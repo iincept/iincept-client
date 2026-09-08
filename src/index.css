@@ -1,0 +1,370 @@
+@import url("https://cdn.jsdelivr.net/gh/mailtoharshit/San-Francisco-Font-/sanfrancisco.css");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+}
+
+:root {
+  --font-apple: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  --main-bg: #FFFFFF;
+  --primary-text: #1D1D1F;
+  --secondary-text: #6E6E73;
+  --light-bg: #F5F5F7;
+  --border: #D2D2D7;
+  --apple-blue: #0071E3;
+  --hover-blue: #0077ED;
+
+  /* Aliases */
+  --black: #1D1D1F;
+  --gray: #6E6E73;
+  --light-gray: #F5F5F7;
+  --white: #FFFFFF;
+  --blue: #0071E3;
+}
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+body {
+  background: #FFFFFF;
+  color: #1D1D1F;
+}
+
+.typography-headline-elevated {
+  font-size: 56px;
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: #1d1d1f;
+}
+
+.typography-modal-headline, .modal-headline {
+  font-size: 40px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: #1d1d1f;
+}
+
+@media (max-width: 734px) {
+  .typography-modal-headline, .modal-headline {
+    font-size: 28px;
+    line-height: 1.14286;
+  }
+}
+@media (min-width: 1068px) {
+  .typography-headline-elevated {
+    font-size: 64px;
+  }
+}
+@media (max-width: 734px) {
+  .typography-headline-elevated {
+    font-size: 40px;
+    line-height: 1.08;
+  }
+}
+
+.typography-eyebrow-reduced {
+  font-size: 19px;
+  line-height: 1.4211;
+  font-weight: 600;
+  letter-spacing: 0.012em;
+  color: #1d1d1f;
+}
+@media (max-width: 734px) {
+  .typography-eyebrow-reduced {
+    font-size: 17px;
+    line-height: 1.47059;
+  }
+}
+
+.section {
+  background: #F5F5F7;
+}
+
+.secondary-text {
+  color: #6E6E73;
+}
+
+.button {
+  background: #0071E3;
+  color: #FFFFFF;
+  transition: background-color 0.2s ease;
+}
+
+.button:hover {
+  background: #0077ED;
+}
+
+.product {
+  transform: translateY(0);
+  transition: transform 0.4s ease;
+}
+
+.product:hover {
+  transform: translateY(-5px);
+}
+
+.container {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.hero {
+  width: 100%;
+  min-height: 700px;
+  overflow: hidden;
+}
+
+.hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.product-image {
+  width: 100%;
+  height: 500px;
+  object-fit: contain;
+}
+
+.hero-title {
+  font-size: clamp(48px, 6vw, 88px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.hero-description {
+  font-size: clamp(18px, 2vw, 24px);
+}
+
+.navbar {
+  width: 100%;
+  height: 64px;
+}
+
+.navbar-inner {
+  width: 100%;
+  max-width: 1600px;
+  margin: auto;
+  padding: 0 40px;
+}
+
+/* Aptronix Loyalty Banner Styles */
+.loyalty-banner-container {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  position: relative;
+  padding-left: 3rem;
+  padding-right: 3rem;
+}
+
+.loyalty-banner {
+  max-width: 1440px;
+  margin: 0 auto;
+  border-radius: 32px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  overflow: hidden;
+  background-repeat: no-repeat;
+}
+
+.loyalty-banner__container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 90px 100px;
+  min-height: 480px;
+  position: relative;
+}
+
+.loyalty-banner__content {
+  flex: 1;
+  max-width: 50%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.loyalty-banner__heading {
+  font-size: 3.2rem;
+  font-weight: 300;
+  line-height: 1.2;
+  color: #1d1d1f;
+  margin-bottom: 16px;
+}
+
+.loyalty-banner__heading strong {
+  font-weight: 700;
+}
+
+.loyalty-banner__description {
+  font-size: 1.4rem;
+  color: #1d1d1f;
+  margin-bottom: 32px;
+  line-height: 1.4;
+}
+
+.loyalty-banner__description p {
+  margin: 0;
+}
+
+.loyalty-banner__button {
+  display: inline-flex;
+  align-items: center;
+  background-color: #0d0d0d;
+  color: #ffffff;
+  padding: 14px 32px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.loyalty-banner__button:hover {
+  background-color: #1a1a1a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.loyalty-banner__image {
+  position: absolute;
+  right: 5%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 45%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loyalty-banner__img {
+  max-height: 125%;
+  width: auto;
+  object-fit: contain;
+}
+
+.desktop-image {
+  display: block;
+}
+
+.mobile-image {
+  display: none;
+}
+
+/* Responsive overrides */
+@media (max-width: 1024px) {
+  .loyalty-banner-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+  .loyalty-banner__container {
+    padding: 70px 60px;
+    min-height: 420px;
+  }
+  .loyalty-banner__heading {
+    font-size: 2.6rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .loyalty-banner-container {
+    padding-top: 60px !important;
+    padding-bottom: 30px !important;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .loyalty-banner {
+    border-radius: 20px;
+    margin: 0;
+    background-size: cover;
+  }
+  .loyalty-banner__container {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 60px 30px;
+    min-height: auto;
+  }
+  .loyalty-banner__content {
+    max-width: 100%;
+    align-items: center;
+    margin-bottom: 32px;
+  }
+  .loyalty-banner__heading {
+    font-size: 2.2rem;
+    text-align: center;
+  }
+  .loyalty-banner__description {
+    font-size: 1.25rem;
+    text-align: center;
+  }
+  .loyalty-banner__image {
+    position: relative;
+    transform: none;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 260px;
+    margin-top: 16px;
+  }
+  .desktop-image {
+    display: none;
+  }
+  .mobile-image {
+    display: block;
+    margin: 0 auto;
+    max-width: 260px;
+  }
+}
+
+/* Slider Wrapper Rules */
+.loyalty-banner-slider-wrapper {
+  position: relative;
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
+  min-height: 480px;
+}
+
+.loyalty-banner-slider-wrapper .loyalty-banner {
+  height: 100%;
+  min-height: inherit;
+}
+
+@media (max-width: 768px) {
+  .loyalty-banner-slider-wrapper {
+    min-height: 580px;
+  }
+}
+
+/* Smooth Apple-style transition for category switching */
+@keyframes appleSmoothFade {
+  0% {
+    opacity: 0;
+    transform: scale(0.985) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.apple-smooth-fade {
+  animation: appleSmoothFade 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}
