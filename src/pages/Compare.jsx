@@ -681,7 +681,7 @@ export default function Compare() {
                       {/* Interactive Color Selection Dots directly inside Card */}
                       {Array.isArray(prod.colors) && prod.colors.length > 0 && (
                         <div className="pt-2 flex flex-col items-center gap-1.5">
-                          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                          <div className="flex items-center justify-center gap-3 flex-wrap py-1">
                             {prod.colors.map((col, cIdx) => {
                               const colName = typeof col === 'object' ? col.name : col;
                               const isSelected = activeColor === colName;
@@ -705,7 +705,7 @@ export default function Compare() {
                                   type="button"
                                   onClick={() => handleColorChange(idx, colName)}
                                   className={`w-4 h-4 rounded-full border shadow-xs transition-all cursor-pointer ${
-                                    isSelected ? 'scale-125 border-zinc-900 ring-2 ring-[#0071e3]' : 'border-zinc-300 hover:scale-110'
+                                    isSelected ? 'scale-110 border-zinc-900 ring-2 ring-offset-2 ring-[#0071e3] z-10' : 'border-zinc-300 hover:scale-105'
                                   }`}
                                   style={{
                                     backgroundColor: resolveColorValue(colName),

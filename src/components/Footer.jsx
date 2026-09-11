@@ -3,19 +3,21 @@ import { Link } from 'react-router-dom';
 import axiosClient from '../services/axiosClient';
 
 const DEFAULT_FOOTER_DATA = {
-  brandTitle: 'IndiaiStore',
+  brandTitle: 'iiNCEPT',
   brandTagline: 'Official platform of Apple Authorised Distributors in India. Browse online, buy from trusted mono-brand resellers near you.',
-  copyrightText: 'Copyright © 2026 IndiaiStore. All rights reserved. Powered by Ingram Micro & Redington.',
+  copyrightText: 'Copyright © 2026 iiNCEPT Electronics. All rights reserved. Powered by Ingram Micro & Redington.',
   columns: [
     {
       title: 'Shop',
       links: [
         { label: 'Mac', url: '/macbook' },
-        { label: 'iPad', url: '/ipad' },
         { label: 'iPhone', url: '/iphone' },
+        { label: 'iPad', url: '/ipad' },
         { label: 'Watch', url: '/watch' },
         { label: 'AirPods', url: '/airpods' },
+        { label: 'TV & Home', url: '/tv-home' },
         { label: 'Accessories', url: '/accessories' },
+        { label: 'AppleCare+', url: '/applecare' },
       ]
     },
     {
@@ -78,7 +80,7 @@ export default function Footer() {
         }));
       }
     } catch (err) {
-      console.warn('Using default IndiaiStore footer settings:', err);
+      console.warn('Using default iiNCEPT footer settings:', err);
     }
   };
 
@@ -170,24 +172,18 @@ export default function Footer() {
           
           {/* Column 1: Brand Info */}
           <div className="indiaistore-footer-brand-col">
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '18px',
-              fontWeight: 700,
-              color: '#1d1d1f',
-              letterSpacing: '-0.3px',
-              marginBottom: '12px'
-            }}>
-              <span style={{ fontSize: '20px', lineHeight: 1 }}></span>
-              <span>{footerData.brandTitle}</span>
-            </div>
+            <Link to="/" style={{ display: 'inline-block', marginBottom: '18px' }}>
+              <img 
+                src="/iincept_footer_logo.png" 
+                alt="iiNCEPT - The best experience for everything Apple" 
+                style={{ height: '115px', width: 'auto', objectFit: 'contain' }} 
+              />
+            </Link>
             <p style={{
               fontSize: '13px',
               color: '#86868b',
               lineHeight: 1.55,
-              maxWidth: '260px',
+              maxWidth: '340px',
               margin: 0
             }}>
               {footerData.brandTagline}
@@ -248,34 +244,6 @@ export default function Footer() {
         </div>
 
       </div>
-
-      {/* Floating WhatsApp Contact Button */}
-      <a
-        href="https://wa.me/918607222417?text=Hi%20there!%20I%20am%20interested%20in%20buying%20Apple%20products%20for%20my%20business."
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{
-          position: 'fixed',
-          bottom: '24px',
-          right: '24px',
-          width: '52px',
-          height: '52px',
-          backgroundColor: '#25D366',
-          color: '#ffffff',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 4px 14px rgba(37,211,102,0.45)',
-          zIndex: 99,
-          transition: 'transform 0.2s ease, background-color 0.2s ease'
-        }}
-        title="Chat with us on WhatsApp"
-      >
-        <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: '28px', height: '28px' }}>
-          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.967C16.59 2.012 14.125.99 11.516.99c-5.44 0-9.866 4.372-9.87 9.802 0 1.706.467 3.376 1.349 4.86L2.014 22l6.633-1.745zM15.938 12.67c-.237-.117-1.4-.69-1.617-.768-.218-.078-.376-.117-.534.117-.158.236-.61.768-.748.924-.138.156-.277.175-.515.058-.237-.117-.998-.367-1.9-1.173-.702-.627-1.176-1.401-1.314-1.636-.138-.236-.015-.363.104-.48l.317-.37c.105-.122.138-.208.208-.346.069-.138.034-.26-.017-.378-.052-.117-.534-1.285-.733-1.76-.193-.466-.39-.402-.534-.41-.138-.007-.297-.009-.455-.009-.158 0-.416.059-.633.296-.217.236-.83.811-.83 1.977 0 1.166.85 2.292.969 2.45.118.157 1.673 2.553 4.053 3.58.566.244 1.008.39 1.353.499.569.18 1.087.155 1.496.094.456-.068 1.4-.572 1.6-1.127.198-.555.198-1.03.139-1.127-.059-.098-.218-.156-.456-.274z" />
-        </svg>
-      </a>
     </footer>
   );
 }

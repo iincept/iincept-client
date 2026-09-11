@@ -55,10 +55,29 @@ export default function Shop() {
   const filteredProducts = activeProducts.filter((prod) => {
     const matchesSearch = matchesProductSearch(prod, search);
     
-    // Category match
-    const categoryName = prod.category?.name || prod.category;
-    const matchesCategory = selectedCategory === 'all' || 
-                            categoryName?.toLowerCase() === selectedCategory.toLowerCase();
+    // Category match supporting names, slugs, and aliases
+    const catName = (prod.category?.name || (typeof prod.category === 'string' ? prod.category : '')).toLowerCase();
+    const catSlug = (prod.category?.slug || '').toLowerCase();
+    const selCat = selectedCategory.toLowerCase();
+
+    let matchesCategory = selCat === 'all';
+    if (!matchesCategory) {
+      if (selCat === 'iphone' || selCat === 'iphones' || selCat === 'smartphones') {
+        matchesCategory = catName.includes('iphone') || catName.includes('smartphone') || catName.includes('phone') || catSlug.includes('iphone') || catSlug.includes('smartphone');
+      } else if (selCat === 'mac' || selCat === 'macbook' || selCat === 'laptops & pcs' || selCat === 'laptops-pcs') {
+        matchesCategory = catName.includes('mac') || catName.includes('laptop') || catSlug.includes('mac') || catSlug.includes('laptop');
+      } else if (selCat === 'ipad' || selCat === 'ipads' || selCat === 'tablets') {
+        matchesCategory = catName.includes('ipad') || catName.includes('tablet') || catSlug.includes('ipad') || catSlug.includes('tablet');
+      } else if (selCat === 'watch' || selCat === 'watches' || selCat === 'wearables') {
+        matchesCategory = catName.includes('watch') || catName.includes('wearable') || catSlug.includes('watch');
+      } else if (selCat === 'airpods' || selCat === 'audio') {
+        matchesCategory = catName.includes('airpod') || catName.includes('audio') || catSlug.includes('airpod');
+      } else if (selCat === 'accessories') {
+        matchesCategory = catName.includes('accessori') || catSlug.includes('accessori');
+      } else {
+        matchesCategory = catName === selCat || catSlug === selCat || (typeof prod.category === 'string' && prod.category.toLowerCase() === selCat);
+      }
+    }
     
     // Price match
     const matchesPrice = prod.price <= maxPrice;

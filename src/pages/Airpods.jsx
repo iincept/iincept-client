@@ -53,24 +53,86 @@ const DEFAULT_AIRPODS_APPLECARE_ROWS = [
   }
 ];
 
+const DEFAULT_AIRPODS_PRODUCTS = [
+  {
+    id: 'default-airpods-pro-2',
+    name: 'AirPods Pro 2',
+    price: 24900,
+    priceStr: '₹24,900',
+    image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-pro-2-hero-select-202409?wid=800&hei=1000&fmt=webp&qlt=90',
+    images: ['https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-pro-2-hero-select-202409?wid=800&hei=1000&fmt=webp&qlt=90'],
+    colors: [{ name: 'White', value: '#ffffff' }],
+    rating: 5.0,
+    isSoldOut: false
+  },
+  {
+    id: 'default-airpods-4',
+    name: 'AirPods 4',
+    price: 12900,
+    priceStr: '₹12,900',
+    image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-4-hero-select-202409?wid=800&hei=1000&fmt=webp&qlt=90',
+    images: ['https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-4-hero-select-202409?wid=800&hei=1000&fmt=webp&qlt=90'],
+    colors: [{ name: 'White', value: '#ffffff' }],
+    rating: 4.9,
+    isSoldOut: false
+  },
+  {
+    id: 'default-airpods-4-anc',
+    name: 'AirPods 4 with ANC',
+    price: 17900,
+    priceStr: '₹17,900',
+    image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-4-anc-hero-select-202409?wid=800&hei=1000&fmt=webp&qlt=90',
+    images: ['https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-4-anc-hero-select-202409?wid=800&hei=1000&fmt=webp&qlt=90'],
+    colors: [{ name: 'White', value: '#ffffff' }],
+    rating: 4.9,
+    isSoldOut: false
+  },
+  {
+    id: 'default-airpods-max',
+    name: 'AirPods Max',
+    price: 59900,
+    priceStr: '₹59,900',
+    image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-max-hero-select-202409?wid=800&hei=1000&fmt=webp&qlt=90',
+    images: ['https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-max-hero-select-202409?wid=800&hei=1000&fmt=webp&qlt=90'],
+    colors: [
+      { name: 'Midnight', value: '#1e293b' },
+      { name: 'Starlight', value: '#f5f5f4' },
+      { name: 'Blue', value: '#1d3557' },
+      { name: 'Purple', value: '#a855f7' },
+      { name: 'Orange', value: '#e07a5f' }
+    ],
+    rating: 5.0,
+    isSoldOut: false
+  }
+];
+
 const AIRPODS_SUB_NAV_ITEMS = [
-  { name: 'AirPods Pro 2', query: 'Pro 2', image: '/airpods_nav/airpods_pro_2.png', scale: 'scale-100' },
-  { name: 'AirPods 4', query: 'AirPods 4', image: '/airpods_nav/airpods_4.png', scale: 'scale-100' },
-  { name: 'AirPods Max', query: 'AirPods Max', image: '/airpods_nav/airpods_max.png', scale: 'scale-100' },
-  { name: 'AppleCare+', path: '/airpods?tab=applecare', image: '/applecare_official_hero.png', scale: 'scale-100' },
-  { name: 'Compare', path: '/compare', image: '/airpods_nav/airpods_compare.png', scale: 'scale-100' }
+  { name: 'AirPods', isNew: true, query: 'AirPods', image: 'https://www.apple.com/v/airpods/shared/icon_airpods_4__b83p14jxgzkm_large.svg', scale: 'scale-100' },
+  { name: 'AirPods Pro', query: 'Pro 2', image: 'https://www.apple.com/v/airpods/shared/icon_airpods_pro__c4g86280j6eu_large.svg', scale: 'scale-100' },
+  { name: 'AirPods Max', query: 'AirPods Max', image: 'https://www.apple.com/v/airpods/shared/icon_airpods_max__c1i39v5a1pqu_large.svg', scale: 'scale-100' },
+  { name: 'Compare', path: '/compare', image: 'https://www.apple.com/v/airpods/shared/icon_compare__e3a7h9h7ywa6_large.svg', scale: 'scale-100' },
+  { name: 'Accessories', path: '/shop?category=Accessories', image: 'https://www.apple.com/v/airpods/shared/icon_accessories__f29e160a0z6q_large.svg', scale: 'scale-100' },
+  { name: 'AppleCare+', path: '/airpods?tab=applecare', image: '/applecare_official_hero.png', scale: 'scale-100' }
 ];
 
 const resolveSubItemPath = (item) => {
-  const lowerName = (item.name || item.label || '').toLowerCase();
-  if (lowerName.includes('care')) {
+  const lowerName = (item.name || item.label || item.query || '').toLowerCase();
+  if (lowerName.includes('care') || lowerName.includes('applecare')) {
     return '/airpods?tab=applecare';
   }
-  if (item.path && item.path !== '/airpods') return item.path;
-  if (item.query) {
-    return `/airpods?search=${encodeURIComponent(item.query)}`;
+  if (lowerName.includes('shop airpods') || lowerName === 'all' || lowerName === 'all airpods') {
+    return '/airpods';
   }
-  return '/airpods';
+  if (
+    item.path &&
+    item.path !== '/airpods' &&
+    !item.path.startsWith('/airpods?search=') &&
+    !item.path.startsWith('/product/')
+  ) {
+    return item.path;
+  }
+  const queryVal = item.query || item.name || item.label || '';
+  return `/airpods?search=${encodeURIComponent(queryVal)}`;
 };
 
 const ensureAppleCareInSubItems = (items = []) => {
@@ -115,15 +177,23 @@ const getInitialSubItems = (categoryKey, defaultItems) => {
 const resolveIconImage = (img, label) => {
   if (img && typeof img === 'string' && img.trim()) {
     let clean = img.trim();
-    if (!clean.startsWith('http://') && !clean.startsWith('https://') && !clean.startsWith('data:') && !clean.startsWith('blob:') && !clean.startsWith('/')) {
-      clean = '/' + clean;
+    if (!clean.includes('airpods_nav') && clean !== 'null' && clean !== 'undefined') {
+      if (!clean.startsWith('http://') && !clean.startsWith('https://') && !clean.startsWith('data:') && !clean.startsWith('blob:') && !clean.startsWith('/')) {
+        clean = '/' + clean;
+      }
+      return clean;
     }
-    return clean;
   }
+
   const lblLower = (label || '').toLowerCase().trim();
-  if (lblLower.includes('care')) return '/applecare_official_hero.png';
-  const matched = AIRPODS_SUB_NAV_ITEMS.find(m => m.name.toLowerCase().trim() === lblLower);
-  return matched?.image || '/airpods_nav/airpods_pro_2.png';
+  if (lblLower.includes('care') || lblLower.includes('applecare')) return '/applecare_official_hero.png';
+  if (lblLower.includes('compare')) return 'https://www.apple.com/v/airpods/shared/icon_compare__e3a7h9h7ywa6_large.svg';
+  if (lblLower.includes('accessory') || lblLower.includes('accessories')) return 'https://www.apple.com/v/airpods/shared/icon_accessories__f29e160a0z6q_large.svg';
+  if (lblLower.includes('max')) return 'https://www.apple.com/v/airpods/shared/icon_airpods_max__c1i39v5a1pqu_large.svg';
+  if (lblLower.includes('pro')) return 'https://www.apple.com/v/airpods/shared/icon_airpods_pro__c4g86280j6eu_large.svg';
+  if (lblLower.includes('airpods') || lblLower.includes('4') || lblLower.includes('5')) return 'https://www.apple.com/v/airpods/shared/icon_airpods_4__b83p14jxgzkm_large.svg';
+
+  return 'https://www.apple.com/v/airpods/shared/icon_airpods_4__b83p14jxgzkm_large.svg';
 };
 
 const getModelImageByName = (modelName = '') => {
@@ -479,7 +549,26 @@ export default function Airpods() {
     };
   });
 
-  const combinedProducts = dbAirpods;
+  const combinedProducts = (() => {
+    let list = dbAirpods.length > 0 ? [...dbAirpods] : [];
+    DEFAULT_AIRPODS_PRODUCTS.forEach(defProd => {
+      const cleanDef = defProd.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const idx = list.findIndex(p => {
+        const cleanP = (p.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        return cleanP === cleanDef || cleanP.includes(cleanDef) || cleanDef.includes(cleanP);
+      });
+      if (idx === -1) {
+        list.push(defProd);
+      } else {
+        list[idx] = {
+          ...defProd,
+          ...list[idx],
+          image: (list[idx].image && !list[idx].image.includes('airpods_pro_3')) ? list[idx].image : defProd.image
+        };
+      }
+    });
+    return list;
+  })();
 
   const sortedProducts = [...combinedProducts].sort((a, b) => {
     if (sortBy === 'price-asc') return a.price - b.price;
@@ -514,18 +603,25 @@ export default function Airpods() {
             {subItems.map((item, idx) => {
               const currentTab = searchParams.get('tab') || '';
               const currentSearch = searchParams.get('search') || '';
-              const isAppleCareItem = (item.name || item.label || '').toLowerCase().includes('care');
+              const itemLowerName = (item.name || item.label || '').toLowerCase();
+              const isAppleCareItem = itemLowerName.includes('care');
               const isAppleCareActive = currentTab.toLowerCase() === 'applecare' || currentSearch.toLowerCase().includes('care');
-              const isActive = isAppleCareActive
-                ? isAppleCareItem
-                : (currentSearch && currentSearch.toLowerCase() === (item.query || '').toLowerCase());
+
+              let isActive = false;
+              if (isAppleCareActive) {
+                isActive = isAppleCareItem;
+              } else if (currentSearch) {
+                const normSearch = currentSearch.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const normQuery = (item.query || item.name || item.label || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                isActive = normSearch === normQuery || normSearch.includes(normQuery) || normQuery.includes(normSearch);
+              }
 
               return (
                 <Link
                   key={item.name || item.query || idx}
                   to={resolveSubItemPath(item)}
-                  className={`flex flex-col items-center gap-2 shrink-0 group cursor-pointer transition-transform transition-opacity duration-200 ${
-                    isActive ? 'scale-105 opacity-100 font-bold' : 'hover:scale-105 opacity-75 hover:opacity-100'
+                  className={`flex flex-col items-center gap-2 shrink-0 group cursor-pointer opacity-100 ${
+                    isActive ? 'font-bold' : ''
                   }`}
                 >
                   <div className="h-16 w-20 flex items-center justify-center p-1 overflow-visible">
@@ -537,14 +633,17 @@ export default function Airpods() {
                         if (lower.includes('care')) {
                           e.currentTarget.src = '/applecare_official_hero.png';
                         } else {
-                          e.currentTarget.src = '/airpods_nav/airpods_pro_2.png';
+                          e.currentTarget.src = '/airpods_category_uploaded.png';
                         }
                       }}
-                      className={`max-h-full max-w-full object-contain filter drop-shadow-sm transition-transform duration-300 group-hover:scale-110 ${item.scale || 'scale-100'}`}
+                      className="max-h-full max-w-full object-contain filter drop-shadow-sm transition-all duration-300 ease-out group-hover:scale-112 group-hover:-translate-y-1"
                     />
                   </div>
-                  <span className={`text-xs tracking-tight text-zinc-950 transition-colors ${isActive ? 'font-bold text-zinc-950' : 'font-semibold'}`}>
-                    {item.name}
+                  <span className={`text-xs tracking-tight transition-colors duration-200 flex flex-col items-center gap-0.5 ${isActive ? 'font-bold text-zinc-950' : 'font-semibold text-zinc-700 group-hover:text-zinc-950'}`}>
+                    <span>{item.name}</span>
+                    {(item.isNew || item.name.toLowerCase() === 'airpods') && (
+                      <span className="text-[10px] font-normal text-[#f56300] leading-none mt-0.5">New</span>
+                    )}
                   </span>
                 </Link>
               );
@@ -896,9 +995,9 @@ export default function Airpods() {
                   {/* Non-clickable configurations / actions */}
                   <div className="space-y-4 pt-2">
                     {/* Color Dot Options Row */}
-                    <div className="flex items-center justify-between gap-1.5 border-t border-zinc-100/60 pt-3">
+                    <div className="flex items-center justify-between gap-2 border-t border-zinc-100/60 pt-3">
                       <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Colors</span>
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-3 shrink-0 py-1">
                         {prod.colors.map((color) => {
                           const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
                           return (
@@ -906,8 +1005,8 @@ export default function Airpods() {
                               key={color.name}
                               onClick={() => handleColorChange(prod.id, color.name)}
                               style={{ backgroundColor: color.value }}
-                              className={`w-3.5 h-3.5 rounded-full cursor-pointer transition-all border ${
-                                isSelected ? 'scale-125 border-zinc-800 ring-1 ring-zinc-400' : 'border-zinc-300 hover:scale-110'
+                              className={`w-4 h-4 rounded-full cursor-pointer transition-all ${
+                                isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10' : 'border border-zinc-300 hover:scale-105'
                               }`}
                               title={color.name}
                             />

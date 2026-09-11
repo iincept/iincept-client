@@ -434,9 +434,9 @@ export default function Accessories() {
                 <div className="space-y-4 pt-2">
                   {/* Color Dot Options Row */}
                   {prod.colors && prod.colors.length > 0 && (
-                    <div className="flex items-center justify-between gap-1.5 border-t border-zinc-100/60 pt-3">
+                    <div className="flex items-center justify-between gap-2 border-t border-zinc-100/60 pt-3">
                       <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Colors</span>
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-3 shrink-0 py-1">
                         {prod.colors.map((color) => {
                           const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
                           return (
@@ -444,7 +444,7 @@ export default function Accessories() {
                               key={color.name}
                               onClick={() => handleColorChange(prod.id, color.name)}
                               style={{ backgroundColor: color.value }}
-                              className={`w-3.5 h-3.5 rounded-full cursor-pointer transition-all border ${isSelected ? 'scale-125 border-zinc-800 ring-1 ring-zinc-400' : 'border-zinc-300 hover:scale-110'
+                              className={`w-4 h-4 rounded-full cursor-pointer transition-all ${isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10' : 'border border-zinc-300 hover:scale-105'
                                 }`}
                               title={color.name}
                             />

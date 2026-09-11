@@ -36,13 +36,19 @@ export default function AppleCategories() {
     try {
       const response = await axiosClient.get('/settings');
       if (response.data && response.data.appleCategories && response.data.appleCategories.length > 0) {
-        setAppleCards(response.data.appleCategories.map(c => ({ ...c, isActive: c.isActive !== false })));
+        setAppleCards(response.data.appleCategories.map(c => ({
+          ...c,
+          image: (c.image || '').trim(),
+          name: (c.name || '').trim(),
+          link: (c.link || '').trim(),
+          isActive: c.isActive !== false
+        })));
       } else {
         setAppleCards([
-          { name: 'iPhone', actionText: 'Shop all models →', link: '/iphone', image: '/iphone_category_uploaded.jpg', cardTheme: 'dark', isActive: true },
-          { name: 'Mac', actionText: 'Shop all models →', link: '/macbook', image: '/macbook_category_uploaded.png', cardTheme: 'light', isActive: true },
-          { name: 'iPad', actionText: 'Shop all models →', link: '/ipad', image: '/ipad_category_uploaded.png', cardTheme: 'dark', isActive: true },
-          { name: 'Watch', actionText: 'Shop all models →', link: '/watch', image: '/watch_category_uploaded.png', cardTheme: 'dark', isActive: true },
+          { name: 'Mac', actionText: 'Shop all models →', link: '/macbook', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/mac/home-img-1776683069_8064.png', cardTheme: 'light', isActive: true },
+          { name: 'iPhone', actionText: 'Shop all models →', link: '/iphone', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/iphone/home-img-1776683084_2967.png', cardTheme: 'dark', isActive: true },
+          { name: 'iPad', actionText: 'Shop all models →', link: '/ipad', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/ipad/home-img-1776683096_1014.png', cardTheme: 'dark', isActive: true },
+          { name: 'Watch', actionText: 'Shop all models →', link: '/watch', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/watch/home-img-1757682221_3904.jpg', cardTheme: 'dark', isActive: true },
           { name: 'AirPods', actionText: 'Shop all models →', link: '/airpods', image: '/airpods_category_uploaded.png', cardTheme: 'grey', isActive: true },
           { name: 'TV & Home', actionText: 'Shop all models →', link: '/tv-home', image: '/tvhome_category_uploaded.png', cardTheme: 'light', isActive: true },
           { name: 'Accessories', actionText: 'Shop all models →', link: '/accessories', image: '/accessories_category_uploaded.png', cardTheme: 'dark', isActive: true },
@@ -139,7 +145,13 @@ export default function AppleCategories() {
     setSaving(true);
     setError(null);
     try {
-      await axiosClient.put('/settings', { appleCategories: appleCards });
+      const cleanedCards = appleCards.map(c => ({
+        ...c,
+        image: (c.image || '').trim(),
+        name: (c.name || '').trim(),
+        link: (c.link || '').trim(),
+      }));
+      await axiosClient.put('/settings', { appleCategories: cleanedCards });
       showSuccessMessage('Apple Categories & Header Navigation updated live!');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to save Apple Categories');
@@ -180,9 +192,9 @@ export default function AppleCategories() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 font-sans flex items-center gap-2.5">
             <Grid className="h-6 w-6 text-[#0071e3]" />
-            Apple Categories Manager
+            Shop Category Manager
           </h1>
-          <p className="text-zinc-500 mt-1 text-sm">Control Homepage "Apple category" grid tiles & Header Navbar order, titles, hover images, and visibility.</p>
+          <p className="text-zinc-500 mt-1 text-sm">Control Homepage "Shop by Category" grid tiles & Header Navbar order, titles, hover images, and visibility.</p>
         </div>
 
         <button
@@ -191,7 +203,7 @@ export default function AppleCategories() {
           className="flex items-center gap-2 bg-[#0071e3] hover:bg-[#005bb5] text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-0 shadow-sm"
         >
           <Plus className="h-4 w-4" />
-          Add Apple Category
+          Add Shop Category
         </button>
       </header>
 
@@ -412,7 +424,7 @@ export default function AppleCategories() {
               className="flex items-center gap-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-0"
             >
               <Plus className="h-4 w-4" />
-              Add Another Apple Category
+              Add Another Category
             </button>
 
             <button
@@ -421,7 +433,7 @@ export default function AppleCategories() {
               className="flex items-center gap-2 bg-[#0071e3] hover:bg-[#005bb5] disabled:bg-zinc-400 text-white px-7 py-3 rounded-xl text-xs font-bold tracking-wider uppercase shadow-md transition-all cursor-pointer border-0"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Publish Apple Categories
+              Publish Shop Categories
             </button>
           </div>
         </form>

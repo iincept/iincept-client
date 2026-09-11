@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { ShieldAlert, Star } from 'lucide-react';
-import { fetchProductById, fetchProducts } from '../redux/productSlice';
+import { fetchProductById, fetchProducts, setCurrentProduct } from '../redux/productSlice';
 import { addToCart } from '../redux/cartSlice';
 import Loader from '../components/Loader';
 import axiosClient from '../services/axiosClient';
@@ -107,7 +107,13 @@ export default function ProductDetails() {
   };
 
   useEffect(() => {
-    dispatch(fetchProductById(id));
+    if (id) {
+      if (id.match(/^[0-9a-fA-F]{24}$/)) {
+        dispatch(fetchProductById(id));
+      } else {
+        dispatch(setCurrentProduct(null));
+      }
+    }
   }, [id, dispatch]);
 
   useEffect(() => {
@@ -140,26 +146,294 @@ export default function ProductDetails() {
     }
   };
 
-  const getProductFromStore = (prodId) => {
-    if (!products || products.length === 0 || !prodId) return null;
+  const FALLBACK_PRODUCTS_MAP = {
+    'default-iphone-15': {
+      id: 'default-iphone-15',
+      _id: 'default-iphone-15',
+      title: 'iPhone 15',
+      name: 'iPhone 15',
+      price: 69900,
+      priceStr: '₹69,900',
+      category: 'iphone',
+      image: '/iphone_nav/iphone_15.png',
+      images: ['/iphone_nav/iphone_15.png', '/iphone16_group.jpg'],
+      description: 'Dynamic Island, 48MP Main camera, and USB-C. All in a durable color-infused glass and aluminum design.',
+      colors: [
+        { name: 'Black', value: '#111111', image: '/iphone_nav/iphone_15.png' },
+        { name: 'Blue', value: '#bae6fd', image: '/iphone_nav/iphone_15.png' },
+        { name: 'Green', value: '#bbf7d0', image: '/iphone_nav/iphone_15.png' },
+        { name: 'Yellow', value: '#eab308', image: '/iphone_nav/iphone_15.png' },
+        { name: 'Pink', value: '#ec4899', image: '/iphone_nav/iphone_15.png' }
+      ],
+      storage: ['128GB', '256GB', '512GB'],
+      variants: [
+        { storage: '128GB', price: 69900 },
+        { storage: '256GB', price: 79900 },
+        { storage: '512GB', price: 99900 }
+      ],
+      rating: 4.8
+    },
+    'default-iphone-se': {
+      id: 'default-iphone-se',
+      _id: 'default-iphone-se',
+      title: 'iPhone SE',
+      name: 'iPhone SE',
+      price: 49900,
+      priceStr: '₹49,900',
+      category: 'iphone',
+      image: '/iphone_nav/iphone_se.png',
+      images: ['/iphone_nav/iphone_se.png', '/iphone17e_group.jpg'],
+      description: 'Serious power in a compact design. Lightning-fast A15 Bionic chip and great battery life.',
+      colors: [
+        { name: 'Midnight', value: '#1e293b', image: '/iphone_nav/iphone_se.png' },
+        { name: 'Starlight', value: '#f5f5f4', image: '/iphone_nav/iphone_se.png' },
+        { name: 'RED', value: '#e0115f', image: '/iphone_nav/iphone_se.png' }
+      ],
+      storage: ['64GB', '128GB', '256GB'],
+      variants: [
+        { storage: '64GB', price: 49900 },
+        { storage: '128GB', price: 54900 },
+        { storage: '256GB', price: 64900 }
+      ],
+      rating: 4.7
+    },
+    'default-iphone-air': {
+      id: 'default-iphone-air',
+      _id: 'default-iphone-air',
+      title: 'iPhone Air',
+      name: 'iPhone Air',
+      price: 119900,
+      priceStr: '₹1,19,900',
+      category: 'iphone',
+      image: '/iphone_nav/dropdown_iphone_air.png',
+      images: ['/iphone_nav/dropdown_iphone_air.png', '/iphone_air_group.jpg'],
+      description: 'Impossibly thin. Unbelievably powerful. Built for Apple Intelligence.',
+      colors: [
+        { name: 'Silver', value: '#e5e6e8', image: '/iphone_nav/dropdown_iphone_air.png' },
+        { name: 'Space Gray', value: '#4b4c4e', image: '/iphone_nav/dropdown_iphone_air.png' }
+      ],
+      storage: ['256GB', '512GB', '1TB'],
+      variants: [
+        { storage: '256GB', price: 119900 },
+        { storage: '512GB', price: 139900 },
+        { storage: '1TB', price: 179900 }
+      ],
+      rating: 4.9
+    },
+    'default-iphone-17': {
+      id: 'default-iphone-17',
+      _id: 'default-iphone-17',
+      title: 'iPhone 17',
+      name: 'iPhone 17',
+      price: 79900,
+      priceStr: '₹79,900',
+      category: 'iphone',
+      image: '/iphone_nav/iphone_17.png',
+      images: ['/iphone_nav/iphone_17.png', '/iphone17_group.jpg'],
+      description: 'Next-generation performance with A19 chip and ProMotion display.',
+      colors: [
+        { name: 'Lavender', value: '#d8b4fe', image: '/iphone_nav/iphone_17.png' },
+        { name: 'Sage Green', value: '#a7f3d0', image: '/iphone_nav/iphone_17.png' },
+        { name: 'Starlight', value: '#fafaf9', image: '/iphone_nav/iphone_17.png' }
+      ],
+      storage: ['128GB', '256GB', '512GB'],
+      variants: [
+        { storage: '128GB', price: 79900 },
+        { storage: '256GB', price: 89900 },
+        { storage: '512GB', price: 109900 }
+      ],
+      rating: 4.9
+    },
+    'default-iphone-17e': {
+      id: 'default-iphone-17e',
+      _id: 'default-iphone-17e',
+      title: 'iPhone 17e',
+      name: 'iPhone 17e',
+      price: 59900,
+      priceStr: '₹59,900',
+      category: 'iphone',
+      image: '/iphone_nav/dropdown_iphone_17e.png',
+      images: ['/iphone_nav/dropdown_iphone_17e.png', '/iphone17e_group.jpg'],
+      description: 'Essential Apple performance at a groundbreaking value.',
+      colors: [
+        { name: 'Soft Pink', value: '#fbcfe8', image: '/iphone_nav/dropdown_iphone_17e.png' },
+        { name: 'White', value: '#ffffff', image: '/iphone_nav/dropdown_iphone_17e.png' },
+        { name: 'Midnight', value: '#1e293b', image: '/iphone_nav/dropdown_iphone_17e.png' }
+      ],
+      storage: ['128GB', '256GB'],
+      variants: [
+        { storage: '128GB', price: 59900 },
+        { storage: '256GB', price: 69900 }
+      ],
+      rating: 4.8
+    },
+    'default-iphone-17-pro': {
+      id: 'default-iphone-17-pro',
+      _id: 'default-iphone-17-pro',
+      title: 'iPhone 17 Pro',
+      name: 'iPhone 17 Pro',
+      price: 134900,
+      priceStr: '₹1,34,900',
+      category: 'iphone',
+      image: '/iphone_nav/iphone_17_pro.png',
+      images: ['/iphone_nav/iphone_17_pro.png', '/iphone17p_white.jpg'],
+      description: 'Forged in titanium. Powered by A19 Pro chip with breakthrough camera capabilities.',
+      colors: [
+        { name: 'Cosmic Orange', value: '#e07a5f', image: '/iphone_nav/iphone_17_pro.png' },
+        { name: 'White Titanium', value: '#f4f4f6', image: '/iphone17p_white.jpg' },
+        { name: 'Black Titanium', value: '#323335', image: '/iphone_nav/iphone_17_pro.png' }
+      ],
+      storage: ['128GB', '256GB', '512GB', '1TB'],
+      variants: [
+        { storage: '128GB', price: 134900 },
+        { storage: '256GB', price: 144900 },
+        { storage: '512GB', price: 164900 },
+        { storage: '1TB', price: 184900 }
+      ],
+      rating: 5.0
+    },
+    'default-iphone-16-pro': {
+      id: 'default-iphone-16-pro',
+      _id: 'default-iphone-16-pro',
+      title: 'iPhone 16 Pro',
+      name: 'iPhone 16 Pro',
+      price: 119900,
+      priceStr: '₹1,19,900',
+      category: 'iphone',
+      image: '/iphone_nav/iphone_16_pro.png',
+      images: ['/iphone_nav/iphone_16_pro.png'],
+      description: 'Titanium design with A18 Pro chip and 48MP Fusion camera.',
+      colors: [
+        { name: 'Desert Titanium', value: '#e6c2b9', image: '/iphone_nav/iphone_16_pro.png' },
+        { name: 'Natural Titanium', value: '#a39e99', image: '/iphone_nav/iphone_16_pro.png' },
+        { name: 'Black Titanium', value: '#232426', image: '/iphone_nav/iphone_16_pro.png' },
+        { name: 'White Titanium', value: '#f2f1ed', image: '/iphone_nav/iphone_16_pro.png' }
+      ],
+      storage: ['128GB', '256GB', '512GB', '1TB'],
+      variants: [
+        { storage: '128GB', price: 119900 },
+        { storage: '256GB', price: 129900 },
+        { storage: '512GB', price: 149900 },
+        { storage: '1TB', price: 169900 }
+      ],
+      rating: 5.0
+    },
+    'default-iphone-16': {
+      id: 'default-iphone-16',
+      _id: 'default-iphone-16',
+      title: 'iPhone 16',
+      name: 'iPhone 16',
+      price: 79900,
+      priceStr: '₹79,900',
+      category: 'iphone',
+      image: '/iphone_nav/iphone_16.png',
+      images: ['/iphone_nav/iphone_16.png', '/iphone16_group.jpg'],
+      description: 'Camera Control, 48MP Fusion camera, A18 chip, and Vibrant colors.',
+      colors: [
+        { name: 'Ultramarine', value: '#2a4b7c', image: '/iphone_nav/iphone_16.png' },
+        { name: 'Teal', value: '#1d3557', image: '/iphone_nav/iphone_16.png' },
+        { name: 'Pink', value: '#ec4899', image: '/iphone_nav/iphone_16.png' },
+        { name: 'White', value: '#ffffff', image: '/iphone_nav/iphone_16.png' },
+        { name: 'Black', value: '#111111', image: '/iphone_nav/iphone_16.png' }
+      ],
+      storage: ['128GB', '256GB', '512GB'],
+      variants: [
+        { storage: '128GB', price: 79900 },
+        { storage: '256GB', price: 89900 },
+        { storage: '512GB', price: 109900 }
+      ],
+      rating: 4.9
+    },
+    'default-iphone-18-pro': {
+      id: 'default-iphone-18-pro',
+      _id: 'default-iphone-18-pro',
+      title: 'iPhone 18 Pro',
+      name: 'iPhone 18 Pro',
+      price: 164900,
+      priceStr: '₹1,64,900',
+      category: 'iphone',
+      image: '/iphone17p_white.jpg',
+      images: ['/iphone17p_white.jpg'],
+      description: 'The pinnacle of mobile engineering and Apple Intelligence.',
+      colors: [
+        { name: 'Burgundy', value: '#4a1525', image: '/iphone17p_white.jpg' },
+        { name: 'Glacier', value: '#e4effb', image: '/iphone17p_white.jpg' },
+        { name: 'Silver', value: '#e5e6e8', image: '/iphone17p_white.jpg' }
+      ],
+      storage: ['256GB', '512GB', '1TB', '2TB'],
+      variants: [
+        { storage: '256GB', price: 164900 },
+        { storage: '512GB', price: 189000 },
+        { storage: '1TB', price: 239900 },
+        { storage: '2TB', price: 314900 }
+      ],
+      rating: 5.0
+    },
+    'default-iphone-duo': {
+      id: 'default-iphone-duo',
+      _id: 'default-iphone-duo',
+      title: 'iPhone Duo',
+      name: 'iPhone Duo',
+      price: 299900,
+      priceStr: '₹2,99,900',
+      category: 'iphone',
+      image: '/iphone_nav/dropdown_iphone_duo.png',
+      images: ['/iphone_nav/dropdown_iphone_duo.png'],
+      description: 'Revolutionary dual display iPhone experience.',
+      colors: [
+        { name: 'Star White', value: '#fafafa', image: '/iphone_nav/dropdown_iphone_duo.png' },
+        { name: 'Night Sky', value: '#353e4a', image: '/iphone_nav/dropdown_iphone_duo.png' }
+      ],
+      storage: ['512GB', '1TB'],
+      variants: [
+        { storage: '512GB', price: 299900 },
+        { storage: '1TB', price: 349900 }
+      ],
+      rating: 5.0
+    }
+  };
 
-    // 1. Direct _id / id match
-    const directMatch = products.find(p => (p._id || p.id) === prodId);
-    if (directMatch) return directMatch;
+  const getProductFromStore = (prodId) => {
+    if (!prodId) return null;
+
+    // 1. Direct _id / id match in products array
+    if (products && products.length > 0) {
+      const directMatch = products.find(p => (p._id || p.id) === prodId);
+      if (directMatch) return directMatch;
+    }
 
     // 2. Mock map or title substring match
     const mockIdMap = {
+      'iphone-18-pro': 'iPhone 18 Pro',
+      'default-iphone-18-pro': 'iPhone 18 Pro',
+      'iphone-duo': 'iPhone Duo',
+      'default-iphone-duo': 'iPhone Duo',
       'ip17pm': 'iPhone 17 Pro Max',
       'ip17p': 'iPhone 17 Pro',
       'iphone-17-pro': 'iPhone 17 Pro',
+      'default-iphone-17-pro': 'iPhone 17 Pro',
       'ipair': 'iPhone Air',
       'iphone-air': 'iPhone Air',
+      'default-iphone-air': 'iPhone Air',
       'ip17': 'iPhone 17',
       'iphone-17': 'iPhone 17',
-      'ip16pm': 'iPhone 17e',
+      'default-iphone-17': 'iPhone 17',
+      'ip17e': 'iPhone 17e',
       'iphone-17e': 'iPhone 17e',
+      'default-iphone-17e': 'iPhone 17e',
+      'ip16pm': 'iPhone 16 Pro Max',
+      'ip16p': 'iPhone 16 Pro',
+      'iphone-16-pro': 'iPhone 16 Pro',
+      'default-iphone-16-pro': 'iPhone 16 Pro',
       'ip16': 'iPhone 16',
       'iphone-16': 'iPhone 16',
+      'default-iphone-16': 'iPhone 16',
+      'ip15': 'iPhone 15',
+      'iphone-15': 'iPhone 15',
+      'default-iphone-15': 'iPhone 15',
+      'ipse': 'iPhone SE',
+      'iphone-se': 'iPhone SE',
+      'default-iphone-se': 'iPhone SE',
       'mbneo': 'MacBook Neo',
       'mac-neo-a18': 'MacBook Neo',
       'mac-air-13-m5': 'MacBook Air',
@@ -184,14 +458,35 @@ export default function ProductDetails() {
       'airpods4': 'AirPods 4'
     };
 
-    const targetTitle = mockIdMap[prodId] || prodId;
-    const matchedProduct = products.find(p => {
+    const targetTitle = mockIdMap[prodId] || prodId.replace(/^default-/, '').replace(/-/g, ' ');
+    if (products && products.length > 0) {
+      const matchedProduct = products.find(p => {
+        const pTitle = (p.title || p.name || '').toLowerCase();
+        const tLower = targetTitle.toLowerCase();
+        return pTitle.includes(tLower) || tLower.includes(pTitle);
+      });
+      if (matchedProduct) return matchedProduct;
+    }
+
+    // 3. Exact key match in FALLBACK_PRODUCTS_MAP
+    if (FALLBACK_PRODUCTS_MAP[prodId]) {
+      return FALLBACK_PRODUCTS_MAP[prodId];
+    }
+
+    const cleanKey = `default-${prodId.replace(/^default-/, '').toLowerCase()}`;
+    if (FALLBACK_PRODUCTS_MAP[cleanKey]) {
+      return FALLBACK_PRODUCTS_MAP[cleanKey];
+    }
+
+    // 4. Soft match in FALLBACK_PRODUCTS_MAP
+    const fallbackVals = Object.values(FALLBACK_PRODUCTS_MAP);
+    const softFallback = fallbackVals.find(p => {
       const pTitle = (p.title || p.name || '').toLowerCase();
       const tLower = targetTitle.toLowerCase();
       return pTitle.includes(tLower) || tLower.includes(pTitle);
     });
 
-    return matchedProduct || null;
+    return softFallback || null;
   };
 
   const getCategoryGroup = (prod) => {
@@ -270,6 +565,10 @@ export default function ProductDetails() {
       return cValStr;
     }
     const PDP_COLOR_MAP = {
+      "night sky": "#353e4a",
+      "star white": "#fafafa",
+      "burgundy": "#4a1525",
+      "glacier": "#e4effb",
       "space black": "#1c1c1c",
       "space gray": "#555555",
       "starlight": "#f5f5f4",
@@ -414,6 +713,10 @@ export default function ProductDetails() {
       storages.push(trimmed);
     }
   });
+
+  if (storages.length === 0 && ((product?.title || product?.name || '').toLowerCase().includes('18 pro'))) {
+    storages = ['256GB', '512GB', '1TB', '2TB'];
+  }
 
   let rams = [];
   const rawRams = Array.isArray(product?.ram) ? [...product.ram] : (Array.isArray(product?.rams) ? [...product.rams] : []);
@@ -779,6 +1082,17 @@ export default function ProductDetails() {
   const getVariantPrice = (oColor, oSize, oStorage, oRam, oGlass, oConnectivity) => {
     if (!product) return 0;
     const defaultPrice = product.price || 0;
+
+    const currentStorage = (oStorage || selectedStorage || storages[0] || '').toString().toLowerCase().trim();
+    const is18Pro = (product.name || product.title || '').toLowerCase().includes('18 pro');
+
+    if (is18Pro && currentStorage) {
+      if (currentStorage.includes('256')) return 164900;
+      if (currentStorage.includes('512')) return 189000;
+      if (currentStorage.includes('1tb') || currentStorage.includes('1 tb')) return 239900;
+      if (currentStorage.includes('2tb') || currentStorage.includes('2 tb')) return 314900;
+    }
+
     if (!product.variants || product.variants.length === 0) return defaultPrice;
 
     const matchedVar = getActiveVariant(oColor, oStorage, oRam, oSize, oGlass, oConnectivity);

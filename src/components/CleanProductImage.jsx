@@ -13,22 +13,48 @@ export default function CleanProductImage({
   className = 'max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-500 select-none',
   containerClassName = 'w-full h-64 sm:h-72 bg-[#f5f5f7] rounded-2xl flex items-center justify-center p-6 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f2f2f4]',
   mixBlend = true,
+  fallbackSrc = '',
 }) {
-  const [processedSrc, setProcessedSrc] = useState(src);
+  const getSmartFallback = (name, rawSrc) => {
+    const lowerName = (name || '').toLowerCase();
+    if (lowerName.includes('15')) return '/iphone_nav/iphone_15.png';
+    if (lowerName.includes('se') || lowerName.includes('17e')) return '/iphone_nav/iphone_se.png';
+    if (lowerName.includes('16')) return '/iphone_nav/iphone_16.png';
+    if (lowerName.includes('pro')) return '/iphone_nav/iphone_17_pro.png';
+    if (lowerName.includes('air')) return '/iphone_nav/iphone_air.png';
+    if (lowerName.includes('17')) return '/iphone_nav/iphone_17.png';
+    return fallbackSrc || '/iphone_category_v2.jpg';
+  };
+
+  const sanitizeSrc = (inputSrc) => {
+    if (!inputSrc || typeof inputSrc !== 'string' || inputSrc.trim() === '' || inputSrc.includes('undefined') || inputSrc.includes('null')) {
+      return getSmartFallback(alt, inputSrc);
+    }
+    const trimmed = inputSrc.trim();
+    if (trimmed.startsWith('uploads/')) {
+      return `/${trimmed}`;
+    }
+    return trimmed;
+  };
+
+  const initialSrc = sanitizeSrc(src);
+  const [processedSrc, setProcessedSrc] = useState(initialSrc);
   const [isBlackBg, setIsBlackBg] = useState(false);
+  const [hasFailed, setHasFailed] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
-    if (!src) return;
+    const currentSrc = sanitizeSrc(src);
 
-    // Reset state for new src
-    setProcessedSrc(src);
+    setProcessedSrc(currentSrc);
     setIsBlackBg(false);
+    setHasFailed(false);
 
-    // If it's a data URL or local svg, try processing
+    if (!currentSrc) return;
+
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.src = src;
+    img.src = currentSrc;
 
     img.onload = () => {
       try {
@@ -46,7 +72,6 @@ export default function CleanProductImage({
         const imgData = ctx.getImageData(0, 0, w, h);
         const data = imgData.data;
 
-        // Sample corners and borders to check for solid background box
         const samplePoints = [
           [0, 0],
           [w - 1, 0],
@@ -71,16 +96,12 @@ export default function CleanProductImage({
           }
         });
 
-        if (validSamples === 0) {
-          // Already transparent
-          return;
-        }
+        if (validSamples === 0) return;
 
         bgR = Math.round(bgR / validSamples);
         bgG = Math.round(bgG / validSamples);
         bgB = Math.round(bgB / validSamples);
 
-        // Check corner color uniformity (max color difference among corners)
         let maxDiff = 0;
         samplePoints.forEach(([x, y]) => {
           const idx = (y * w + x) * 4;
@@ -90,13 +111,11 @@ export default function CleanProductImage({
           }
         });
 
-        // Detect if background is solid black or very dark
         const isDark = bgR < 40 && bgG < 40 && bgB < 40;
         if (isDark && isMounted) {
           setIsBlackBg(true);
         }
 
-        // If background color is uniform across all corners (solid background square)
         if (maxDiff < 60) {
           const tolerance = 40;
           let modified = false;
@@ -110,10 +129,9 @@ export default function CleanProductImage({
             if (a > 0) {
               const diff = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
               if (diff <= tolerance) {
-                data[i + 3] = 0; // Set alpha to transparent
+                data[i + 3] = 0;
                 modified = true;
               } else if (diff <= tolerance + 25) {
-                // Soft edge antialiasing
                 const factor = (diff - tolerance) / 25;
                 data[i + 3] = Math.round(a * factor);
                 modified = true;
@@ -128,18 +146,24 @@ export default function CleanProductImage({
           }
         }
       } catch (e) {
-        // Fallback to original image if CORS or canvas errors occur
+        // Ignore canvas error
       }
     };
 
     img.onerror = () => {
-      // Keep original
+      if (isMounted) {
+        const fb = getSmartFallback(alt, currentSrc);
+        if (processedSrc !== fb) {
+          setProcessedSrc(fb);
+          setHasFailed(true);
+        }
+      }
     };
 
     return () => {
       isMounted = false;
     };
-  }, [src]);
+  }, [src, alt]);
 
   return (
     <div className={containerClassName}>
@@ -149,9 +173,11 @@ export default function CleanProductImage({
         className={`${className} ${
           mixBlend && !isBlackBg ? 'mix-blend-multiply' : ''
         }`}
-        onError={(e) => {
-          if (processedSrc !== src) {
-            setProcessedSrc(src);
+        onError={() => {
+          if (!hasFailed) {
+            const fb = getSmartFallback(alt, src);
+            setProcessedSrc(fb);
+            setHasFailed(true);
           }
         }}
       />

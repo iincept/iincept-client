@@ -13,6 +13,129 @@ import CleanProductImage from '../components/CleanProductImage';
 // Fallback iPhone products in case DB returns 0 items
 const DEFAULT_IPHONE_PRODUCTS = [
   {
+    id: 'default-iphone-18-pro',
+    name: 'iPhone 18 Pro',
+    price: 164900,
+    priceStr: '₹1,64,900',
+    image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-18-pro-202609?wid=800&hei=1000&fmt=webp&qlt=90&.v=UzBXQnlhUWdraTNvNU1Kb3pEQlpXSWQybG1sZ1oxVnEyWjA5KzltU01ZTFNab1lJcUZwSFVRK1htYlNmZUtPTFJ2R3NEUGt3Q2tTUTNWU09neHFkdWRUL1Azd1lsYk5RbEsxZXhvbThSV3VXS3B5dFRDdHdOWGF6ZzVmZHdiRWc&traceId=1',
+    images: [
+      'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-18-pro-202609?wid=800&hei=1000&fmt=webp&qlt=90&.v=UzBXQnlhUWdraTNvNU1Kb3pEQlpXSWQybG1sZ1oxVnEyWjA5KzltU01ZTFNab1lJcUZwSFVRK1htYlNmZUtPTFJ2R3NEUGt3Q2tTUTNWU09neHFkdWRUL1Azd1lsYk5RbEsxZXhvbThSV3VXS3B5dFRDdHdOWGF6ZzVmZHdiRWc&traceId=1',
+      'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-duo-202609_GEO_IN?wid=800&hei=1000&fmt=webp&qlt=90&.v=UzBXQnlhUWdraTNvNU1Kb3pEQlpXTmRieWJxSUI5TWh3VExiQnFCdzRFUVIzWjZtanZvZXBzWDFVU2JjN3Z3cXBxK0ZBNmxGbmUyUFZlUkRMaDBrbFIrM1V0MXQ3L01IeDRJOXlOYjZtNC9JTVpqRTIzSGM4czgvT0dWYlpqZnY&traceId=1',
+      '/iphone17p_white.jpg',
+      '/iphone_nav/iphone_16_pro.png'
+    ],
+    colors: [
+      {
+        name: 'Burgundy',
+        value: '#4a1525',
+        image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-18-pro-202609?wid=800&hei=1000&fmt=webp&qlt=90&.v=UzBXQnlhUWdraTNvNU1Kb3pEQlpXSWQybG1sZ1oxVnEyWjA5KzltU01ZTFNab1lJcUZwSFVRK1htYlNmZUtPTFJ2R3NEUGt3Q2tTUTNWU09neHFkdWRUL1Azd1lsYk5RbEsxZXhvbThSV3VXS3B5dFRDdHdOWGF6ZzVmZHdiRWc&traceId=1'
+      },
+      {
+        name: 'Glacier',
+        value: '#e4effb',
+        image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-18-pro-202609?wid=800&hei=1000&fmt=webp&qlt=90&.v=UzBXQnlhUWdraTNvNU1Kb3pEQlpXSWQybG1sZ1oxVnEyWjA5KzltU01ZTFNab1lJcUZwSFVRK1htYlNmZUtPTFJ2R3NEUGt3Q2tTUTNWU09neHFkdWRUL1Azd1lsYk5RbEsxZXhvbThSV3VXS3B5dFRDdHdOWGF6ZzVmZHdiRWc&traceId=1'
+      },
+      {
+        name: 'Silver',
+        value: '#e5e6e8',
+        image: '/iphone17p_white.jpg'
+      },
+      {
+        name: 'Sky Blue',
+        value: '#e2effc',
+        image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-duo-202609_GEO_IN?wid=800&hei=1000&fmt=webp&qlt=90&.v=UzBXQnlhUWdraTNvNU1Kb3pEQlpXTmRieWJxSUI5TWh3VExiQnFCdzRFUVIzWjZtanZvZXBzWDFVU2JjN3Z3cXBxK0ZBNmxGbmUyUFZlUkRMaDBrbFIrM1V0MXQ3L01IeDRJOXlOYjZtNC9JTVpqRTIzSGM4czgvT0dWYlpqZnY&traceId=1'
+      },
+      {
+        name: 'White Titanium',
+        value: '#f4f4f6',
+        image: '/iphone17p_white.jpg'
+      },
+      {
+        name: 'Black Titanium',
+        value: '#323335',
+        image: '/iphone_nav/iphone_16_pro.png'
+      }
+    ],
+    storage: ['256GB', '512GB', '1TB', '2TB'],
+    variants: [
+      { storage: '256GB', price: 164900 },
+      { storage: '512GB', price: 189000 },
+      { storage: '1TB', price: 239900 },
+      { storage: '2TB', price: 314900 }
+    ],
+    rating: 5.0,
+    isSoldOut: false
+  },
+  {
+    id: 'default-iphone-duo',
+    name: 'iPhone Duo',
+    price: 299900,
+    priceStr: '₹2,99,900',
+    image: '/iphone_nav/dropdown_iphone_duo.png',
+    images: [
+      '/iphone_nav/dropdown_iphone_duo.png'
+    ],
+    colors: [
+      {
+        name: 'Star White',
+        value: '#fafafa',
+        image: '/iphone_nav/dropdown_iphone_duo.png'
+      },
+      {
+        name: 'Night Sky',
+        value: '#353e4a',
+        image: '/iphone_nav/dropdown_iphone_duo.png'
+      }
+    ],
+    rating: 5.0,
+    isSoldOut: false
+  },
+  {
+    id: 'default-iphone-17-pro',
+    name: 'iPhone 17 Pro',
+    price: 134900,
+    priceStr: '₹1,34,900',
+    image: '/iphone_nav/iphone_17_pro.png',
+    images: ['/iphone_nav/iphone_17_pro.png', '/iphone17p_white.jpg'],
+    colors: [
+      { name: 'Cosmic Orange', value: '#e07a5f' },
+      { name: 'White Titanium', value: '#f4f4f6' },
+      { name: 'Black Titanium', value: '#323335' }
+    ],
+    rating: 5.0,
+    isSoldOut: false
+  },
+  {
+    id: 'default-iphone-17',
+    name: 'iPhone 17',
+    price: 79900,
+    priceStr: '₹79,900',
+    image: '/iphone_nav/iphone_17.png',
+    images: ['/iphone_nav/iphone_17.png'],
+    colors: [
+      { name: 'Lavender', value: '#d8b4fe' },
+      { name: 'Sage Green', value: '#a7f3d0' },
+      { name: 'Starlight', value: '#fafaf9' }
+    ],
+    rating: 4.9,
+    isSoldOut: false
+  },
+  {
+    id: 'default-iphone-17e',
+    name: 'iPhone 17e',
+    price: 59900,
+    priceStr: '₹59,900',
+    image: '/iphone_nav/iphone_16.png',
+    images: ['/iphone_nav/iphone_16.png'],
+    colors: [
+      { name: 'Soft Pink', value: '#fbcfe8' },
+      { name: 'White', value: '#ffffff' },
+      { name: 'Midnight', value: '#1e293b' }
+    ],
+    rating: 4.8,
+    isSoldOut: false
+  },
+  {
     id: 'default-iphone-16-pro',
     name: 'iPhone 16 Pro',
     price: 119900,
@@ -43,38 +166,6 @@ const DEFAULT_IPHONE_PRODUCTS = [
       { name: 'Black', value: '#111111' }
     ],
     rating: 4.9,
-    isSoldOut: false
-  },
-  {
-    id: 'default-iphone-15',
-    name: 'iPhone 15',
-    price: 69900,
-    priceStr: '₹69,900',
-    image: '/iphone_nav/iphone_15.png',
-    images: ['/iphone_nav/iphone_15.png'],
-    colors: [
-      { name: 'Black', value: '#111111' },
-      { name: 'Blue', value: '#bae6fd' },
-      { name: 'Green', value: '#bbf7d0' },
-      { name: 'Yellow', value: '#eab308' },
-      { name: 'Pink', value: '#ec4899' }
-    ],
-    rating: 4.8,
-    isSoldOut: false
-  },
-  {
-    id: 'default-iphone-se',
-    name: 'iPhone SE',
-    price: 49900,
-    priceStr: '₹49,900',
-    image: '/iphone_nav/iphone_se.png',
-    images: ['/iphone_nav/iphone_se.png'],
-    colors: [
-      { name: 'Midnight', value: '#1e293b' },
-      { name: 'Starlight', value: '#f5f5f4' },
-      { name: 'RED', value: '#e0115f' }
-    ],
-    rating: 4.7,
     isSoldOut: false
   }
 ];
@@ -174,28 +265,37 @@ const DEFAULT_IPHONE_APPLECARE_ROWS = [
 ];
 
 const IPHONE_SUB_NAV_ITEMS = [
+  { name: 'Iphone Duo', query: 'iPhone Duo', image: '/iphone_nav/iphone_duo.png', scale: 'scale-100' },
+  { name: 'Iphone 18 pro', query: 'iPhone 18 Pro', image: '/iphone_nav/iphone_18_pro.jpg', scale: 'scale-90' },
   { name: 'iPhone 17 Pro', query: 'iPhone 17 Pro', image: '/iphone_nav/iphone_17_pro.png', scale: 'scale-100' },
   { name: 'iPhone 17', query: 'iPhone 17', image: '/iphone_nav/iphone_17.png', scale: 'scale-100' },
-  { name: 'iPhone 16 Pro', query: 'iPhone 16 Pro', image: '/iphone_nav/iphone_16_pro.png', scale: 'scale-100' },
+  { name: 'iPhone 17e', query: 'iPhone 17e', image: '/iphone_nav/iphone_16.png', scale: 'scale-100' },
   { name: 'iPhone 16', query: 'iPhone 16', image: '/iphone_nav/iphone_16.png', scale: 'scale-100' },
-  { name: 'iPhone 15', query: 'iPhone 15', image: '/iphone_nav/iphone_15.png', scale: 'scale-100' },
-  { name: 'iPhone SE', query: 'iPhone SE', image: '/iphone_nav/iphone_se.png', scale: 'scale-95' },
-  { name: 'AppleCare+', path: '/iphone?tab=applecare', image: '/applecare_official_hero.png', scale: 'scale-100' },
-  { name: 'Compare', path: '/compare', image: '/iphone_nav/iphone_compare.png', scale: 'scale-100' },
-  { name: 'AirPods', path: '/airpods', image: '/iphone_nav/airpods.png', scale: 'scale-95' },
-  { name: 'AirTag', query: 'AirTag', image: '/iphone_nav/airtag.png', scale: 'scale-90' }
+  { name: 'Accessories', path: '/shop?category=Accessories', image: '/iphone_nav/airtag.png', scale: 'scale-90' },
+  { name: 'Shop iPhone', path: '/iphone', query: '', image: '/iphone_nav/iphone_16_pro.png', scale: 'scale-100' },
+  { name: 'AppleCare', path: '/iphone?tab=applecare', image: '/applecare_official_hero.png', scale: 'scale-100' }
 ];
 
 const resolveSubItemPath = (item) => {
-  const lowerName = (item.name || item.label || '').toLowerCase();
-  if (lowerName.includes('care')) {
+  const lowerName = (item.name || item.label || item.query || '').toLowerCase();
+
+  if (lowerName.includes('care') || lowerName.includes('applecare')) {
     return '/iphone?tab=applecare';
   }
-  if (item.path && item.path !== '/iphone') return item.path;
-  if (item.query) {
-    return `/iphone?search=${encodeURIComponent(item.query)}`;
+  if (lowerName.includes('shop iphone') || lowerName === 'all' || lowerName === 'all iphones') {
+    return '/iphone';
   }
-  return '/iphone';
+  if (
+    item.path &&
+    item.path !== '/iphone' &&
+    !item.path.startsWith('/iphone?search=') &&
+    !item.path.startsWith('/product/')
+  ) {
+    return item.path;
+  }
+
+  const queryVal = item.query || item.name || item.label || '';
+  return `/iphone?search=${encodeURIComponent(queryVal)}`;
 };
 
 const ensureAppleCareInSubItems = (items = []) => {
@@ -525,17 +625,70 @@ export default function Iphone() {
     setSelectedColors((prev) => ({ ...prev, [productId]: colorVal }));
   };
 
+  const extractFirstValidImage = (p) => {
+    if (!p) return null;
+    if (p.image && typeof p.image === 'string' && p.image.trim() && !p.image.includes('mock-cloud')) {
+      return p.image;
+    }
+    if (Array.isArray(p.images) && p.images.length > 0) {
+      const found = p.images.find(img => typeof img === 'string' && img.trim() && !img.includes('mock-cloud'));
+      if (found) return found;
+    }
+    if (Array.isArray(p.variants) && p.variants.length > 0) {
+      for (const v of p.variants) {
+        if (v.image && typeof v.image === 'string' && v.image.trim() && !v.image.includes('mock-cloud')) {
+          return v.image;
+        }
+        if (Array.isArray(v.images) && v.images.length > 0) {
+          const found = v.images.find(img => typeof img === 'string' && img.trim() && !img.includes('mock-cloud'));
+          if (found) return found;
+        }
+      }
+    }
+    if (Array.isArray(p.colors) && p.colors.length > 0) {
+      for (const c of p.colors) {
+        if (typeof c === 'object' && c) {
+          if (c.image && typeof c.image === 'string' && c.image.trim() && !c.image.includes('mock-cloud')) {
+            return c.image;
+          }
+          if (Array.isArray(c.images) && c.images.length > 0) {
+            const found = c.images.find(img => typeof img === 'string' && img.trim() && !img.includes('mock-cloud'));
+            if (found) return found;
+          }
+        }
+      }
+    }
+    return null;
+  };
+
+  const isValidImageString = (imgStr) => {
+    if (!imgStr || typeof imgStr !== 'string') return false;
+    const trimmed = imgStr.trim().toLowerCase();
+    if (!trimmed || trimmed === 'undefined' || trimmed === 'null' || trimmed.includes('mock-cloud')) return false;
+    if (trimmed.startsWith('#') || trimmed.startsWith('rgb')) return false;
+    return true;
+  };
+
   const getProductImage = (prod) => {
-    const selectedColorName = selectedColors[prod.id];
-    if (selectedColorName) {
-      const targetNorm = selectedColorName.replace(/\s+/g, ' ').trim().toLowerCase();
+    if (!prod) return '/iphone_category_v2.jpg';
+
+    const lowerName = (prod.name || prod.title || '').toLowerCase();
+    const userSelectedColor = selectedColors[prod.id];
+
+    // If user explicitly selected a color dot, check for color-specific image
+    if (userSelectedColor && prod.colors && Array.isArray(prod.colors)) {
+      const targetNorm = userSelectedColor.replace(/\s+/g, ' ').trim().toLowerCase();
 
       const foundColor = prod.colors.find((c) => {
         const cNorm = (c.name || c.rawName || c).replace(/\s+/g, ' ').trim().toLowerCase();
         return cNorm === targetNorm;
       });
-      if (foundColor && foundColor.image) {
+
+      if (foundColor && isValidImageString(foundColor.image) && !foundColor.image.includes('iphone17p_orange')) {
         return foundColor.image;
+      }
+      if (foundColor && foundColor.images && isValidImageString(foundColor.images[0]) && !foundColor.images[0].includes('iphone17p_orange')) {
+        return foundColor.images[0];
       }
 
       if (prod.variants && Array.isArray(prod.variants)) {
@@ -543,8 +696,9 @@ export default function Iphone() {
           if (!v.color) return false;
           return v.color.replace(/\s+/g, ' ').trim().toLowerCase() === targetNorm;
         });
-        if (foundVariant && foundVariant.images && foundVariant.images[0]) {
-          return foundVariant.images[0];
+        if (foundVariant) {
+          if (isValidImageString(foundVariant.image) && !foundVariant.image.includes('iphone17p_orange')) return foundVariant.image;
+          if (foundVariant.images && isValidImageString(foundVariant.images[0]) && !foundVariant.images[0].includes('iphone17p_orange')) return foundVariant.images[0];
         }
       }
 
@@ -552,11 +706,35 @@ export default function Iphone() {
         const cNorm = (c.name || c.rawName || c).replace(/\s+/g, ' ').trim().toLowerCase();
         return cNorm === targetNorm;
       });
-      if (colorIdx !== -1 && prod.images && prod.images[colorIdx]) {
+      if (colorIdx !== -1 && prod.images && isValidImageString(prod.images[colorIdx]) && !prod.images[colorIdx].includes('iphone17p_orange')) {
         return prod.images[colorIdx];
       }
     }
-    return prod.image;
+
+    // Always match clean inside product details image for 17 Pro / 17 Pro Max
+    if (lowerName.includes('17 pro')) {
+      return '/iphone_nav/iphone_17_pro.png';
+    }
+
+    // Check main image uploaded via Admin Panel if it's clean
+    if (isValidImageString(prod.image) && !prod.image.includes('iphone_category_v2') && !prod.image.includes('iphone17p_orange')) {
+      return prod.image;
+    }
+
+    if (prod.images && Array.isArray(prod.images)) {
+      const cleanImg = prod.images.find(img => isValidImageString(img) && !img.includes('iphone_category_v2') && !img.includes('iphone17p_orange'));
+      if (cleanImg) return cleanImg;
+    }
+
+    const extracted = extractFirstValidImage(prod);
+    if (isValidImageString(extracted) && !extracted.includes('iphone17p_orange')) return extracted;
+
+    if (lowerName.includes('15')) return '/iphone_nav/iphone_15.png';
+    if (lowerName.includes('se') || lowerName.includes('17e')) return '/iphone_nav/iphone_se.png';
+    if (lowerName.includes('16')) return '/iphone_nav/iphone_16.png';
+    if (lowerName.includes('17')) return '/iphone_nav/iphone_17.png';
+
+    return (isValidImageString(prod.image) ? prod.image : '/iphone_category_v2.jpg');
   };
 
   const handleAddToCart = (prod) => {
@@ -588,6 +766,14 @@ export default function Iphone() {
       return cValStr;
     }
     const COLOR_MAP = {
+      "night sky": "#353e4a",
+      "star white": "#fafafa",
+      "burgundy": "#4a1525",
+      "glacier": "#e4effb",
+      "sky blue": "#e2effc",
+      "ice blue": "#e4effb",
+      "white titanium": "#f4f4f6",
+      "black titanium": "#323335",
       "space black": "#1c1c1c",
       "space gray": "#555555",
       "starlight": "#f5f5f4",
@@ -611,28 +797,32 @@ export default function Iphone() {
     return COLOR_MAP[lowerVal] || '#cbd5e1';
   };
 
-  // Broadened category matching to catch any iPhone product in MongoDB
+  // Precise category and title matching to include ONLY iPhone products in MongoDB
   const dbIphones = products.filter(p => {
-    const catName = p.category?.name || p.category?.toString() || '';
-    const catSlug = p.category?.slug || '';
+    const catName = (p.category?.name || p.category?.toString() || '').toLowerCase();
+    const catSlug = (p.category?.slug || '').toLowerCase();
     const pTitle = (p.title || p.name || '').toLowerCase();
-    const pDesc = (p.description || '').toLowerCase();
 
-    return (
-      catName.toLowerCase() === 'iphones' ||
-      catName.toLowerCase() === 'iphone' ||
-      catSlug.toLowerCase() === 'iphones' ||
-      catSlug.toLowerCase() === 'iphone' ||
-      catSlug.toLowerCase() === 'smartphones' ||
-      catName.toLowerCase().includes('iphone') ||
-      catName.toLowerCase().includes('phone') ||
-      catName.toLowerCase().includes('mobile') ||
-      pTitle.includes('iphone') ||
-      pTitle.includes('apple phone')
-    );
+    // Explicitly exclude non-iPhone items (Mac, iPad, Watch, Audio, Accessories, Cables, Adapters, etc.)
+    const nonIphoneKeywords = [
+      'macbook', 'imac', 'mac mini', 'mac studio', 'mac pro',
+      'ipad', 'watch', 'apple tv', 'homepod', 'airpod', 'headphone',
+      'adapter', 'cable', 'charger', 'case', 'sleeve', 'cover', 'bag',
+      'keyboard', 'mouse', 'pencil', 'strap', 'band', 'loop', 'magsafe',
+      'display', 'monitor', 'screen protector'
+    ];
+
+    if (nonIphoneKeywords.some(kw => pTitle.includes(kw))) {
+      return false;
+    }
+
+    const isCategoryMatch = catName === 'iphones' || catName === 'iphone' || catSlug === 'iphones' || catSlug === 'iphone' || catSlug === 'smartphones' || catName.includes('iphone');
+    const isTitleMatch = pTitle.includes('iphone') || /^phone\s*(15|16|17|18|se|pro|air|max|duo)/i.test(pTitle.trim());
+
+    return isCategoryMatch || isTitleMatch;
   }).map(p => {
-    const firstImg = p.image || (p.images && p.images[0]);
-    const isValidImg = firstImg && !firstImg.includes('mock-cloud');
+    const firstImg = extractFirstValidImage(p);
+    const isValidImg = !!firstImg;
     return {
       id: p._id || p.id,
       name: p.title || p.name,
@@ -641,20 +831,28 @@ export default function Iphone() {
       image: isValidImg ? firstImg : '/iphone_category_v2.jpg',
       images: p.images || [],
       variants: p.variants || [],
-      colors: Array.isArray(p.colors) ? p.colors.map(c => {
+      stock: p.stock,
+      colors: Array.isArray(p.colors) && p.colors.length > 0 ? p.colors.map(c => {
         const rawName = typeof c === 'string' ? c : (c.name || '');
         const normName = rawName.replace(/\s+/g, ' ').trim();
         const val = typeof c === 'string' ? c : (c.value || c.name || '');
 
         let variantImage = typeof c === 'object' && c.image ? c.image : null;
+        if (!variantImage && typeof c === 'object' && Array.isArray(c.images) && c.images[0]) {
+          variantImage = c.images[0];
+        }
         if (!variantImage && p.variants && Array.isArray(p.variants)) {
           const matchedVariant = p.variants.find(v => {
             if (!v.color) return false;
             const vColor = v.color.replace(/\s+/g, ' ').trim().toLowerCase();
             return vColor === normName.toLowerCase();
           });
-          if (matchedVariant && matchedVariant.images && matchedVariant.images[0]) {
-            variantImage = matchedVariant.images[0];
+          if (matchedVariant) {
+            if (matchedVariant.image) {
+              variantImage = matchedVariant.image;
+            } else if (matchedVariant.images && matchedVariant.images[0]) {
+              variantImage = matchedVariant.images[0];
+            }
           }
         }
 
@@ -666,15 +864,40 @@ export default function Iphone() {
         };
       }) : [],
       rating: p.rating || 5.0,
-      isSoldOut: p.stock <= 0
+      isSoldOut: p.stock !== undefined && p.stock !== null ? p.stock <= 0 : false
     };
   });
 
-  // Use DB iPhones if found, otherwise use fallback realistic iPhone data
-  const combinedProducts = dbIphones.length > 0 ? dbIphones : DEFAULT_IPHONE_PRODUCTS;
+  const combinedProducts = (() => {
+    if (dbIphones.length > 0) {
+      const excludedModels = ['iphone 15', 'iphone se', 'iphone air'];
+      const filtered = dbIphones.filter(p => {
+        const name = (p.name || p.title || '').toLowerCase();
+        if (excludedModels.some(ex => name.includes(ex) || name === 'iphone se' || name === 'iphone 15' || name === 'iphone air')) {
+          return false;
+        }
+        const nonIphoneKw = ['macbook', 'imac', 'ipad', 'watch', 'tv', 'homepod', 'airpod', 'headphone', 'adapter', 'cable', 'case', 'charger', 'display'];
+        return !nonIphoneKw.some(kw => name.includes(kw));
+      });
+
+      DEFAULT_IPHONE_PRODUCTS.forEach(def => {
+        const defNameLower = def.name.toLowerCase();
+        const exists = filtered.some(p => (p.name || p.title || '').toLowerCase().includes(defNameLower));
+        if (!exists) {
+          filtered.push(def);
+        }
+      });
+
+      return filtered;
+    }
+
+    return DEFAULT_IPHONE_PRODUCTS;
+  })();
 
   const getIphoneSequenceRank = (productName) => {
     const name = (productName || '').toLowerCase();
+    if (name.includes('duo')) return 0;
+    if (name.includes('18 pro max') || name.includes('18 pro') || name.includes('18')) return 0.5;
     if (name.includes('17 pro max') || name.includes('17 pro')) return 1;
     if (name.includes('17')) return 2;
     if (name.includes('16 pro max') || name.includes('16 pro')) return 3;
@@ -709,15 +932,7 @@ export default function Iphone() {
     return true;
   });
 
-  // Fallback: If search query produced 0 items, show all sorted products so page never stays empty
-  const isSearchEmptyFallback = searchQuery && filteredProducts.length === 0;
-  if (isSearchEmptyFallback) {
-    filteredProducts = sortedProducts.filter((prod) => {
-      if (activeTab === 'available') return !prod.isSoldOut;
-      if (activeTab === 'soldout') return prod.isSoldOut;
-      return true;
-    });
-  }
+  // Fallback: If search query produced 0 items, keep filteredProducts as [] so search results are accurately displayed
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] py-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none animate-in fade-in duration-300 relative">
@@ -734,18 +949,28 @@ export default function Iphone() {
             {subItems.map((item, idx) => {
               const currentTab = searchParams.get('tab') || '';
               const currentSearch = searchParams.get('search') || '';
-              const isAppleCareItem = (item.name || item.label || '').toLowerCase().includes('care');
+              const itemLowerName = (item.name || item.label || '').toLowerCase();
+              const isAppleCareItem = itemLowerName.includes('care');
               const isAppleCareActive = currentTab.toLowerCase() === 'applecare' || currentSearch.toLowerCase().includes('care');
-              const isActive = isAppleCareActive
-                ? isAppleCareItem
-                : (currentSearch && currentSearch.toLowerCase() === (item.query || '').toLowerCase());
+              const isShopAllItem = itemLowerName.includes('shop iphone') || itemLowerName === 'all';
+
+              let isActive = false;
+              if (isAppleCareActive) {
+                isActive = isAppleCareItem;
+              } else if (!currentSearch) {
+                isActive = isShopAllItem;
+              } else {
+                const normSearch = currentSearch.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const normQuery = (item.query || item.name || item.label || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                isActive = normSearch === normQuery || normSearch.includes(normQuery) || normQuery.includes(normSearch);
+              }
 
               return (
                 <Link
                   key={item.name || item.query || idx}
                   to={resolveSubItemPath(item)}
-                  className={`flex flex-col items-center gap-2 shrink-0 group cursor-pointer transition-transform transition-opacity duration-200 ${
-                    isActive ? 'scale-105 opacity-100 font-bold' : 'hover:scale-105 opacity-75 hover:opacity-100'
+                  className={`flex flex-col items-center gap-2 shrink-0 group cursor-pointer opacity-100 ${
+                    isActive ? 'font-bold' : ''
                   }`}
                 >
                   <div className="h-16 w-20 flex items-center justify-center p-1 overflow-visible">
@@ -760,10 +985,10 @@ export default function Iphone() {
                           e.currentTarget.src = '/iphone_nav/iphone_17.png';
                         }
                       }}
-                      className={`max-h-full max-w-full object-contain filter drop-shadow-sm transition-transform duration-300 group-hover:scale-110 ${item.scale || 'scale-100'}`}
+                      className="max-h-full max-w-full object-contain filter drop-shadow-sm transition-all duration-300 ease-out group-hover:scale-112 group-hover:-translate-y-1"
                     />
                   </div>
-                  <span className={`text-xs tracking-tight text-zinc-950 transition-colors ${isActive ? 'font-bold text-zinc-950' : 'font-semibold'}`}>
+                  <span className={`text-xs tracking-tight transition-colors duration-200 ${isActive ? 'font-bold text-zinc-950' : 'font-semibold text-zinc-700 group-hover:text-zinc-950'}`}>
                     {item.name}
                   </span>
                 </Link>
@@ -1069,11 +1294,6 @@ export default function Iphone() {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-zinc-150 pb-6 mb-8 text-sm font-sans uppercase font-bold text-zinc-500 tracking-wider">
               <div className="text-zinc-800 text-xs tracking-widest flex items-center gap-2">
                 <span>SHOWING ALL {filteredProducts.length} RESULTS</span>
-                {isSearchEmptyFallback && (
-                  <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-[10px]">
-                    Showing all models for "{searchQuery}"
-                  </span>
-                )}
               </div>
 
               {searchQuery && (
@@ -1189,9 +1409,9 @@ export default function Iphone() {
                   {/* Non-clickable configurations / actions */}
                   <div className="space-y-4 pt-2">
                     {/* Color Dot Options */}
-                    <div className="flex items-center justify-between gap-1.5 border-t border-zinc-100/60 pt-3">
+                    <div className="flex items-center justify-between gap-2 border-t border-zinc-100/60 pt-3">
                       <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Colors</span>
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-3 shrink-0 py-1">
                         {prod.colors.map((color) => {
                           const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
                           return (
@@ -1203,7 +1423,7 @@ export default function Iphone() {
                                 handleColorChange(prod.id, color.name);
                               }}
                               style={{ backgroundColor: color.value }}
-                              className={`w-3.5 h-3.5 rounded-full cursor-pointer transition-all border ${isSelected ? 'scale-125 border-zinc-800 ring-1 ring-zinc-400' : 'border-zinc-300 hover:scale-110'
+                              className={`w-4 h-4 rounded-full cursor-pointer transition-all ${isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10' : 'border border-zinc-300 hover:scale-105'
                                 }`}
                               title={color.name}
                             />

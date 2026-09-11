@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 35 944 235" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  <style>
+    .logo-img {
+      mix-blend-mode: multiply;
+      filter: contrast(1.08) brightness(1.02);
+    }
+  </style>
+  <image href="/iincept_logo_full.jpg" x="0" y="0" width="1024" height="468" class="logo-img" />
+</svg>

@@ -424,6 +424,12 @@ export default function Macbook() {
       }
     }
 
+    if (prod.image && !prod.image.includes('macbook_category')) {
+      return prod.image;
+    }
+    const extracted = extractFirstValidImage(prod);
+    if (extracted) return extracted;
+
     const firstImg = prod.image || (prod.images && prod.images[0]);
     if (firstImg && !firstImg.includes('mock-cloud') && !firstImg.includes('macbook_category_v3')) {
       return firstImg;
@@ -515,6 +521,42 @@ export default function Macbook() {
     return COLOR_MAP[lowerVal] || '#cbd5e1';
   };
 
+  const extractFirstValidImage = (p) => {
+    if (!p) return null;
+    if (p.image && typeof p.image === 'string' && p.image.trim() && !p.image.includes('mock-cloud')) {
+      return p.image;
+    }
+    if (Array.isArray(p.images) && p.images.length > 0) {
+      const found = p.images.find(img => typeof img === 'string' && img.trim() && !img.includes('mock-cloud'));
+      if (found) return found;
+    }
+    if (Array.isArray(p.variants) && p.variants.length > 0) {
+      for (const v of p.variants) {
+        if (v.image && typeof v.image === 'string' && v.image.trim() && !v.image.includes('mock-cloud')) {
+          return v.image;
+        }
+        if (Array.isArray(v.images) && v.images.length > 0) {
+          const found = v.images.find(img => typeof img === 'string' && img.trim() && !img.includes('mock-cloud'));
+          if (found) return found;
+        }
+      }
+    }
+    if (Array.isArray(p.colors) && p.colors.length > 0) {
+      for (const c of p.colors) {
+        if (typeof c === 'object' && c) {
+          if (c.image && typeof c.image === 'string' && c.image.trim() && !c.image.includes('mock-cloud')) {
+            return c.image;
+          }
+          if (Array.isArray(c.images) && c.images.length > 0) {
+            const found = c.images.find(img => typeof img === 'string' && img.trim() && !img.includes('mock-cloud'));
+            if (found) return found;
+          }
+        }
+      }
+    }
+    return null;
+  };
+
   // Merge database products with fallback mock data
   const dbMacbooks = products.filter(p => {
     const catName = p.category?.name || p.category?.toString() || '';
@@ -524,8 +566,8 @@ export default function Macbook() {
       catName.toLowerCase().includes('macbook') ||
       catName.toLowerCase().includes('mac');
   }).map(p => {
-    const firstImg = p.image || (p.images && p.images[0]);
-    const isValidImg = firstImg && !firstImg.includes('mock-cloud');
+    const firstImg = extractFirstValidImage(p);
+    const isValidImg = !!firstImg;
     const varPrices = (p.variants && Array.isArray(p.variants)) ? p.variants.map(v => v.price).filter(pr => typeof pr === 'number' && pr > 0) : [];
     const effectivePrice = varPrices.length > 0 ? Math.min(...varPrices) : (p.price || 0);
 
@@ -653,8 +695,8 @@ export default function Macbook() {
                 <Link
                   key={item.name || item.query || idx}
                   to={resolveSubItemPath(item)}
-                  className={`flex flex-col items-center gap-2 shrink-0 group cursor-pointer transition-transform transition-opacity duration-200 ${
-                    isActive ? 'scale-105 opacity-100 font-bold' : 'hover:scale-105 opacity-75 hover:opacity-100'
+                  className={`flex flex-col items-center gap-2 shrink-0 group cursor-pointer opacity-100 ${
+                    isActive ? 'font-bold' : ''
                   }`}
                 >
                   <div className="h-16 w-20 flex items-center justify-center p-1 overflow-visible">
@@ -669,10 +711,10 @@ export default function Macbook() {
                           e.currentTarget.src = '/mac_nav/macbook_air.png';
                         }
                       }}
-                      className={`max-h-full max-w-full object-contain filter drop-shadow-sm transition-transform duration-300 group-hover:scale-110 ${item.scale || 'scale-100'}`}
+                      className="max-h-full max-w-full object-contain filter drop-shadow-sm transition-all duration-300 ease-out group-hover:scale-112 group-hover:-translate-y-1"
                     />
                   </div>
-                  <span className={`text-xs tracking-tight text-zinc-950 transition-colors ${isActive ? 'font-bold text-zinc-950' : 'font-semibold'}`}>
+                  <span className={`text-xs tracking-tight transition-colors duration-200 ${isActive ? 'font-bold text-zinc-950' : 'font-semibold text-zinc-700 group-hover:text-zinc-950'}`}>
                     {item.name}
                   </span>
                 </Link>
@@ -1030,9 +1072,9 @@ export default function Macbook() {
             {/* Non-clickable configurations / actions */}
             <div className="space-y-4 pt-2">
               {/* Color Dot Options Row */}
-              <div className="flex items-center justify-between gap-1.5 border-t border-zinc-100/60 pt-3">
+              <div className="flex items-center justify-between gap-2 border-t border-zinc-100/60 pt-3">
                 <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Colors</span>
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-3 shrink-0 py-1">
                   {prod.colors.map((color) => {
                     const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
                     // iMac two-tone split circle: top-left = main color, bottom-right = lighter shade
@@ -1052,8 +1094,8 @@ export default function Macbook() {
                         style={swatchStyle}
                         className={`w-4 h-4 rounded-full cursor-pointer transition-all ${
                           isSelected
-                            ? 'scale-125 ring-2 ring-offset-1 ring-zinc-500 shadow-md'
-                            : 'border border-zinc-200 hover:scale-110 hover:shadow-sm'
+                            ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10'
+                            : 'border border-zinc-300 hover:scale-105 hover:shadow-xs'
                         }`}
                         title={color.name}
                       />

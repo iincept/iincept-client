@@ -507,9 +507,8 @@ export default function TvHome() {
               return (
                 <Link
                   key={item.name || item.query || idx}
-                  to={resolveSubItemPath(item)}
-                  className={`flex flex-col items-center gap-2 shrink-0 group cursor-pointer transition-transform transition-opacity duration-200 ${
-                    isActive ? 'scale-105 opacity-100 font-bold' : 'hover:scale-105 opacity-75 hover:opacity-100'
+                      className={`flex flex-col items-center gap-2 shrink-0 group cursor-pointer opacity-100 ${
+                    isActive ? 'font-bold' : ''
                   }`}
                 >
                   <div className="h-16 w-20 flex items-center justify-center p-1 overflow-visible">
@@ -521,13 +520,13 @@ export default function TvHome() {
                         if (lower.includes('care')) {
                           e.currentTarget.src = '/applecare_official_hero.png';
                         } else {
-                          e.currentTarget.src = '/tvhome_nav/apple_tv_4k.png';
+                          e.currentTarget.src = '/tv_home_nav/apple_tv_4k.png';
                         }
                       }}
-                      className={`max-h-full max-w-full object-contain filter drop-shadow-sm transition-transform duration-300 group-hover:scale-110 ${item.scale || 'scale-100'}`}
+                      className="max-h-full max-w-full object-contain filter drop-shadow-sm transition-all duration-300 ease-out group-hover:scale-112 group-hover:-translate-y-1"
                     />
                   </div>
-                  <span className={`text-xs tracking-tight text-zinc-950 transition-colors ${isActive ? 'font-bold text-zinc-950' : 'font-semibold'}`}>
+                  <span className={`text-xs tracking-tight transition-colors duration-200 ${isActive ? 'font-bold text-zinc-950' : 'font-semibold text-zinc-700 group-hover:text-zinc-950'}`}>
                     {item.name}
                   </span>
                 </Link>
@@ -881,9 +880,9 @@ export default function TvHome() {
                   {/* Non-clickable configurations / actions */}
                   <div className="space-y-4 pt-2">
                     {/* Color Dot Options Row */}
-                    <div className="flex items-center justify-between gap-1.5 border-t border-zinc-100/60 pt-3">
+                    <div className="flex items-center justify-between gap-2 border-t border-zinc-100/60 pt-3">
                       <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Colors</span>
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-3 shrink-0 py-1">
                         {prod.colors.map((color) => {
                           const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
                           return (
@@ -891,8 +890,8 @@ export default function TvHome() {
                               key={color.name}
                               onClick={() => handleColorChange(prod.id, color.name)}
                               style={{ backgroundColor: color.value }}
-                              className={`w-3.5 h-3.5 rounded-full cursor-pointer transition-all border ${
-                                isSelected ? 'scale-125 border-zinc-800 ring-1 ring-zinc-400' : 'border-zinc-300 hover:scale-110'
+                              className={`w-4 h-4 rounded-full cursor-pointer transition-all ${
+                                isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10' : 'border border-zinc-300 hover:scale-105'
                               }`}
                               title={color.name}
                             />
