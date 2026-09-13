@@ -10,7 +10,7 @@ import AIChatWidget from '../components/AIChatWidget';
 import Footer from '../components/Footer';
 
 export default function MainLayout() {
-  const { pathname } = useLocation();
+  const location = useLocation();
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state) => state.auth);
 
@@ -27,7 +27,7 @@ export default function MainLayout() {
       left: 0,
       behavior: 'instant' // Instant scroll without delay to keep transition fast and crisp
     });
-  }, [pathname]);
+  }, [location.pathname, location.search]);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-slate-900 font-sans antialiased">
@@ -45,7 +45,9 @@ export default function MainLayout() {
 
       {/* Main Outlet for nested routes */}
       <main className="flex-grow w-full min-w-0 pt-0 pb-8 shrink-0">
-        <Outlet />
+        <div key={location.key || (location.pathname + location.search)} className="page-smooth-enter w-full h-full min-w-0">
+          <Outlet />
+        </div>
       </main>
 
       {/* Footer component */}

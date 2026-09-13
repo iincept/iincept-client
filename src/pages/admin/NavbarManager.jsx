@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axiosClient from '../../services/axiosClient';
+import { notifyAdminChange } from '../../services/liveSyncService';
 import { 
   Navigation, 
   Plus, 
@@ -319,6 +320,7 @@ export default function NavbarManager() {
     setError(null);
     try {
       await axiosClient.put('/settings', { navbarMenuItems: navItems });
+      notifyAdminChange('categories', { action: 'update_navbar' });
       showSuccessMessage('Navbar Menu & Dropdown Sub-Items updated successfully!');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to save navbar items');

@@ -27,7 +27,7 @@ export default function AdminSidebar() {
     { label: 'Navbar Menu', path: '/admin/navbar-menu', icon: Navigation },
     { label: 'Category Icons', path: '/admin/category-icons', icon: Layers },
     { label: 'MacBook AppleCare', path: '/admin/applecare', icon: ShieldCheck },
-    { label: 'iPad AppleCare', path: '/admin/ipad-applecare', icon: ShieldCheck },
+    { label: 'iPad Care', path: '/admin/ipad-applecare', icon: ShieldCheck },
     { label: 'iPhone AppleCare', path: '/admin/iphone-applecare', icon: ShieldCheck },
     { label: 'Watch AppleCare', path: '/admin/watch-applecare', icon: ShieldCheck },
     { label: 'AirPods AppleCare', path: '/admin/airpods-applecare', icon: ShieldCheck },

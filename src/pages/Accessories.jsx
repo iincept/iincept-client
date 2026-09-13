@@ -7,6 +7,7 @@ import { addToWishlist } from '../redux/wishlistSlice';
 import { fetchProducts } from '../redux/productSlice';
 import { matchesProductSearch } from '../utils/searchUtils';
 import CleanProductImage from '../components/CleanProductImage';
+import { subscribeToLiveSync } from '../services/liveSyncService';
 
 // Products are loaded dynamically from e-commerce database API
 
@@ -109,7 +110,15 @@ export default function Accessories() {
 
   useEffect(() => {
     dispatch(fetchProducts());
+    const unsubscribe = subscribeToLiveSync(() => {
+      dispatch(fetchProducts());
+    });
+    return () => unsubscribe();
   }, [dispatch]);
+
+  useEffect(() => {
+    setSelectedColors({});
+  }, [products]);
 
   useEffect(() => {
     setVisibleCount(6);
@@ -197,7 +206,7 @@ export default function Accessories() {
   };
 
   const getProductImage = (prod) => {
-    const selectedColorName = selectedColors[prod.id];
+    const selectedColorName = selectedColors[prod.id] || (prod.colors && prod.colors[0] ? (prod.colors[0].name || (typeof prod.colors[0] === 'string' ? prod.colors[0] : '')) : null);
     if (selectedColorName) {
       const foundColor = prod.colors.find((c) => c.name === selectedColorName);
       if (foundColor && foundColor.image) {
@@ -422,6 +431,8 @@ export default function Accessories() {
                   <CleanProductImage
                     src={getProductImage(prod)}
                     alt={prod.name}
+                    className="max-h-[92%] max-w-[92%] object-contain group-hover:scale-110 transition-transform duration-500 select-none transform scale-115 sm:scale-125"
+                    containerClassName="w-full h-72 sm:h-80 bg-white rounded-2xl flex items-center justify-center p-2 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f0f0f2]"
                   />
 
                   {/* Title with Dynamic Color Part Number */}

@@ -368,3 +368,20 @@ body {
   animation: appleSmoothFade 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   will-change: opacity, transform;
 }
+
+/* Smooth Apple-style Page Refresh & Entry Animations */
+@keyframes pageSmoothEnter {
+  0% {
+    opacity: 0.2;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-smooth-enter {
+  animation: pageSmoothEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}

@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import axiosClient from '../../services/axiosClient';
+import { notifyAdminChange } from '../../services/liveSyncService';
 import { 
   Plus, 
   Trash2, 
@@ -14,7 +16,6 @@ import {
   Image as ImageIcon,
   Grid
 } from 'lucide-react';
-import axiosClient from '../../services/axiosClient';
 
 export default function AppleCategories() {
   const [loading, setLoading] = useState(false);
@@ -152,6 +153,7 @@ export default function AppleCategories() {
         link: (c.link || '').trim(),
       }));
       await axiosClient.put('/settings', { appleCategories: cleanedCards });
+      notifyAdminChange('categories', { action: 'update_apple_categories' });
       showSuccessMessage('Apple Categories & Header Navigation updated live!');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to save Apple Categories');

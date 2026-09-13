@@ -7,6 +7,7 @@ import { addToWishlist } from '../redux/wishlistSlice';
 import { fetchProducts } from '../redux/productSlice';
 import { matchesProductSearch } from '../utils/searchUtils';
 import axiosClient from '../services/axiosClient';
+import { subscribeToLiveSync } from '../services/liveSyncService';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 import CleanProductImage from '../components/CleanProductImage';
 
@@ -54,11 +55,11 @@ const DEFAULT_WATCH_APPLECARE_ROWS = [
 ];
 
 const WATCH_SUB_NAV_ITEMS = [
-  { name: 'Apple Watch Series 10', query: 'Series', image: '/watch_nav/watch_series_10.png', scale: 'scale-100' },
-  { name: 'Apple Watch Ultra 2', query: 'Ultra', image: '/watch_nav/watch_ultra_2.png', scale: 'scale-100' },
-  { name: 'Apple Watch SE', query: 'SE', image: '/watch_nav/watch_se.png', scale: 'scale-95' },
+  { name: 'Apple Watch Series 11', query: 'Series', image: '/watch_nav/watch_series_10.png', scale: 'scale-100' },
+  { name: 'Apple Watch Ultra 3', query: 'Ultra', image: '/watch_nav/watch_ultra_2.png', scale: 'scale-100' },
+  { name: 'Apple Watch SE 3', query: 'SE', image: '/watch_nav/watch_se.png', scale: 'scale-95' },
   { name: 'AppleCare+', path: '/watch?tab=applecare', image: '/applecare_official_hero.png', scale: 'scale-100' },
-  { name: 'Compare', path: '/compare', image: '/watch_nav/watch_compare.png', scale: 'scale-100' }
+  { name: 'Compare', path: '/compare?category=watch', image: '/watch_nav/watch_compare.png', scale: 'scale-100' }
 ];
 
 const resolveSubItemPath = (item) => {
@@ -159,7 +160,16 @@ export default function Watch() {
   useEffect(() => {
     dispatch(fetchProducts());
     fetchNavSettings();
+    const unsubscribe = subscribeToLiveSync(() => {
+      dispatch(fetchProducts());
+      fetchNavSettings();
+    });
+    return () => unsubscribe();
   }, [dispatch]);
+
+  useEffect(() => {
+    setSelectedColors({});
+  }, [products]);
 
   useEffect(() => {
     setVisibleCount(6);
@@ -385,7 +395,7 @@ export default function Watch() {
   };
 
   const getProductImage = (prod) => {
-    const selectedColorName = selectedColors[prod.id];
+    const selectedColorName = selectedColors[prod.id] || (prod.colors && prod.colors[0] ? (prod.colors[0].name || (typeof prod.colors[0] === 'string' ? prod.colors[0] : '')) : null);
     if (selectedColorName) {
       const foundColor = prod.colors.find((c) => c.name === selectedColorName);
       if (foundColor && foundColor.image) {
@@ -488,13 +498,20 @@ export default function Watch() {
   };
 
   const dbWatches = products.filter(p => {
-    const catName = p.category?.name || p.category?.toString() || '';
-    const catSlug = p.category?.slug || '';
-    return catName.toLowerCase() === 'watch' ||
-      catName.toLowerCase() === 'watches' ||
-      catSlug.toLowerCase() === 'watch' ||
-      catSlug.toLowerCase() === 'watches' ||
-      catName.toLowerCase().includes('watch');
+    const catName = (p.category?.name || p.category?.toString() || '').toLowerCase();
+    const catSlug = (p.category?.slug || '').toLowerCase();
+    const pTitle = (p.title || p.name || '').toLowerCase();
+
+    // Exclude non-watch products and standalone cables/adapters
+    const nonWatchKeywords = ['macbook', 'imac', 'mac mini', 'mac studio', 'ipad', 'iphone', 'airpod', 'headphone', 'cable', 'charger', 'adapter'];
+    if (nonWatchKeywords.some(kw => pTitle.includes(kw))) {
+      return false;
+    }
+
+    const isCategoryMatch = catName === 'watch' || catName === 'watches' || catSlug === 'watch' || catSlug === 'watches' || catName.includes('watch') || catName.includes('wearable');
+    const isTitleMatch = pTitle.includes('watch') || pTitle.includes('series') || pTitle.includes('ultra');
+
+    return isCategoryMatch || isTitleMatch;
   }).map(p => {
     const firstImg = extractFirstValidImage(p);
     const isValidImg = !!firstImg;
@@ -502,7 +519,7 @@ export default function Watch() {
       id: p._id || p.id,
       name: p.title || p.name,
       price: p.price,
-      priceStr: `₹${p.price.toLocaleString()}`,
+      priceStr: `₹${p.price.toLocaleString('en-IN')}`,
       image: isValidImg ? firstImg : '/watch_category.jpg',
       images: p.images || [],
       colors: Array.isArray(p.colors) ? p.colors.map(c => {
@@ -511,7 +528,7 @@ export default function Watch() {
         return { name, value: resolveColorValue(val) };
       }) : [],
       rating: p.rating || 5.0,
-      isSoldOut: p.stock <= 0
+      isSoldOut: p.stock !== undefined && p.stock !== null ? p.stock <= 0 : false
     };
   });
 
@@ -634,7 +651,7 @@ export default function Watch() {
                                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
                                   
                                   {/* LEFT COLUMN: Media Container Box */}
-                                  <div className="md:col-span-5 bg-[#F7F7F9] rounded-2xl p-4 sm:p-5 relative flex flex-col items-center justify-between min-h-[260px] sm:min-h-[280px] h-full border border-zinc-100/80">
+                                  <div className="md:col-span-5 bg-white group-hover:bg-[#f0f0f2] transition-colors duration-300 rounded-2xl p-4 sm:p-5 relative flex flex-col items-center justify-between min-h-[260px] sm:min-h-[280px] h-full border border-zinc-100/80">
                                     
                                     {/* Top Left Badge */}
                                     <div className="w-full flex items-center justify-start z-10 mb-1">
@@ -913,6 +930,8 @@ export default function Watch() {
                     <CleanProductImage
                       src={getProductImage(prod)}
                       alt={prod.name}
+                      className="max-h-[92%] max-w-[92%] object-contain group-hover:scale-110 transition-transform duration-500 select-none transform scale-115 sm:scale-125"
+                      containerClassName="w-full h-72 sm:h-80 bg-white rounded-2xl flex items-center justify-center p-2 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f0f0f2]"
                     />
 
                     {/* Title */}

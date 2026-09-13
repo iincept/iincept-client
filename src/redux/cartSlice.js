@@ -22,17 +22,28 @@ const transformCartItem = (dbItem) => {
 export const fetchCart = createAsyncThunk(
   'cart/fetchCart',
   async (_, thunkAPI) => {
+    const localItems = localStorage.getItem('cartItems')
+      ? JSON.parse(localStorage.getItem('cartItems'))
+      : [];
+
     if (!isAuthenticated()) {
-      const guestItems = localStorage.getItem('cartItems')
-        ? JSON.parse(localStorage.getItem('cartItems'))
-        : [];
-      return guestItems;
+      return localItems;
     }
     try {
       const serverItems = await cartApi.getCart();
       const transformed = serverItems.map(transformCartItem);
-      localStorage.setItem('cartItems', JSON.stringify(transformed));
-      return transformed;
+
+      // Merge local non-mongo items (e.g. AppleCare) with server cart items
+      const customItems = localItems.filter(x => x.isAppleCare || (x.id && String(x.id).startsWith('ac-')));
+      const combined = [...transformed];
+      for (const item of customItems) {
+        if (!combined.some(c => c.id === item.id)) {
+          combined.push(item);
+        }
+      }
+
+      localStorage.setItem('cartItems', JSON.stringify(combined));
+      return combined;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
     }
@@ -43,25 +54,22 @@ export const addToCart = createAsyncThunk(
   'cart/addToCart',
   async (item, thunkAPI) => {
     const state = thunkAPI.getState().cart;
+    const rawId = item.id || item.productId || item._id;
+    const isCustomItem = item.isAppleCare || (rawId && String(rawId).startsWith('ac-')) || !/^[0-9a-fA-F]{24}$/.test(String(rawId).split('-')[0]);
 
-    if (!isAuthenticated()) {
+    if (!isAuthenticated() || isCustomItem) {
       const updatedItems = [...state.cartItems];
-      const existItem = updatedItems.find(x => x.id === item.id);
-      if (existItem) {
-        updatedItems.push({ ...item, quantity: item.quantity || 1 });
-        // Since Redux state shouldn't be directly updated in thunk, we map:
-        const mapped = updatedItems.map(x =>
-          x.id === existItem.id
-            ? { ...x, quantity: x.quantity + (item.quantity || 1) }
-            : x
-        );
-        localStorage.setItem('cartItems', JSON.stringify(mapped));
-        return { cartItems: mapped, openCart: true };
+      const existIndex = updatedItems.findIndex(x => x.id === item.id);
+      if (existIndex > -1) {
+        updatedItems[existIndex] = {
+          ...updatedItems[existIndex],
+          quantity: (updatedItems[existIndex].quantity || 1) + (item.quantity || 1)
+        };
       } else {
         updatedItems.push({ ...item, quantity: item.quantity || 1 });
-        localStorage.setItem('cartItems', JSON.stringify(updatedItems));
-        return { cartItems: updatedItems, openCart: true };
       }
+      localStorage.setItem('cartItems', JSON.stringify(updatedItems));
+      return { cartItems: updatedItems, openCart: true };
     }
 
     try {
@@ -71,8 +79,18 @@ export const addToCart = createAsyncThunk(
       await cartApi.addToCart(productId, quantity);
       const serverItems = await cartApi.getCart();
       const transformed = serverItems.map(transformCartItem);
-      localStorage.setItem('cartItems', JSON.stringify(transformed));
-      return { cartItems: transformed, openCart: true };
+
+      // Preserve existing custom items
+      const customItems = state.cartItems.filter(x => x.isAppleCare || (x.id && String(x.id).startsWith('ac-')));
+      const combined = [...transformed];
+      for (const custom of customItems) {
+        if (!combined.some(c => c.id === custom.id)) {
+          combined.push(custom);
+        }
+      }
+
+      localStorage.setItem('cartItems', JSON.stringify(combined));
+      return { cartItems: combined, openCart: true };
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
     }
@@ -83,8 +101,9 @@ export const removeFromCart = createAsyncThunk(
   'cart/removeFromCart',
   async (id, thunkAPI) => {
     const state = thunkAPI.getState().cart;
+    const isCustomItem = String(id).startsWith('ac-') || !/^[0-9a-fA-F]{24}$/.test(String(id).split('-')[0]);
 
-    if (!isAuthenticated()) {
+    if (!isAuthenticated() || isCustomItem) {
       const updatedItems = state.cartItems.filter(x => x.id !== id);
       localStorage.setItem('cartItems', JSON.stringify(updatedItems));
       return updatedItems;
@@ -95,8 +114,17 @@ export const removeFromCart = createAsyncThunk(
       await cartApi.removeFromCart(productId);
       const serverItems = await cartApi.getCart();
       const transformed = serverItems.map(transformCartItem);
-      localStorage.setItem('cartItems', JSON.stringify(transformed));
-      return transformed;
+
+      const customItems = state.cartItems.filter(x => x.isAppleCare || (x.id && String(x.id).startsWith('ac-')));
+      const combined = [...transformed];
+      for (const custom of customItems) {
+        if (custom.id !== id && !combined.some(c => c.id === custom.id)) {
+          combined.push(custom);
+        }
+      }
+
+      localStorage.setItem('cartItems', JSON.stringify(combined));
+      return combined;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
     }
@@ -108,8 +136,9 @@ export const updateQuantity = createAsyncThunk(
   async ({ id, quantity }, thunkAPI) => {
     const state = thunkAPI.getState().cart;
     const targetQty = Math.max(1, quantity);
+    const isCustomItem = String(id).startsWith('ac-') || !/^[0-9a-fA-F]{24}$/.test(String(id).split('-')[0]);
 
-    if (!isAuthenticated()) {
+    if (!isAuthenticated() || isCustomItem) {
       const updatedItems = state.cartItems.map(x =>
         x.id === id ? { ...x, quantity: targetQty } : x
       );

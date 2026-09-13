@@ -11,6 +11,8 @@ import {
   AlertCircle,
   ArrowUp,
   ArrowDown,
+  ArrowUpToLine,
+  ArrowDownToLine,
   Smartphone,
   Tag,
   FileText,
@@ -116,13 +118,13 @@ export default function IphoneAppleCareManager() {
             setIphoneRows(iphoneTable.rows.map(r => ({
               model: r.model || '',
               title: r.title || `AppleCare+ for ${r.model}`,
-              description: r.description || `2 Years Apple-certified coverage for ${r.model}`,
-              sku: r.sku || '',
-              mrp: r.mrp || '',
-              discount: r.discount || '',
-              salePrice: r.salePrice || r.yearly || '',
+              description: r.description || r.description2yr || `2 Years Apple-certified coverage for ${r.model}`,
+              sku: r.sku || r.sku2yr || '',
+              mrp: r.mrp || r.mrp2yr || '',
+              discount: r.discount || r.discount2yr || '',
+              salePrice: r.salePrice || r.salePrice2yr || r.yearly || '',
               monthly: r.monthly || '',
-              yearly: r.yearly || r.salePrice || '',
+              yearly: r.yearly || r.salePrice || r.salePrice2yr || '',
               image: r.image ?? '',
               isActive: r.isActive !== false
             })));
@@ -238,6 +240,22 @@ export default function IphoneAppleCareManager() {
   };
 
   const handleMoveRow = (index, direction) => {
+    if (direction === 'first') {
+      setIphoneRows(prev => {
+        const updated = [...prev];
+        const [item] = updated.splice(index, 1);
+        return [item, ...updated];
+      });
+      return;
+    }
+    if (direction === 'last') {
+      setIphoneRows(prev => {
+        const updated = [...prev];
+        const [item] = updated.splice(index, 1);
+        return [...updated, item];
+      });
+      return;
+    }
     const targetIdx = direction === 'up' ? index - 1 : index + 1;
     if (targetIdx < 0 || targetIdx >= iphoneRows.length) return;
     setIphoneRows(prev => {
@@ -432,7 +450,16 @@ export default function IphoneAppleCareManager() {
                 <div className="flex items-center gap-3.5 flex-1 min-w-0">
                   <div className="flex items-center gap-1 shrink-0">
                     <span className="text-xs font-bold text-zinc-400 w-5">{idx + 1}.</span>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleMoveRow(idx, 'first')}
+                        disabled={idx === 0}
+                        className="p-1 hover:bg-zinc-200 text-zinc-600 rounded disabled:opacity-30 cursor-pointer border-0"
+                        title="Move to First (Top)"
+                      >
+                        <ArrowUpToLine className="h-3.5 w-3.5" />
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleMoveRow(idx, 'up')}
@@ -450,6 +477,15 @@ export default function IphoneAppleCareManager() {
                         title="Move Down"
                       >
                         <ArrowDown className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveRow(idx, 'last')}
+                        disabled={idx === iphoneRows.length - 1}
+                        className="p-1 hover:bg-zinc-200 text-zinc-600 rounded disabled:opacity-30 cursor-pointer border-0"
+                        title="Move to Last (Bottom)"
+                      >
+                        <ArrowDownToLine className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
@@ -550,38 +586,17 @@ export default function IphoneAppleCareManager() {
                 </div>
               </div>
 
-              {/* Duration Plan Selector Bar for 1-Year vs 2-Year Plan details */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-zinc-50 border border-zinc-200/80 p-3 rounded-2xl mb-4 gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-zinc-600">Select Plan Duration to Edit:</span>
-                  <div className="inline-flex p-1 bg-zinc-200/80 rounded-xl">
-                    <button
-                      type="button"
-                      onClick={() => handleUpdateRow(idx, 'activePlanTab', '1yr')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border-0 ${
-                        row.activePlanTab === '1yr'
-                          ? 'bg-[#0071e3] text-white shadow-xs'
-                          : 'text-zinc-700 hover:text-zinc-900 bg-transparent'
-                      }`}
-                    >
-                      1-Year Plan Specs
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleUpdateRow(idx, 'activePlanTab', '2yr')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border-0 ${
-                        row.activePlanTab !== '1yr'
-                          ? 'bg-[#0071e3] text-white shadow-xs'
-                          : 'text-zinc-700 hover:text-zinc-900 bg-transparent'
-                      }`}
-                    >
-                      2-Year Plan Specs
-                    </button>
-                  </div>
+              {/* 2-YEAR COVERAGE PLAN SPECS */}
+              <div className="p-4 bg-[#F7F7F9] border border-zinc-200/80 rounded-2xl space-y-3 mb-4">
+                <div className="flex items-center justify-between border-b border-zinc-200/60 pb-2">
+                  <span className="text-xs font-extrabold uppercase text-[#FF2D55] tracking-wider flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#FF2D55]"></span>
+                    2-Year Plan Specs (AppleCare+)
+                  </span>
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 bg-rose-50 text-[#FF2D55] rounded-full border border-rose-100">
+                    2-Year Coverage
+                  </span>
                 </div>
-                <span className="text-xs font-bold px-3 py-1 bg-blue-50 text-[#0071e3] rounded-full border border-blue-100">
-                  Editing: {row.activePlanTab === '1yr' ? '1 Year Coverage Plan' : '2 Years Coverage Plan'}
-                </span>
               </div>
 
               {/* Form Input Fields Grid */}
@@ -595,7 +610,7 @@ export default function IphoneAppleCareManager() {
                   </label>
                   <input
                     type="text"
-                    value={row.model}
+                    value={row.model || ''}
                     onChange={(e) => handleUpdateRow(idx, 'model', e.target.value)}
                     placeholder="e.g. iPhone 17 Pro"
                     className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
@@ -621,19 +636,20 @@ export default function IphoneAppleCareManager() {
                 <div>
                   <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
                     <Barcode className="w-3.5 h-3.5 text-[#0071e3]" />
-                    SKU Code ({row.activePlanTab === '1yr' ? '1-Yr' : '2-Yr'})
+                    SKU Code (2-Yr)
                   </label>
                   <input
                     type="text"
-                    value={row.activePlanTab === '1yr' ? (row.sku1yr || '') : (row.sku2yr || row.sku || '')}
+                    value={row.sku2yr || row.sku || ''}
                     onChange={(e) => {
-                      if (row.activePlanTab === '1yr') handleUpdateRow(idx, 'sku1yr', e.target.value);
-                      else {
-                        handleUpdateRow(idx, 'sku2yr', e.target.value);
-                        handleUpdateRow(idx, 'sku', e.target.value);
-                      }
+                      const val = e.target.value;
+                      setIphoneRows(prev => {
+                        const updated = [...prev];
+                        updated[idx] = { ...updated[idx], sku: val, sku2yr: val };
+                        return updated;
+                      });
                     }}
-                    placeholder={row.activePlanTab === '1yr' ? "e.g. AC-IPHONE-17PRO-1YR" : "e.g. AC-IPHONE-17PRO-2YR"}
+                    placeholder="e.g. AC-IPHONE-17PRO-2YR"
                     className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
                   />
                 </div>
@@ -642,19 +658,20 @@ export default function IphoneAppleCareManager() {
                 <div>
                   <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
                     <DollarSign className="w-3.5 h-3.5 text-zinc-500" />
-                    MRP Price ({row.activePlanTab === '1yr' ? '1-Yr' : '2-Yr'})
+                    MRP Price (2-Yr)
                   </label>
                   <input
                     type="text"
-                    value={row.activePlanTab === '1yr' ? (row.mrp1yr || '') : (row.mrp2yr || row.mrp || '')}
+                    value={row.mrp2yr || row.mrp || ''}
                     onChange={(e) => {
-                      if (row.activePlanTab === '1yr') handleUpdateRow(idx, 'mrp1yr', e.target.value);
-                      else {
-                        handleUpdateRow(idx, 'mrp2yr', e.target.value);
-                        handleUpdateRow(idx, 'mrp', e.target.value);
-                      }
+                      const val = e.target.value;
+                      setIphoneRows(prev => {
+                        const updated = [...prev];
+                        updated[idx] = { ...updated[idx], mrp: val, mrp2yr: val };
+                        return updated;
+                      });
                     }}
-                    placeholder={row.activePlanTab === '1yr' ? "e.g. ₹12,900.00" : "e.g. ₹23,900.00"}
+                    placeholder="e.g. ₹23,900.00"
                     className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
                   />
                 </div>
@@ -663,19 +680,20 @@ export default function IphoneAppleCareManager() {
                 <div>
                   <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
                     <Percent className="w-3.5 h-3.5 text-emerald-600" />
-                    Discount ({row.activePlanTab === '1yr' ? '1-Yr' : '2-Yr'})
+                    Discount (2-Yr)
                   </label>
                   <input
                     type="text"
-                    value={row.activePlanTab === '1yr' ? (row.discount1yr || '') : (row.discount2yr || row.discount || '')}
+                    value={row.discount2yr || row.discount || ''}
                     onChange={(e) => {
-                      if (row.activePlanTab === '1yr') handleUpdateRow(idx, 'discount1yr', e.target.value);
-                      else {
-                        handleUpdateRow(idx, 'discount2yr', e.target.value);
-                        handleUpdateRow(idx, 'discount', e.target.value);
-                      }
+                      const val = e.target.value;
+                      setIphoneRows(prev => {
+                        const updated = [...prev];
+                        updated[idx] = { ...updated[idx], discount: val, discount2yr: val };
+                        return updated;
+                      });
                     }}
-                    placeholder={row.activePlanTab === '1yr' ? "e.g. 15% OFF" : "e.g. 9% OFF"}
+                    placeholder="e.g. 9% OFF"
                     className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
                   />
                 </div>
@@ -684,20 +702,20 @@ export default function IphoneAppleCareManager() {
                 <div>
                   <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
                     <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
-                    Final Sale Price ({row.activePlanTab === '1yr' ? '1-Yr' : '2-Yr'})
+                    Final Sale Price (2-Yr)
                   </label>
                   <input
                     type="text"
-                    value={row.activePlanTab === '1yr' ? (row.salePrice1yr || '') : (row.salePrice2yr || row.salePrice || row.yearly || '')}
+                    value={row.salePrice2yr || row.salePrice || row.yearly || ''}
                     onChange={(e) => {
-                      if (row.activePlanTab === '1yr') handleUpdateRow(idx, 'salePrice1yr', e.target.value);
-                      else {
-                        handleUpdateRow(idx, 'salePrice2yr', e.target.value);
-                        handleUpdateRow(idx, 'salePrice', e.target.value);
-                        handleUpdateRow(idx, 'yearly', e.target.value);
-                      }
+                      const val = e.target.value;
+                      setIphoneRows(prev => {
+                        const updated = [...prev];
+                        updated[idx] = { ...updated[idx], salePrice: val, salePrice2yr: val, yearly: val };
+                        return updated;
+                      });
                     }}
-                    placeholder={row.activePlanTab === '1yr' ? "e.g. ₹10,900.00" : "e.g. ₹21,900.00"}
+                    placeholder="e.g. ₹21,900.00"
                     className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-bold text-emerald-700 focus:outline-none focus:border-[#0071e3]"
                   />
                 </div>
@@ -732,19 +750,20 @@ export default function IphoneAppleCareManager() {
                 <div className="sm:col-span-2 md:col-span-3">
                   <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
                     <FileText className="w-3.5 h-3.5 text-zinc-500" />
-                    Card Description Paragraph ({row.activePlanTab === '1yr' ? '1-Year Coverage' : '2-Year Coverage'})
+                    Card Description Paragraph (2-Year Coverage)
                   </label>
                   <textarea
                     rows={2}
-                    value={row.activePlanTab === '1yr' ? (row.description1yr || '') : (row.description2yr || row.description || '')}
+                    value={row.description2yr || row.description || ''}
                     onChange={(e) => {
-                      if (row.activePlanTab === '1yr') handleUpdateRow(idx, 'description1yr', e.target.value);
-                      else {
-                        handleUpdateRow(idx, 'description2yr', e.target.value);
-                        handleUpdateRow(idx, 'description', e.target.value);
-                      }
+                      const val = e.target.value;
+                      setIphoneRows(prev => {
+                        const updated = [...prev];
+                        updated[idx] = { ...updated[idx], description: val, description2yr: val };
+                        return updated;
+                      });
                     }}
-                    placeholder={row.activePlanTab === '1yr' ? "1 Year Apple-certified coverage for iPhone 17 Pro." : "2 Years Apple-certified coverage for iPhone 17 Pro with accidental damage protection."}
+                    placeholder="2 Years Apple-certified coverage for iPhone 17 Pro with accidental damage protection."
                     className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-medium text-zinc-800 focus:outline-none focus:border-[#0071e3]"
                   />
                 </div>

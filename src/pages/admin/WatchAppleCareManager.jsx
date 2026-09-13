@@ -11,6 +11,8 @@ import {
   AlertCircle,
   ArrowUp,
   ArrowDown,
+  ArrowUpToLine,
+  ArrowDownToLine,
   Watch,
   Tag,
   FileText,
@@ -173,6 +175,22 @@ export default function WatchAppleCareManager() {
   };
 
   const handleMoveRow = (index, direction) => {
+    if (direction === 'first') {
+      setWatchRows(prev => {
+        const updated = [...prev];
+        const [item] = updated.splice(index, 1);
+        return [item, ...updated];
+      });
+      return;
+    }
+    if (direction === 'last') {
+      setWatchRows(prev => {
+        const updated = [...prev];
+        const [item] = updated.splice(index, 1);
+        return [...updated, item];
+      });
+      return;
+    }
     const targetIdx = direction === 'up' ? index - 1 : index + 1;
     if (targetIdx < 0 || targetIdx >= watchRows.length) return;
     setWatchRows(prev => {
@@ -367,7 +385,16 @@ export default function WatchAppleCareManager() {
                 <div className="flex items-center gap-3.5 flex-1 min-w-0">
                   <div className="flex items-center gap-1 shrink-0">
                     <span className="text-xs font-bold text-zinc-400 w-5">{idx + 1}.</span>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleMoveRow(idx, 'first')}
+                        disabled={idx === 0}
+                        className="p-1 hover:bg-zinc-200 text-zinc-600 rounded disabled:opacity-30 cursor-pointer border-0"
+                        title="Move to First (Top)"
+                      >
+                        <ArrowUpToLine className="h-3.5 w-3.5" />
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleMoveRow(idx, 'up')}
@@ -385,6 +412,15 @@ export default function WatchAppleCareManager() {
                         title="Move Down"
                       >
                         <ArrowDown className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveRow(idx, 'last')}
+                        disabled={idx === watchRows.length - 1}
+                        className="p-1 hover:bg-zinc-200 text-zinc-600 rounded disabled:opacity-30 cursor-pointer border-0"
+                        title="Move to Last (Bottom)"
+                      >
+                        <ArrowDownToLine className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>

@@ -7,6 +7,7 @@ import { addToWishlist } from '../redux/wishlistSlice';
 import { fetchProducts } from '../redux/productSlice';
 import { matchesProductSearch } from '../utils/searchUtils';
 import axiosClient from '../services/axiosClient';
+import { subscribeToLiveSync } from '../services/liveSyncService';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 import CleanProductImage from '../components/CleanProductImage';
 
@@ -176,15 +177,10 @@ const DEFAULT_IPHONE_APPLECARE_ROWS = [
     model: 'iPhone 15 / iPhone 16', 
     title: 'AppleCare+ for iPhone 15 / 16', 
     description: '2 Years Apple-certified coverage for iPhone 15 & 16 with accidental damage protection.', 
-    description1yr: '1 Year Apple-certified coverage for iPhone 15 & 16 with accidental damage protection.', 
     sku: 'AC-IPHONE-15-16', 
-    sku1yr: 'AC-IPHONE-15-16-1YR',
     mrp: '₹16,900.00', 
-    mrp1yr: '₹9,800.00',
     discount: '12% OFF', 
-    discount1yr: '15% OFF',
     salePrice: '₹14,900.00', 
-    salePrice1yr: '₹8,330.00',
     monthly: '₹749.00', 
     yearly: '₹14,900.00', 
     image: '/iphone_nav/iphone_16.png', 
@@ -194,15 +190,10 @@ const DEFAULT_IPHONE_APPLECARE_ROWS = [
     model: 'iPhone 16 Plus / 17', 
     title: 'AppleCare+ for iPhone 16 Plus / 17', 
     description: '2 Years Apple-certified coverage for iPhone 16 Plus & 17 with accidental damage protection.', 
-    description1yr: '1 Year Apple-certified coverage for iPhone 16 Plus & 17 with accidental damage protection.', 
     sku: 'AC-IPHONE-16P-17', 
-    sku1yr: 'AC-IPHONE-16P-17-1YR',
     mrp: '₹19,900.00', 
-    mrp1yr: '₹11,500.00',
     discount: '10% OFF', 
-    discount1yr: '13% OFF',
     salePrice: '₹17,900.00', 
-    salePrice1yr: '₹9,990.00',
     monthly: '₹899.00', 
     yearly: '₹17,900.00', 
     image: '/iphone_nav/iphone_17.png', 
@@ -212,15 +203,10 @@ const DEFAULT_IPHONE_APPLECARE_ROWS = [
     model: 'iPhone 16 Pro / 16 Pro Max', 
     title: 'AppleCare+ for iPhone 16 Pro / Pro Max', 
     description: '2 Years Apple-certified coverage for iPhone 16 Pro & Pro Max with accidental damage protection.', 
-    description1yr: '1 Year Apple-certified coverage for iPhone 16 Pro & Pro Max with accidental damage protection.', 
     sku: 'AC-IPHONE-16PRO', 
-    sku1yr: 'AC-IPHONE-16PRO-1YR',
     mrp: '₹22,900.00', 
-    mrp1yr: '₹13,200.00',
     discount: '10% OFF', 
-    discount1yr: '12% OFF',
     salePrice: '₹20,900.00', 
-    salePrice1yr: '₹11,600.00',
     monthly: '₹1,049.00', 
     yearly: '₹20,900.00', 
     image: '/iphone_nav/iphone_16_pro.png', 
@@ -230,15 +216,10 @@ const DEFAULT_IPHONE_APPLECARE_ROWS = [
     model: 'iPhone 17 Pro / 17 Pro Max', 
     title: 'AppleCare+ for iPhone 17 Pro / Pro Max', 
     description: '2 Years Apple-certified coverage for iPhone 17 Pro & Pro Max with accidental damage protection.', 
-    description1yr: '1 Year Apple-certified coverage for iPhone 17 Pro & Pro Max with accidental damage protection.', 
     sku: 'AC-IPHONE-17PRO', 
-    sku1yr: 'AC-IPHONE-17PRO-1YR',
     mrp: '₹23,900.00', 
-    mrp1yr: '₹13,800.00',
     discount: '9% OFF', 
-    discount1yr: '11% OFF',
     salePrice: '₹21,900.00', 
-    salePrice1yr: '₹12,200.00',
     monthly: '₹1,099.00', 
     yearly: '₹21,900.00', 
     image: '/iphone_nav/iphone_17_pro.png', 
@@ -248,15 +229,10 @@ const DEFAULT_IPHONE_APPLECARE_ROWS = [
     model: 'iPhone SE', 
     title: 'AppleCare+ for iPhone SE', 
     description: '2 Years Apple-certified coverage for iPhone SE with accidental damage protection.', 
-    description1yr: '1 Year Apple-certified coverage for iPhone SE with accidental damage protection.', 
     sku: 'AC-IPHONE-SE', 
-    sku1yr: 'AC-IPHONE-SE-1YR',
     mrp: '₹9,900.00', 
-    mrp1yr: '₹5,800.00',
     discount: '10% OFF', 
-    discount1yr: '14% OFF',
     salePrice: '₹8,900.00', 
-    salePrice1yr: '₹4,990.00',
     monthly: '₹449.00', 
     yearly: '₹8,900.00', 
     image: '/iphone_nav/iphone_se.png', 
@@ -265,11 +241,11 @@ const DEFAULT_IPHONE_APPLECARE_ROWS = [
 ];
 
 const IPHONE_SUB_NAV_ITEMS = [
-  { name: 'Iphone Duo', query: 'iPhone Duo', image: '/iphone_nav/iphone_duo.png', scale: 'scale-100' },
-  { name: 'Iphone 18 pro', query: 'iPhone 18 Pro', image: '/iphone_nav/iphone_18_pro.jpg', scale: 'scale-90' },
+  { name: 'iPhone Duo', query: 'iPhone Duo', image: '/iphone_nav/iphone_duo.png', scale: 'scale-100' },
+  { name: 'iPhone 18 Pro', query: 'iPhone 18 Pro', image: '/iphone_nav/iphone_18_pro.jpg', scale: 'scale-90' },
   { name: 'iPhone 17 Pro', query: 'iPhone 17 Pro', image: '/iphone_nav/iphone_17_pro.png', scale: 'scale-100' },
   { name: 'iPhone 17', query: 'iPhone 17', image: '/iphone_nav/iphone_17.png', scale: 'scale-100' },
-  { name: 'iPhone 17e', query: 'iPhone 17e', image: '/iphone_nav/iphone_16.png', scale: 'scale-100' },
+  { name: 'iPhone 17e', query: 'iPhone 17e', image: '/iphone_nav/iphone_17e.png', scale: 'scale-100' },
   { name: 'iPhone 16', query: 'iPhone 16', image: '/iphone_nav/iphone_16.png', scale: 'scale-100' },
   { name: 'Accessories', path: '/shop?category=Accessories', image: '/iphone_nav/airtag.png', scale: 'scale-90' },
   { name: 'Shop iPhone', path: '/iphone', query: '', image: '/iphone_nav/iphone_16_pro.png', scale: 'scale-100' },
@@ -285,16 +261,11 @@ const resolveSubItemPath = (item) => {
   if (lowerName.includes('shop iphone') || lowerName === 'all' || lowerName === 'all iphones') {
     return '/iphone';
   }
-  if (
-    item.path &&
-    item.path !== '/iphone' &&
-    !item.path.startsWith('/iphone?search=') &&
-    !item.path.startsWith('/product/')
-  ) {
+  if (item.path && (item.path.startsWith('/iphone?search=') || item.path.startsWith('/product/') || item.path.startsWith('/shop?'))) {
     return item.path;
   }
 
-  const queryVal = item.query || item.name || item.label || '';
+  const queryVal = item.query || item.label || item.name || '';
   return `/iphone?search=${encodeURIComponent(queryVal)}`;
 };
 
@@ -398,12 +369,21 @@ export default function Iphone() {
       return localStorage.getItem('iincept_iphone_applecare_duration_v2') || '2 Years';
     } catch (e) { return '2 Years'; }
   });
-  const [appleCareDuration, setAppleCareDuration] = useState('2');
+
 
   useEffect(() => {
     dispatch(fetchProducts());
     fetchNavSettings();
+    const unsubscribe = subscribeToLiveSync(() => {
+      dispatch(fetchProducts());
+      fetchNavSettings();
+    });
+    return () => unsubscribe();
   }, [dispatch]);
+
+  useEffect(() => {
+    setSelectedColors({});
+  }, [products]);
 
   useEffect(() => {
     setVisibleCount(6);
@@ -673,9 +653,9 @@ export default function Iphone() {
     if (!prod) return '/iphone_category_v2.jpg';
 
     const lowerName = (prod.name || prod.title || '').toLowerCase();
-    const userSelectedColor = selectedColors[prod.id];
+    const userSelectedColor = selectedColors[prod.id] || (prod.colors && prod.colors[0] ? (prod.colors[0].name || prod.colors[0].rawName || (typeof prod.colors[0] === 'string' ? prod.colors[0] : '')) : null);
 
-    // If user explicitly selected a color dot, check for color-specific image
+    // Check for color-specific image
     if (userSelectedColor && prod.colors && Array.isArray(prod.colors)) {
       const targetNorm = userSelectedColor.replace(/\s+/g, ' ').trim().toLowerCase();
 
@@ -825,7 +805,7 @@ export default function Iphone() {
     const isValidImg = !!firstImg;
     return {
       id: p._id || p.id,
-      name: p.title || p.name,
+      name: (p.title || p.name || '').replace(/^phone\b/i, 'iPhone'),
       price: p.price,
       priceStr: `₹${p.price.toLocaleString('en-IN')}`,
       image: isValidImg ? firstImg : '/iphone_category_v2.jpg',
@@ -870,22 +850,10 @@ export default function Iphone() {
 
   const combinedProducts = (() => {
     if (dbIphones.length > 0) {
-      const excludedModels = ['iphone 15', 'iphone se', 'iphone air'];
       const filtered = dbIphones.filter(p => {
         const name = (p.name || p.title || '').toLowerCase();
-        if (excludedModels.some(ex => name.includes(ex) || name === 'iphone se' || name === 'iphone 15' || name === 'iphone air')) {
-          return false;
-        }
         const nonIphoneKw = ['macbook', 'imac', 'ipad', 'watch', 'tv', 'homepod', 'airpod', 'headphone', 'adapter', 'cable', 'case', 'charger', 'display'];
         return !nonIphoneKw.some(kw => name.includes(kw));
-      });
-
-      DEFAULT_IPHONE_PRODUCTS.forEach(def => {
-        const defNameLower = def.name.toLowerCase();
-        const exists = filtered.some(p => (p.name || p.title || '').toLowerCase().includes(defNameLower));
-        if (!exists) {
-          filtered.push(def);
-        }
       });
 
       return filtered;
@@ -1003,7 +971,6 @@ export default function Iphone() {
         const currentTab = searchParams.get('tab') || '';
         const currentSearch = searchParams.get('search') || '';
         const isAppleCareActive = currentTab.toLowerCase() === 'applecare' || currentSearch.toLowerCase().includes('care');
-
         if (isAppleCareActive) {
           return (
             <div className="max-w-7xl mx-auto my-6 animate-in fade-in duration-300">
@@ -1016,34 +983,8 @@ export default function Iphone() {
                         {dbHeaderTitle || 'AppleCare+'}
                       </div>
                       <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-1">
-                        Official Apple-certified protection for your iPhone
+                        Official 2-Year Apple-certified protection for your iPhone
                       </p>
-                    </div>
-
-                    {/* Plan Duration Selector Pills (1 Year vs 2 Years) */}
-                    <div className="bg-zinc-100/90 p-1.5 rounded-2xl flex items-center gap-1 border border-zinc-200/80 shadow-2xs">
-                      <button
-                        type="button"
-                        onClick={() => setAppleCareDuration('1')}
-                        className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer border-0 ${
-                          appleCareDuration === '1'
-                            ? 'bg-[#FF2D55] text-white shadow-xs'
-                            : 'text-zinc-600 hover:text-zinc-900 bg-transparent'
-                        }`}
-                      >
-                        1 Year Coverage
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setAppleCareDuration('2')}
-                        className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer border-0 ${
-                          appleCareDuration === '2'
-                            ? 'bg-[#FF2D55] text-white shadow-xs'
-                            : 'text-zinc-600 hover:text-zinc-900 bg-transparent'
-                        }`}
-                      >
-                        2 Years Coverage
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -1051,7 +992,6 @@ export default function Iphone() {
                 {/* Product Box Grid matching reference design */}
                 {(() => {
                   const rows = dbAppleCareRows.length > 0 ? dbAppleCareRows : DEFAULT_IPHONE_APPLECARE_ROWS;
-                  const is1Yr = appleCareDuration === '1';
 
                   return (
                     <>
@@ -1060,31 +1000,17 @@ export default function Iphone() {
                           const itemKey = row.model || row.title;
                           const isSelected = !!selectedAppleCareMap[itemKey];
 
-                          const activeMrp = is1Yr
-                            ? (row.mrp1yr || (row.mrp ? '₹' + Math.round(parseInt(row.mrp.replace(/[^\d]/g, '') || '16000') * 0.58).toLocaleString('en-IN') + '.00' : ''))
-                            : (row.mrp2yr || row.mrp);
-
-                          const activeSalePrice = is1Yr
-                            ? (row.salePrice1yr || (row.salePrice || row.yearly ? '₹' + Math.round(parseInt((row.salePrice || row.yearly).replace(/[^\d]/g, '') || '14000') * 0.58).toLocaleString('en-IN') + '.00' : ''))
-                            : (row.salePrice2yr || row.salePrice || row.yearly);
-
-                          const activeDiscount = is1Yr
-                            ? (row.discount1yr || row.discount || '15% OFF')
-                            : (row.discount2yr || row.discount);
-
-                          const activeSku = is1Yr
-                            ? (row.sku1yr || (row.sku ? `${row.sku}-1YR` : ''))
-                            : (row.sku2yr || row.sku);
-
-                          const activeDescription = is1Yr
-                            ? (row.description1yr || (row.description ? row.description.replace(/2 Years/gi, '1 Year') : '1 Year Apple-certified coverage.'))
-                            : (row.description2yr || row.description);
+                          const activeMrp = row.mrp2yr || row.mrp;
+                          const activeSalePrice = row.salePrice2yr || row.salePrice || row.yearly;
+                          const activeDiscount = row.discount2yr || row.discount;
+                          const activeSku = row.sku2yr || row.sku;
+                          const activeDescription = row.description2yr || row.description;
 
                           return (
                             <div 
                               key={i} 
                               onClick={() => {
-                                toggleAppleCareSelection({ ...row, salePrice: activeSalePrice, mrp: activeMrp, sku: activeSku, duration: is1Yr ? '1 Year' : '2 Years' });
+                                toggleAppleCareSelection({ ...row, salePrice: activeSalePrice, mrp: activeMrp, sku: activeSku, duration: '2 Years' });
                               }}
                               className={`group bg-white rounded-[24px] sm:rounded-[28px] border transition-all duration-300 relative text-left cursor-pointer p-5 sm:p-6 shadow-xs hover:shadow-md flex flex-col justify-between h-full ${
                                 isSelected 
@@ -1098,12 +1024,12 @@ export default function Iphone() {
                                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
                                   
                                   {/* LEFT COLUMN: Media Container Box */}
-                                  <div className="md:col-span-5 bg-[#F7F7F9] rounded-2xl p-4 sm:p-5 relative flex flex-col items-center justify-between min-h-[260px] sm:min-h-[280px] h-full border border-zinc-100/80">
+                                  <div className="md:col-span-5 bg-white group-hover:bg-[#f0f0f2] transition-colors duration-300 rounded-2xl p-4 sm:p-5 relative flex flex-col items-center justify-between min-h-[260px] sm:min-h-[280px] h-full border border-zinc-100/80">
                                     
                                     {/* Top Left Badge */}
                                     <div className="w-full flex items-center justify-start z-10 mb-1">
                                       <span className="bg-[#FF2D55] text-white text-[11px] font-bold px-3 py-1 rounded-full tracking-wide">
-                                        Apple Care+ ({is1Yr ? '1 Year' : '2 Years'})
+                                        Apple Care+ (2 Years)
                                       </span>
                                     </div>
                                     {/* Main Product Image */}
@@ -1145,7 +1071,7 @@ export default function Iphone() {
                                   <div className="md:col-span-7 space-y-3 flex flex-col justify-between h-full">
                                     <div>
                                       <div className="text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-[#FF2D55] mb-1">
-                                        APPLE CARE+ • {is1Yr ? '1 YEAR PLAN' : '2 YEAR PLAN'}
+                                        APPLE CARE+ • 2 YEAR PLAN
                                       </div>
                                       <h3 className="font-extrabold text-[#1D1D1F] text-lg sm:text-xl leading-snug tracking-tight min-h-[52px] flex items-center">
                                         {row.title || `Apple Care+ ${row.model}`}
@@ -1199,7 +1125,7 @@ export default function Iphone() {
                                 </div>
 
                                 {/* MIDDLE SECTION: 4 Feature Highlights Grid */}
-                                <AppleCareFeaturesGrid years={is1Yr ? '1' : '2'} />
+                                <AppleCareFeaturesGrid years="2" />
                               </div>
 
                               {/* BOTTOM ACTION BUTTONS */}
@@ -1390,6 +1316,8 @@ export default function Iphone() {
                     <CleanProductImage
                       src={getProductImage(prod)}
                       alt={prod.name}
+                      className="max-h-[92%] max-w-[92%] object-contain group-hover:scale-110 transition-transform duration-500 select-none transform scale-115 sm:scale-125"
+                      containerClassName="w-full h-72 sm:h-80 bg-white rounded-2xl flex items-center justify-center p-2 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f0f0f2]"
                     />
 
                     {/* Title (Clean Product Name) */}

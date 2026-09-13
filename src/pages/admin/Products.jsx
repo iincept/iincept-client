@@ -10,6 +10,10 @@ import {
   Loader2,
   AlertCircle,
   ArrowLeft,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpToLine,
+  ArrowDownToLine,
   GripVertical,
   Bold,
   Italic,
@@ -29,6 +33,7 @@ import { getProducts, createProduct, updateProduct, deleteProduct } from '../../
 import { getCategories } from '../../services/categoryApi';
 import axiosClient from '../../services/axiosClient';
 import VariantTagInput from '../../components/VariantTagInput';
+import { notifyAdminChange } from '../../services/liveSyncService';
 
 const resolveColorValue = (cVal) => {
   if (!cVal) return '#cbd5e1';
@@ -112,10 +117,33 @@ export default function Products() {
   };
 
   const filteredProducts = products.filter(prod => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase().trim();
+    
     const title = (prod.title || prod.name || '').toString().toLowerCase();
-    const category = (prod.category?.name || prod.category || '').toString().toLowerCase();
-    const query = searchQuery.toLowerCase();
-    return title.includes(query) || category.includes(query);
+    const category = (prod.category?.name || prod.category?.slug || prod.category || '').toString().toLowerCase();
+    const brand = (prod.brand || '').toString().toLowerCase();
+    const sku = (prod.sku || prod.partNumber || prod.modelNumber || '').toString().toLowerCase();
+
+    if (title.includes(query) || category.includes(query) || brand.includes(query) || sku.includes(query)) {
+      return true;
+    }
+
+    const normTitle = title.replace(/^i(?=[a-z])/i, '');
+    const normQuery = query.replace(/^i(?=[a-z])/i, '');
+    if (normTitle.includes(normQuery)) {
+      return true;
+    }
+
+    if (prod.variants && Array.isArray(prod.variants)) {
+      const matchVariant = prod.variants.some(v => {
+        const vText = `${v.title || ''} ${v.displayTitle || ''} ${v.sku || ''} ${v.partNumber || ''} ${v.modelNumber || ''} ${v.color || ''} ${v.storage || ''}`.toLowerCase();
+        return vText.includes(query) || vText.includes(normQuery);
+      });
+      if (matchVariant) return true;
+    }
+
+    return false;
   });
 
   // Forms states
@@ -463,9 +491,11 @@ export default function Products() {
       if (editProductId) {
         await updateProduct(editProductId, formattedProduct);
         showSuccessMessage('Product updated successfully!');
+        notifyAdminChange('products', { action: 'update', id: editProductId });
       } else {
         await createProduct(formattedProduct);
         showSuccessMessage('Product created successfully!');
+        notifyAdminChange('products', { action: 'create' });
       }
       resetProductForm();
       fetchData();
@@ -535,6 +565,7 @@ export default function Products() {
     try {
       await deleteProduct(id);
       showSuccessMessage('Product deleted successfully!');
+      notifyAdminChange('products', { action: 'delete', id });
       fetchData();
     } catch (err) {
       console.error('Delete product error:', err);
@@ -591,6 +622,21 @@ export default function Products() {
       ...prev,
       tags: prev.tags.filter(t => t !== tagToRemove)
     }));
+  };
+
+  const handleMoveVariant = (index, direction) => {
+    setProductForm(prev => {
+      const list = [...(prev.variants || [])];
+      if (index < 0 || index >= list.length) return prev;
+      const [target] = list.splice(index, 1);
+      let newIdx = index;
+      if (direction === 'first') newIdx = 0;
+      else if (direction === 'up') newIdx = Math.max(0, index - 1);
+      else if (direction === 'down') newIdx = Math.min(list.length, index + 1);
+      else if (direction === 'last') newIdx = list.length;
+      list.splice(newIdx, 0, target);
+      return { ...prev, variants: list };
+    });
   };
 
   // Find dynamic price to display in the live preview
@@ -1353,19 +1399,61 @@ export default function Products() {
                                 {vIdx === 0 && <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-sans">Default</span>}
                               </span>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setProductForm(prev => ({
-                                  ...prev,
-                                  variants: prev.variants.filter((_, i) => i !== vIdx)
-                                }));
-                              }}
-                              className="px-2 py-1 text-xs font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer border-0 bg-transparent flex items-center gap-1"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                              Delete
-                            </button>
+                            <div className="flex items-center gap-1">
+                              {/* Reorder Buttons: First, Up, Down, Last */}
+                              <div className="flex items-center gap-0.5 mr-2 bg-white/80 border border-zinc-200 rounded-lg p-0.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveVariant(vIdx, 'first')}
+                                  disabled={vIdx === 0}
+                                  className="p-1 hover:bg-zinc-100 text-zinc-600 rounded disabled:opacity-30 cursor-pointer border-0"
+                                  title="Move to First (Top)"
+                                >
+                                  <ArrowUpToLine className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveVariant(vIdx, 'up')}
+                                  disabled={vIdx === 0}
+                                  className="p-1 hover:bg-zinc-100 text-zinc-600 rounded disabled:opacity-30 cursor-pointer border-0"
+                                  title="Move Up"
+                                >
+                                  <ArrowUp className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveVariant(vIdx, 'down')}
+                                  disabled={vIdx === productForm.variants.length - 1}
+                                  className="p-1 hover:bg-zinc-100 text-zinc-600 rounded disabled:opacity-30 cursor-pointer border-0"
+                                  title="Move Down"
+                                >
+                                  <ArrowDown className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveVariant(vIdx, 'last')}
+                                  disabled={vIdx === productForm.variants.length - 1}
+                                  className="p-1 hover:bg-zinc-100 text-zinc-600 rounded disabled:opacity-30 cursor-pointer border-0"
+                                  title="Move to Last (Bottom)"
+                                >
+                                  <ArrowDownToLine className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setProductForm(prev => ({
+                                    ...prev,
+                                    variants: prev.variants.filter((_, i) => i !== vIdx)
+                                  }));
+                                }}
+                                className="px-2 py-1 text-xs font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer border-0 bg-transparent flex items-center gap-1"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                Delete
+                              </button>
+                            </div>
                           </div>
 
                           {/* Grid row: Color, Storage, RAM, Price, Discount Price, Stock, Part No. / MPN */}

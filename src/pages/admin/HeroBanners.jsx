@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import axiosClient from '../../services/axiosClient';
+import { notifyAdminChange } from '../../services/liveSyncService';
 import { 
   Check, 
   Loader2, 
@@ -14,7 +16,6 @@ import {
   Star,
   Home
 } from 'lucide-react';
-import axiosClient from '../../services/axiosClient';
 
 export default function HeroBanners() {
   const [loading, setLoading] = useState(false);
@@ -144,6 +145,7 @@ export default function HeroBanners() {
     setLoading(true);
     try {
       await axiosClient.put('/settings', siteForm);
+      notifyAdminChange('settings', { action: 'update_banners' });
       showSuccessMessage('Homepage & Hero Banners updated successfully!');
     } catch (err) {
       alert(err.response?.data?.message || err.message || 'Failed to update settings');

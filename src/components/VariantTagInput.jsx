@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, ArrowLeft, ArrowRight } from 'lucide-react';
 
 export default function VariantTagInput({ 
   label, 
@@ -63,6 +63,16 @@ export default function VariantTagInput({
     onChange(updatedTags);
   };
 
+  const moveTag = (idx, direction) => {
+    const updated = [...tags];
+    const targetIdx = direction === 'left' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= tags.length) return;
+    const temp = updated[idx];
+    updated[idx] = updated[targetIdx];
+    updated[targetIdx] = temp;
+    onChange(updated);
+  };
+
   return (
     <div className="space-y-2 text-left">
       <div className="flex justify-between items-center">
@@ -88,7 +98,7 @@ export default function VariantTagInput({
           onClick={() => {
             if (inputValue.trim()) addTags(inputValue);
           }}
-          className="absolute right-2 p-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-600 rounded-lg transition-colors cursor-pointer"
+          className="absolute right-2 p-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-600 rounded-lg transition-colors cursor-pointer border-0"
           title="Add tag"
         >
           <Plus className="h-4 w-4" />
@@ -101,17 +111,46 @@ export default function VariantTagInput({
           {tags.map((tag, idx) => (
             <div
               key={`${tag}-${idx}`}
-              className="group flex items-center gap-1.5 px-3 py-1 bg-zinc-50 text-zinc-800 border border-zinc-200/80 rounded-full text-xs font-medium hover:bg-zinc-100 hover:border-zinc-300 transition-all duration-200 select-none animate-in fade-in zoom-in-95 duration-150"
+              className={`group flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full border transition-all duration-200 select-none ${
+                idx === 0 
+                  ? 'bg-emerald-50 text-emerald-950 border-emerald-300 shadow-sm' 
+                  : 'bg-zinc-50 text-zinc-800 border-zinc-200/80 hover:bg-zinc-100'
+              }`}
             >
+              {idx === 0 && (
+                <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-emerald-600 text-white">
+                  1st (Default)
+                </span>
+              )}
               <span>{tag}</span>
-              <button
-                type="button"
-                onClick={() => removeTag(idx)}
-                className="p-0.5 rounded-full hover:bg-zinc-200 text-zinc-400 hover:text-zinc-700 transition-all cursor-pointer flex items-center justify-center shrink-0"
-                aria-label={`Remove ${tag}`}
-              >
-                <X className="h-3 w-3" />
-              </button>
+              <div className="flex items-center gap-0.5 ml-1 border-l border-zinc-200/80 pl-1">
+                <button
+                  type="button"
+                  onClick={() => moveTag(idx, 'left')}
+                  disabled={idx === 0}
+                  className="p-0.5 hover:bg-zinc-200 text-zinc-500 rounded disabled:opacity-20 cursor-pointer border-0 bg-transparent"
+                  title="Move Left (Make Default)"
+                >
+                  <ArrowLeft className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveTag(idx, 'right')}
+                  disabled={idx === tags.length - 1}
+                  className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 disabled:opacity-20 cursor-pointer border-0 bg-transparent"
+                  title="Move Right"
+                >
+                  <ArrowRight className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeTag(idx)}
+                  className="p-0.5 rounded-full hover:bg-red-100 text-zinc-400 hover:text-red-600 transition-all cursor-pointer flex items-center justify-center shrink-0 border-0 bg-transparent ml-0.5"
+                  aria-label={`Remove ${tag}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
             </div>
           ))}
         </div>

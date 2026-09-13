@@ -11,19 +11,15 @@ export default function CleanProductImage({
   src,
   alt = '',
   className = 'max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-500 select-none',
-  containerClassName = 'w-full h-64 sm:h-72 bg-[#f5f5f7] rounded-2xl flex items-center justify-center p-6 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f2f2f4]',
+  containerClassName = 'w-full h-64 sm:h-72 bg-white rounded-2xl flex items-center justify-center p-6 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f0f0f2]',
   mixBlend = true,
   fallbackSrc = '',
 }) {
+  const NEUTRAL_PLACEHOLDER = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300" fill="none"><rect width="300" height="300" rx="16" fill="%23f5f5f7"/><path d="M150 120c-16.569 0-30 13.431-30 30s13.431 30 30 30 30-13.431 30-30-13.431-30-30-30z" fill="%23e5e5e7"/></svg>';
+
   const getSmartFallback = (name, rawSrc) => {
-    const lowerName = (name || '').toLowerCase();
-    if (lowerName.includes('15')) return '/iphone_nav/iphone_15.png';
-    if (lowerName.includes('se') || lowerName.includes('17e')) return '/iphone_nav/iphone_se.png';
-    if (lowerName.includes('16')) return '/iphone_nav/iphone_16.png';
-    if (lowerName.includes('pro')) return '/iphone_nav/iphone_17_pro.png';
-    if (lowerName.includes('air')) return '/iphone_nav/iphone_air.png';
-    if (lowerName.includes('17')) return '/iphone_nav/iphone_17.png';
-    return fallbackSrc || '/iphone_category_v2.jpg';
+    if (fallbackSrc) return fallbackSrc;
+    return NEUTRAL_PLACEHOLDER;
   };
 
   const sanitizeSrc = (inputSrc) => {

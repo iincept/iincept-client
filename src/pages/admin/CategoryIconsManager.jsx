@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axiosClient from '../../services/axiosClient';
+import { notifyAdminChange } from '../../services/liveSyncService';
 import { 
   Grid, 
   Plus, 
@@ -210,6 +211,7 @@ export default function CategoryIconsManager() {
         categoryIconGroups: groups,
         navbarMenuItems: updatedNavItems
       });
+      notifyAdminChange('categories', { action: 'update_category_icons' });
 
       showSuccessMessage('Category Icons & Models updated successfully!');
     } catch (err) {

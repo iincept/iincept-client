@@ -10,6 +10,7 @@ import { fetchProducts } from '../redux/productSlice';
 import { openCart, fetchCart } from '../redux/cartSlice';
 import { fetchWishlist } from '../redux/wishlistSlice';
 import axiosClient from '../services/axiosClient';
+import { subscribeToLiveSync } from '../services/liveSyncService';
 
 const AppleIcon = (props) => (
   <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -971,11 +972,18 @@ export default function Navbar() {
     );
   };
 
+
+
   const [dynamicNavItems, setDynamicNavItems] = useState(null);
 
   useEffect(() => {
     fetchHeaderCategories();
-  }, []);
+    const unsubscribe = subscribeToLiveSync(() => {
+      fetchHeaderCategories();
+      dispatch(fetchProducts());
+    });
+    return () => unsubscribe();
+  }, [dispatch]);
 
   const fetchHeaderCategories = async () => {
     try {
@@ -1162,9 +1170,9 @@ export default function Navbar() {
               <img 
                 src="/iincept_navbar_logo.png" 
                 alt="iiNCEPT" 
-                className="h-9 sm:h-10 md:h-11 w-auto object-contain transition-transform duration-200 group-hover:scale-105" 
+                className="h-8 sm:h-9 md:h-10 w-auto object-contain transition-transform duration-200 group-hover:scale-105" 
                 style={{
-                  filter: isIphonePage ? 'none' : 'brightness(1.1) contrast(1.05)'
+                  mixBlendMode: 'multiply'
                 }}
               />
             </Link>

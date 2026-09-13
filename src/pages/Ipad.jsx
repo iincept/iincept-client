@@ -7,6 +7,7 @@ import { addToWishlist } from '../redux/wishlistSlice';
 import { fetchProducts } from '../redux/productSlice';
 import { matchesProductSearch } from '../utils/searchUtils';
 import axiosClient from '../services/axiosClient';
+import { subscribeToLiveSync } from '../services/liveSyncService';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 import CleanProductImage from '../components/CleanProductImage';
 
@@ -16,10 +17,20 @@ const DEFAULT_IPAD_APPLECARE_ROWS = [
     model: 'iPad / iPad mini', 
     title: 'AppleCare+ for iPad / iPad mini', 
     description: '2 Years Apple-certified coverage for iPad & iPad mini. Peace of mind for what\'s next.', 
+    description1yr: '1 Year Apple-certified coverage for iPad & iPad mini.',
+    description2yr: '2 Years Apple-certified coverage for iPad & iPad mini.',
     sku: 'AC-IPAD-STD', 
+    sku1yr: 'AC-IPAD-STD-1YR',
+    sku2yr: 'AC-IPAD-STD-2YR',
     mrp: '₹9,900.00', 
+    mrp1yr: '₹5,900.00',
+    mrp2yr: '₹9,900.00',
     discount: '10% OFF', 
+    discount1yr: '17% OFF',
+    discount2yr: '10% OFF',
     salePrice: '₹8,900.00', 
+    salePrice1yr: '₹4,900.00',
+    salePrice2yr: '₹8,900.00',
     monthly: '₹449.00', 
     yearly: '₹8,900.00', 
     image: '/ipad_nav/ipad.png', 
@@ -29,10 +40,20 @@ const DEFAULT_IPAD_APPLECARE_ROWS = [
     model: 'iPad Air 11″', 
     title: 'AppleCare+ for iPad Air 11″', 
     description: '2 Years Apple-certified coverage for iPad Air 11″. Peace of mind for what\'s next.', 
+    description1yr: '1 Year Apple-certified coverage for iPad Air 11″.',
+    description2yr: '2 Years Apple-certified coverage for iPad Air 11″.',
     sku: 'AC-IPAD-AIR-11', 
+    sku1yr: 'AC-IPAD-AIR11-1YR',
+    sku2yr: 'AC-IPAD-AIR11-2YR',
     mrp: '₹10,900.00', 
+    mrp1yr: '₹6,900.00',
+    mrp2yr: '₹10,900.00',
     discount: '9% OFF', 
+    discount1yr: '14% OFF',
+    discount2yr: '9% OFF',
     salePrice: '₹9,900.00', 
+    salePrice1yr: '₹5,900.00',
+    salePrice2yr: '₹9,900.00',
     monthly: '₹499.00', 
     yearly: '₹9,900.00', 
     image: '/ipad_nav/ipad_air.png', 
@@ -42,10 +63,20 @@ const DEFAULT_IPAD_APPLECARE_ROWS = [
     model: 'iPad Air 13″', 
     title: 'AppleCare+ for iPad Air 13″', 
     description: '2 Years Apple-certified coverage for iPad Air 13″. Peace of mind for what\'s next.', 
+    description1yr: '1 Year Apple-certified coverage for iPad Air 13″.',
+    description2yr: '2 Years Apple-certified coverage for iPad Air 13″.',
     sku: 'AC-IPAD-AIR-13', 
+    sku1yr: 'AC-IPAD-AIR13-1YR',
+    sku2yr: 'AC-IPAD-AIR13-2YR',
     mrp: '₹12,900.00', 
+    mrp1yr: '₹7,900.00',
+    mrp2yr: '₹12,900.00',
     discount: '8% OFF', 
+    discount1yr: '12% OFF',
+    discount2yr: '8% OFF',
     salePrice: '₹11,900.00', 
+    salePrice1yr: '₹6,900.00',
+    salePrice2yr: '₹11,900.00',
     monthly: '₹599.00', 
     yearly: '₹11,900.00', 
     image: '/ipad_nav/ipad_air.png', 
@@ -55,10 +86,20 @@ const DEFAULT_IPAD_APPLECARE_ROWS = [
     model: 'iPad Pro 11″', 
     title: 'AppleCare+ for iPad Pro 11″', 
     description: '2 Years Apple-certified coverage for iPad Pro 11″. Peace of mind for what\'s next.', 
+    description1yr: '1 Year Apple-certified coverage for iPad Pro 11″.',
+    description2yr: '2 Years Apple-certified coverage for iPad Pro 11″.',
     sku: 'AC-IPAD-PRO-11', 
+    sku1yr: 'AC-IPAD-PRO11-1YR',
+    sku2yr: 'AC-IPAD-PRO11-2YR',
     mrp: '₹19,900.00', 
+    mrp1yr: '₹11,900.00',
+    mrp2yr: '₹19,900.00',
     discount: '10% OFF', 
+    discount1yr: '8% OFF',
+    discount2yr: '10% OFF',
     salePrice: '₹17,900.00', 
+    salePrice1yr: '₹10,900.00',
+    salePrice2yr: '₹17,900.00',
     monthly: '₹899.00', 
     yearly: '₹17,900.00', 
     image: '/ipad_nav/ipad_pro.png', 
@@ -68,10 +109,20 @@ const DEFAULT_IPAD_APPLECARE_ROWS = [
     model: 'iPad Pro 13″', 
     title: 'AppleCare+ for iPad Pro 13″', 
     description: '2 Years Apple-certified coverage for iPad Pro 13″. Peace of mind for what\'s next.', 
+    description1yr: '1 Year Apple-certified coverage for iPad Pro 13″.',
+    description2yr: '2 Years Apple-certified coverage for iPad Pro 13″.',
     sku: 'AC-IPAD-PRO-13', 
+    sku1yr: 'AC-IPAD-PRO13-1YR',
+    sku2yr: 'AC-IPAD-PRO13-2YR',
     mrp: '₹21,900.00', 
+    mrp1yr: '₹13,900.00',
+    mrp2yr: '₹21,900.00',
     discount: '10% OFF', 
+    discount1yr: '7% OFF',
+    discount2yr: '10% OFF',
     salePrice: '₹19,900.00', 
+    salePrice1yr: '₹12,900.00',
+    salePrice2yr: '₹19,900.00',
     monthly: '₹999.00', 
     yearly: '₹19,900.00', 
     image: '/ipad_nav/ipad_pro.png', 
@@ -206,7 +257,16 @@ export default function Ipad() {
   useEffect(() => {
     dispatch(fetchProducts());
     fetchNavSettings();
+    const unsubscribe = subscribeToLiveSync(() => {
+      dispatch(fetchProducts());
+      fetchNavSettings();
+    });
+    return () => unsubscribe();
   }, [dispatch]);
+
+  useEffect(() => {
+    setSelectedColors({});
+  }, [products]);
 
   useEffect(() => {
     setVisibleCount(6);
@@ -255,7 +315,7 @@ export default function Ipad() {
                 try {
                   localStorage.setItem('iincept_ipad_applecare_rows_v2', JSON.stringify(activeRows));
                 } catch (e) {}
-                setDbAppleCareRows(prev => (JSON.stringify(prev) !== JSON.stringify(activeRows) ? activeRows : prev));
+                setDbAppleCareRows(activeRows);
                 setSelectedAppleCareModel(activeRows[0]);
               }
             }
@@ -429,7 +489,7 @@ export default function Ipad() {
   };
 
   const getProductImage = (prod) => {
-    const selectedColorName = selectedColors[prod.id];
+    const selectedColorName = selectedColors[prod.id] || (prod.colors && prod.colors[0] ? (prod.colors[0].name || prod.colors[0].rawName || (typeof prod.colors[0] === 'string' ? prod.colors[0] : '')) : null);
     if (selectedColorName) {
       const targetNorm = selectedColorName.replace(/\s+/g, ' ').trim().toLowerCase();
 
@@ -710,7 +770,7 @@ export default function Ipad() {
                         if (lower.includes('care')) {
                           e.currentTarget.src = '/applecare_official_hero.png';
                         } else {
-                          e.currentTarget.src = '/ipad_nav/ipad_air.png';
+                          e.currentTarget.src = '/ipad_nav/ipad.png';
                         }
                       }}
                       className="max-h-full max-w-full object-contain filter drop-shadow-sm transition-all duration-300 ease-out group-hover:scale-112 group-hover:-translate-y-1"
@@ -742,42 +802,13 @@ export default function Ipad() {
                     {dbHeaderTitle || 'AppleCare+'}
                   </div>
                   <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-1">
-                    Choose 1-Year or 2-Year Apple-certified coverage for your iPad.
+                    2-Year Apple-certified coverage for your iPad.
                   </p>
-
-                  {/* Duration Selector Pill */}
-                  <div className="flex justify-center mt-4">
-                    <div className="inline-flex p-1.5 bg-zinc-100/90 rounded-2xl border border-zinc-200/80 shadow-2xs">
-                      <button
-                        type="button"
-                        onClick={() => setAppleCareDuration('1')}
-                        className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer border-0 ${
-                          appleCareDuration === '1'
-                            ? 'bg-[#FF2D55] text-white shadow-xs'
-                            : 'text-zinc-600 hover:text-zinc-900 bg-transparent'
-                        }`}
-                      >
-                        1 Year Coverage
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setAppleCareDuration('2')}
-                        className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer border-0 ${
-                          appleCareDuration === '2'
-                            ? 'bg-[#FF2D55] text-white shadow-xs'
-                            : 'text-zinc-600 hover:text-zinc-900 bg-transparent'
-                        }`}
-                      >
-                        2 Years Coverage
-                      </button>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Product Box Grid matching reference design */}
                 {(() => {
                   const rows = dbAppleCareRows.length > 0 ? dbAppleCareRows : DEFAULT_IPAD_APPLECARE_ROWS;
-                  const is1Yr = appleCareDuration === '1';
 
                   return (
                     <>
@@ -786,31 +817,27 @@ export default function Ipad() {
                           const itemKey = row.model || row.title;
                           const isSelected = !!selectedAppleCareMap[itemKey];
 
-                          const activeMrp = is1Yr
-                            ? (row.mrp1yr || (row.mrp ? '₹' + Math.round(parseInt(row.mrp.replace(/[^\d]/g, '') || '8000') * 0.58).toLocaleString('en-IN') + '.00' : ''))
-                            : (row.mrp2yr || row.mrp);
+                          const activeMrp = row.mrp2yr || row.mrp2Yr || row.mrp || '';
+                          const activeSalePrice = row.salePrice2yr || row.salePrice2Yr || row.salePrice || row.yearly || '';
+                          const activeDiscount = row.discount2yr || row.discount2Yr || row.discount || '';
+                          const activeSku = row.sku2yr || row.sku2Yr || row.sku || '';
+                          const activeDescription = row.description2yr || row.description2Yr || row.description || `2 Years Apple-certified coverage for ${row.model}. Peace of mind for what's next.`;
 
-                          const activeSalePrice = is1Yr
-                            ? (row.salePrice1yr || (row.salePrice || row.yearly ? '₹' + Math.round(parseInt((row.salePrice || row.yearly).replace(/[^\d]/g, '') || '7000') * 0.58).toLocaleString('en-IN') + '.00' : ''))
-                            : (row.salePrice2yr || row.salePrice || row.yearly);
-
-                          const activeDiscount = is1Yr
-                            ? (row.discount1yr || row.discount || '15% OFF')
-                            : (row.discount2yr || row.discount);
-
-                          const activeSku = is1Yr
-                            ? (row.sku1yr || (row.sku ? `${row.sku}-1YR` : ''))
-                            : (row.sku2yr || row.sku);
-
-                          const activeDescription = is1Yr
-                            ? (row.description1yr || (row.description ? row.description.replace(/2 Years/gi, '1 Year') : '1 Year Apple-certified coverage.'))
-                            : (row.description2yr || row.description);
+                          const activePlanRow = {
+                            ...row,
+                            salePrice: activeSalePrice,
+                            mrp: activeMrp,
+                            discount: activeDiscount,
+                            sku: activeSku,
+                            description: activeDescription,
+                            duration: '2 Years'
+                          };
 
                           return (
                             <div 
                               key={i} 
                               onClick={() => {
-                                toggleAppleCareSelection({ ...row, salePrice: activeSalePrice, mrp: activeMrp, sku: activeSku, duration: is1Yr ? '1 Year' : '2 Years' });
+                                toggleAppleCareSelection(activePlanRow);
                               }}
                               className={`group bg-white rounded-[24px] sm:rounded-[28px] border transition-all duration-300 relative text-left cursor-pointer p-5 sm:p-6 shadow-xs hover:shadow-md flex flex-col justify-between h-full ${
                                 isSelected 
@@ -824,12 +851,12 @@ export default function Ipad() {
                                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
                                   
                                   {/* LEFT COLUMN: Media Container Box */}
-                                  <div className="md:col-span-5 bg-[#F7F7F9] rounded-2xl p-4 sm:p-5 relative flex flex-col items-center justify-between min-h-[260px] sm:min-h-[280px] h-full border border-zinc-100/80">
+                                  <div className="md:col-span-5 bg-white group-hover:bg-[#f0f0f2] transition-colors duration-300 rounded-2xl p-4 sm:p-5 relative flex flex-col items-center justify-between min-h-[260px] sm:min-h-[280px] h-full border border-zinc-100/80">
                                     
                                     {/* Top Left Badge */}
                                     <div className="w-full flex items-center justify-start z-10 mb-1">
                                       <span className="bg-[#FF2D55] text-white text-[11px] font-bold px-3 py-1 rounded-full tracking-wide">
-                                        Apple Care+ ({is1Yr ? '1 Year' : '2 Years'})
+                                        Apple Care+ (2 Years)
                                       </span>
                                     </div>
                                     {/* Main Product Image */}
@@ -871,7 +898,7 @@ export default function Ipad() {
                                   <div className="md:col-span-7 space-y-3 flex flex-col justify-between h-full">
                                     <div>
                                       <div className="text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-[#FF2D55] mb-1">
-                                        APPLE CARE+ • {is1Yr ? '1 YEAR PLAN' : '2 YEAR PLAN'}
+                                        APPLE CARE+ • 2 YEAR PLAN
                                       </div>
                                       <h3 className="font-extrabold text-[#1D1D1F] text-lg sm:text-xl leading-snug tracking-tight min-h-[52px] flex items-center">
                                         {row.title || `Apple Care+ ${row.model}`}
@@ -887,7 +914,11 @@ export default function Ipad() {
                                       <div className="flex items-center justify-between text-xs text-zinc-500">
                                         <span className="font-semibold text-zinc-500">MRP</span>
                                         <div className="flex items-center gap-2">
-                                          {activeMrp && <span className="line-through text-zinc-400 font-medium">{activeMrp}</span>}
+                                          {activeMrp && (
+                                            <span className="line-through text-zinc-400 font-medium">
+                                              {String(activeMrp).trim().startsWith('₹') ? activeMrp : `₹${activeMrp}`}
+                                            </span>
+                                          )}
                                           {activeDiscount && (
                                             <span className="bg-[#FF2D55] text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md shadow-2xs">
                                               {activeDiscount.includes('%') ? activeDiscount : `${activeDiscount} OFF`}
@@ -912,7 +943,7 @@ export default function Ipad() {
                                       <div className="flex items-baseline justify-between">
                                         <span className="font-extrabold text-[#1D1D1F] text-sm sm:text-base">Final Price</span>
                                         <div className="text-xl sm:text-2xl font-extrabold text-[#00875A] tabular-nums tracking-tight">
-                                          {activeSalePrice}
+                                          {String(activeSalePrice).trim().startsWith('₹') ? activeSalePrice : `₹${activeSalePrice}`}
                                         </div>
                                       </div>
 
@@ -925,7 +956,7 @@ export default function Ipad() {
                                 </div>
 
                                 {/* MIDDLE SECTION: 4 Feature Highlights Grid */}
-                                <AppleCareFeaturesGrid years={is1Yr ? '1' : '2'} />
+                                <AppleCareFeaturesGrid years="2" />
                               </div>
 
                               {/* BOTTOM ACTION BUTTONS */}
@@ -934,23 +965,23 @@ export default function Ipad() {
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleAddAppleCareToWishlist(row, i);
+                                    handleAddAppleCareToWishlist(activePlanRow, i);
                                   }}
                                   className={`w-full border font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer ${
-                                    localWishlist[`ac-ipad-${row.sku || i}`]
+                                    localWishlist[`ac-ipad-${activeSku || row.sku || i}`]
                                       ? 'bg-rose-50 border-rose-200 text-rose-600'
                                       : 'bg-white hover:bg-zinc-50 text-[#1D1D1F] border-zinc-300'
                                   }`}
                                 >
-                                  <Heart className={`w-4 h-4 ${localWishlist[`ac-ipad-${row.sku || i}`] ? 'fill-current text-rose-500' : 'text-zinc-600'}`} />
-                                  <span>{localWishlist[`ac-ipad-${row.sku || i}`] ? 'Wishlisted' : 'Add to Wishlist'}</span>
+                                  <Heart className={`w-4 h-4 ${localWishlist[`ac-ipad-${activeSku || row.sku || i}`] ? 'fill-current text-rose-500' : 'text-zinc-600'}`} />
+                                  <span>{localWishlist[`ac-ipad-${activeSku || row.sku || i}`] ? 'Wishlisted' : 'Add to Wishlist'}</span>
                                 </button>
 
                                 <button
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleAddAppleCareToCart(row, i);
+                                    handleAddAppleCareToCart(activePlanRow, i);
                                   }}
                                   className="w-full bg-black hover:bg-zinc-900 active:scale-[0.98] text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
                                 >
@@ -1106,6 +1137,8 @@ export default function Ipad() {
                     <CleanProductImage
                       src={getProductImage(prod)}
                       alt={prod.name}
+                      className="max-h-[92%] max-w-[92%] object-contain group-hover:scale-110 transition-transform duration-500 select-none transform scale-115 sm:scale-125"
+                      containerClassName="w-full h-72 sm:h-80 bg-white rounded-2xl flex items-center justify-center p-2 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f0f0f2]"
                     />
 
                     {/* Title (Clean Product Name) */}

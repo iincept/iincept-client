@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import axiosClient from '../../services/axiosClient';
-import { 
-  ShieldCheck, 
-  Plus, 
-  Trash2, 
-  Loader2, 
-  Save, 
-  Upload, 
-  CheckCircle2, 
+import {
+  ShieldCheck,
+  Plus,
+  Trash2,
+  Loader2,
+  Save,
+  Upload,
+  CheckCircle2,
   AlertCircle,
   ArrowUp,
   ArrowDown,
+  ArrowUpToLine,
+  ArrowDownToLine,
   Tablet,
   Tag,
   FileText,
@@ -21,70 +23,93 @@ import {
 } from 'lucide-react';
 
 const DEFAULT_IPAD_ROWS = [
-  { 
-    model: 'iPad / iPad mini', 
-    title: 'AppleCare+ for iPad / iPad mini', 
-    description: '2 Years Apple-certified coverage for iPad & iPad mini. Peace of mind for what\'s next.', 
-    sku: 'AC-IPAD-STD', 
-    mrp: '₹9,900.00', 
-    discount: '10% OFF', 
-    salePrice: '₹8,900.00', 
-    monthly: '₹449.00', 
-    yearly: '₹8,900.00', 
-    image: '/ipad_nav/ipad.png', 
-    isActive: true 
+
+  {
+    model: 'iPad Air 11″',
+    title: 'AppleCare+ for iPad Air 11″',
+    description: '2 Years Apple-certified coverage for iPad Air 11″. Peace of mind for what\'s next.',
+    description1yr: '1 Year Apple-certified coverage for iPad Air 11″.',
+    description2yr: '2 Years Apple-certified coverage for iPad Air 11″.',
+    sku: 'AC-IPAD-AIR-11',
+    sku1yr: 'DGVA2HN/A',
+    sku2yr: 'SCV93HN/A',
+    mrp: '₹10,900.00',
+    mrp1yr: '₹3,999.00',
+    mrp2yr: '₹7,900.00',
+    discount: '18% OFF',
+    discount1yr: '18% OFF',
+    discount2yr: '18% OFF',
+    image: '/ipad_nav/ipad_air.png',
+    isActive: true
   },
-  { 
-    model: 'iPad Air 11″', 
-    title: 'AppleCare+ for iPad Air 11″', 
-    description: '2 Years Apple-certified coverage for iPad Air 11″. Peace of mind for what\'s next.', 
-    sku: 'AC-IPAD-AIR-11', 
-    mrp: '₹10,900.00', 
-    discount: '9% OFF', 
-    salePrice: '₹9,900.00', 
-    monthly: '₹499.00', 
-    yearly: '₹9,900.00', 
-    image: '/ipad_nav/ipad_air.png', 
-    isActive: true 
+  {
+    model: 'iPad Air 13″',
+    title: 'AppleCare+ for iPad Air 13″',
+    description: '2 Years Apple-certified coverage for iPad Air 13″. Peace of mind for what\'s next.',
+    description1yr: '1 Year Apple-certified coverage for iPad Air 13″.',
+    description2yr: '2 Years Apple-certified coverage for iPad Air 13″.',
+    sku: 'AC-IPAD-AIR-13',
+    sku1yr: 'AC-IPAD-AIR13-1YR',
+    sku2yr: 'AC-IPAD-AIR13-2YR',
+    mrp: '₹12,900.00',
+    mrp1yr: '₹7,900.00',
+    mrp2yr: '₹12,900.00',
+    discount: '8% OFF',
+    discount1yr: '12% OFF',
+    discount2yr: '8% OFF',
+    salePrice: '₹11,900.00',
+    salePrice1yr: '₹6,900.00',
+    salePrice2yr: '₹11,900.00',
+    monthly: '₹599.00',
+    yearly: '₹11,900.00',
+    image: '/ipad_nav/ipad_air.png',
+    isActive: true
   },
-  { 
-    model: 'iPad Air 13″', 
-    title: 'AppleCare+ for iPad Air 13″', 
-    description: '2 Years Apple-certified coverage for iPad Air 13″. Peace of mind for what\'s next.', 
-    sku: 'AC-IPAD-AIR-13', 
-    mrp: '₹12,900.00', 
-    discount: '8% OFF', 
-    salePrice: '₹11,900.00', 
-    monthly: '₹599.00', 
-    yearly: '₹11,900.00', 
-    image: '/ipad_nav/ipad_air.png', 
-    isActive: true 
+  {
+    model: 'iPad Pro 11″',
+    title: 'AppleCare+ for iPad Pro 11″',
+    description: '2 Years Apple-certified coverage for iPad Pro 11″. Peace of mind for what\'s next.',
+    description1yr: '1 Year Apple-certified coverage for iPad Pro 11″.',
+    description2yr: '2 Years Apple-certified coverage for iPad Pro 11″.',
+    sku: 'AC-IPAD-PRO-11',
+    sku1yr: 'AC-IPAD-PRO11-1YR',
+    sku2yr: 'AC-IPAD-PRO11-2YR',
+    mrp: '₹19,900.00',
+    mrp1yr: '₹11,900.00',
+    mrp2yr: '₹19,900.00',
+    discount: '10% OFF',
+    discount1yr: '8% OFF',
+    discount2yr: '10% OFF',
+    salePrice: '₹17,900.00',
+    salePrice1yr: '₹10,900.00',
+    salePrice2yr: '₹17,900.00',
+    monthly: '₹899.00',
+    yearly: '₹17,900.00',
+    image: '/ipad_nav/ipad_pro.png',
+    isActive: true
   },
-  { 
-    model: 'iPad Pro 11″', 
-    title: 'AppleCare+ for iPad Pro 11″', 
-    description: '2 Years Apple-certified coverage for iPad Pro 11″. Peace of mind for what\'s next.', 
-    sku: 'AC-IPAD-PRO-11', 
-    mrp: '₹19,900.00', 
-    discount: '10% OFF', 
-    salePrice: '₹17,900.00', 
-    monthly: '₹899.00', 
-    yearly: '₹17,900.00', 
-    image: '/ipad_nav/ipad_pro.png', 
-    isActive: true 
-  },
-  { 
-    model: 'iPad Pro 13″', 
-    title: 'AppleCare+ for iPad Pro 13″', 
-    description: '2 Years Apple-certified coverage for iPad Pro 13″. Peace of mind for what\'s next.', 
-    sku: 'AC-IPAD-PRO-13', 
-    mrp: '₹21,900.00', 
-    discount: '10% OFF', 
-    salePrice: '₹19,900.00', 
-    monthly: '₹999.00', 
-    yearly: '₹19,900.00', 
-    image: '/ipad_nav/ipad_pro.png', 
-    isActive: true 
+  {
+    model: 'iPad Pro 13″',
+    title: 'AppleCare+ for iPad Pro 13″',
+    description: '2 Years Apple-certified coverage for iPad Pro 13″. Peace of mind for what\'s next.',
+    description1yr: '1 Year Apple-certified coverage for iPad Pro 13″.',
+    description2yr: '2 Years Apple-certified coverage for iPad Pro 13″.',
+    sku: 'AC-IPAD-PRO-13',
+    sku1yr: 'AC-IPAD-PRO13-1YR',
+    sku2yr: 'AC-IPAD-PRO13-2YR',
+    mrp: '₹21,900.00',
+    mrp1yr: '₹13,900.00',
+    mrp2yr: '₹21,900.00',
+    discount: '10% OFF',
+    discount1yr: '7% OFF',
+    discount2yr: '10% OFF',
+    salePrice: '₹19,900.00',
+    salePrice1yr: '₹12,900.00',
+    salePrice2yr: '₹19,900.00',
+    monthly: '₹999.00',
+    yearly: '₹19,900.00',
+    image: '/ipad_nav/ipad_pro.png',
+    isActive: true
   }
 ];
 
@@ -97,7 +122,7 @@ export default function IpadAppleCareManager() {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-    } catch (e) {}
+    } catch (e) { }
     return DEFAULT_IPAD_ROWS;
   });
   const [headerTitle, setHeaderTitle] = useState(() => {
@@ -137,17 +162,27 @@ export default function IpadAppleCareManager() {
           try {
             localStorage.setItem('iincept_ipad_applecare_title_v2', hTitle);
             localStorage.setItem('iincept_ipad_applecare_duration_v2', dLabel);
-          } catch (e) {}
+          } catch (e) { }
 
           if (ipadTable.rows && ipadTable.rows.length > 0) {
             const mapped = ipadTable.rows.map(r => ({
               model: r.model || '',
               title: r.title || '',
               description: r.description || '',
+              description1yr: r.description1yr || '',
+              description2yr: r.description2yr || r.description || '',
               sku: r.sku || '',
+              sku1yr: r.sku1yr || '',
+              sku2yr: r.sku2yr || r.sku || '',
               mrp: r.mrp || '',
+              mrp1yr: r.mrp1yr || '',
+              mrp2yr: r.mrp2yr || r.mrp || '',
               discount: r.discount || '',
+              discount1yr: r.discount1yr || '',
+              discount2yr: r.discount2yr || r.discount || '',
               salePrice: r.salePrice || r.yearly || '',
+              salePrice1yr: r.salePrice1yr || '',
+              salePrice2yr: r.salePrice2yr || r.salePrice || r.yearly || '',
               monthly: r.monthly || '',
               yearly: r.yearly || r.salePrice || '',
               image: r.image ?? '',
@@ -156,7 +191,7 @@ export default function IpadAppleCareManager() {
             try {
               localStorage.setItem('iincept_admin_ipad_applecare_rows_v2', JSON.stringify(mapped));
               localStorage.setItem('iincept_ipad_applecare_rows_v2', JSON.stringify(mapped.filter(r => r.isActive !== false)));
-            } catch (e) {}
+            } catch (e) { }
             setIpadRows(mapped);
           }
         }
@@ -187,12 +222,16 @@ export default function IpadAppleCareManager() {
     setTimeout(() => setMessage(null), 4000);
   };
 
-  const handleUpdateRow = (index, field, value) => {
+  const handleUpdateRow = (index, fieldOrObject, value) => {
     setIpadRows(prev => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
-      if (field === 'salePrice') updated[index].yearly = value;
-      if (field === 'yearly' && !updated[index].salePrice) updated[index].salePrice = value;
+      if (typeof fieldOrObject === 'object' && fieldOrObject !== null) {
+        updated[index] = { ...updated[index], ...fieldOrObject };
+      } else {
+        updated[index] = { ...updated[index], [fieldOrObject]: value };
+        if (fieldOrObject === 'salePrice') updated[index].yearly = value;
+        if (fieldOrObject === 'yearly' && !updated[index].salePrice) updated[index].salePrice = value;
+      }
       return updated;
     });
   };
@@ -218,10 +257,10 @@ export default function IpadAppleCareManager() {
 
   const handleDeleteRow = async (index) => {
     if (!window.confirm('Are you sure you want to remove this iPad AppleCare product?')) return;
-    
+
     const updatedRows = ipadRows.filter((_, i) => i !== index);
     setIpadRows(updatedRows);
-    
+
     try {
       let updatedTables = [...pricingTables];
       const ipadTableIndex = updatedTables.findIndex(t => t.categoryKey === 'ipad');
@@ -237,10 +276,20 @@ export default function IpadAppleCareManager() {
           model: r.model || '',
           title: r.title || '',
           description: r.description || '',
+          description1yr: r.description1yr || '',
+          description2yr: r.description2yr || '',
           sku: r.sku || '',
+          sku1yr: r.sku1yr || '',
+          sku2yr: r.sku2yr || '',
           mrp: r.mrp || '',
+          mrp1yr: r.mrp1yr || '',
+          mrp2yr: r.mrp2yr || '',
           discount: r.discount || '',
+          discount1yr: r.discount1yr || '',
+          discount2yr: r.discount2yr || '',
           salePrice: r.salePrice || r.yearly || '',
+          salePrice1yr: r.salePrice1yr || '',
+          salePrice2yr: r.salePrice2yr || '',
           monthly: r.monthly || '',
           yearly: r.yearly || r.salePrice || '',
           image: r.image ?? '',
@@ -259,7 +308,7 @@ export default function IpadAppleCareManager() {
       try {
         localStorage.setItem('iincept_admin_ipad_applecare_rows_v2', JSON.stringify(newIpadTable.rows));
         localStorage.setItem('iincept_ipad_applecare_rows_v2', JSON.stringify(newIpadTable.rows.filter(r => r.isActive !== false)));
-      } catch (e) {}
+      } catch (e) { }
 
       showMessage('success', 'iPad product deleted permanently!');
     } catch (err) {
@@ -269,6 +318,22 @@ export default function IpadAppleCareManager() {
   };
 
   const handleMoveRow = (index, direction) => {
+    if (direction === 'first') {
+      setIpadRows(prev => {
+        const updated = [...prev];
+        const [item] = updated.splice(index, 1);
+        return [item, ...updated];
+      });
+      return;
+    }
+    if (direction === 'last') {
+      setIpadRows(prev => {
+        const updated = [...prev];
+        const [item] = updated.splice(index, 1);
+        return [...updated, item];
+      });
+      return;
+    }
     const targetIdx = direction === 'up' ? index - 1 : index + 1;
     if (targetIdx < 0 || targetIdx >= ipadRows.length) return;
     setIpadRows(prev => {
@@ -322,10 +387,20 @@ export default function IpadAppleCareManager() {
           model: r.model || '',
           title: r.title || '',
           description: r.description || '',
+          description1yr: r.description1yr || '',
+          description2yr: r.description2yr || '',
           sku: r.sku || '',
+          sku1yr: r.sku1yr || '',
+          sku2yr: r.sku2yr || '',
           mrp: r.mrp || '',
+          mrp1yr: r.mrp1yr || '',
+          mrp2yr: r.mrp2yr || '',
           discount: r.discount || '',
+          discount1yr: r.discount1yr || '',
+          discount2yr: r.discount2yr || '',
           salePrice: r.salePrice || r.yearly || '',
+          salePrice1yr: r.salePrice1yr || '',
+          salePrice2yr: r.salePrice2yr || '',
           monthly: r.monthly || '',
           yearly: r.yearly || r.salePrice || '',
           image: r.image ?? '',
@@ -348,7 +423,7 @@ export default function IpadAppleCareManager() {
         localStorage.setItem('iincept_ipad_applecare_rows_v2', JSON.stringify(newIpadTable.rows.filter(r => r.isActive !== false)));
         localStorage.setItem('iincept_ipad_applecare_title_v2', headerTitle);
         localStorage.setItem('iincept_ipad_applecare_duration_v2', durationLabel);
-      } catch (e) {}
+      } catch (e) { }
 
       if (res.data?.appleCarePricingTables) {
         setPricingTables(res.data.appleCarePricingTables);
@@ -412,9 +487,8 @@ export default function IpadAppleCareManager() {
 
       {/* Message Toast */}
       {message && (
-        <div className={`p-4 rounded-xl flex items-center gap-3 border text-sm font-medium ${
-          message.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
-        }`}>
+        <div className={`p-4 rounded-xl flex items-center gap-3 border text-sm font-medium ${message.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
+          }`}>
           {message.type === 'success' ? <CheckCircle2 className="h-5 w-5 shrink-0" /> : <AlertCircle className="h-5 w-5 shrink-0" />}
           <span>{message.text}</span>
         </div>
@@ -462,15 +536,24 @@ export default function IpadAppleCareManager() {
         <div className="p-4 sm:p-6 space-y-6">
           {ipadRows.map((row, idx) => (
             <div key={idx} className="p-5 bg-white border border-zinc-200/80 rounded-2xl space-y-4 shadow-xs transition-all hover:border-zinc-300 hover:shadow-sm">
-              
+
               {/* Row Header */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-200/80 pb-4">
-                
+
                 {/* Left: Move & Image & Model Title */}
                 <div className="flex items-center gap-3.5 flex-1 min-w-0">
                   <div className="flex items-center gap-1 shrink-0">
                     <span className="text-xs font-bold text-zinc-400 w-5">{idx + 1}.</span>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleMoveRow(idx, 'first')}
+                        disabled={idx === 0}
+                        className="p-1 hover:bg-zinc-200 text-zinc-600 rounded disabled:opacity-30 cursor-pointer border-0"
+                        title="Move to First (Top)"
+                      >
+                        <ArrowUpToLine className="h-3.5 w-3.5" />
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleMoveRow(idx, 'up')}
@@ -489,11 +572,20 @@ export default function IpadAppleCareManager() {
                       >
                         <ArrowDown className="h-3.5 w-3.5" />
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveRow(idx, 'last')}
+                        disabled={idx === ipadRows.length - 1}
+                        className="p-1 hover:bg-zinc-200 text-zinc-600 rounded disabled:opacity-30 cursor-pointer border-0"
+                        title="Move to Last (Bottom)"
+                      >
+                        <ArrowDownToLine className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   </div>
 
                   {/* Thumbnail Image */}
-                  <div 
+                  <div
                     className="bg-white rounded-xl border border-zinc-200 flex items-center justify-center overflow-hidden p-1 shrink-0 relative"
                     style={{ width: '56px', height: '56px', minWidth: '56px', minHeight: '56px', maxWidth: '56px', maxHeight: '56px' }}
                   >
@@ -533,7 +625,7 @@ export default function IpadAppleCareManager() {
                   </div>
                 </div>
 
-                  {/* Right Actions: Upload Image & Remove Image & Active Switch & Delete */}
+                {/* Right Actions: Upload Image & Remove Image & Active Switch & Delete */}
                 <div className="flex items-center gap-3 shrink-0">
                   <label className="relative inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white hover:bg-zinc-100 text-zinc-700 text-xs font-semibold rounded-xl cursor-pointer border border-zinc-200 transition-colors">
                     <Upload className="h-3.5 w-3.5 text-[#0071e3]" />
@@ -565,15 +657,13 @@ export default function IpadAppleCareManager() {
                   <button
                     type="button"
                     onClick={() => handleUpdateRow(idx, 'isActive', !row.isActive)}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      row.isActive !== false ? 'bg-[#0071e3]' : 'bg-zinc-300'
-                    }`}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${row.isActive !== false ? 'bg-[#0071e3]' : 'bg-zinc-300'
+                      }`}
                     title={row.isActive !== false ? 'Model Active' : 'Model Hidden'}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        row.isActive !== false ? 'translate-x-5' : 'translate-x-0'
-                      }`}
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${row.isActive !== false ? 'translate-x-5' : 'translate-x-0'
+                        }`}
                     />
                   </button>
 
@@ -588,48 +678,13 @@ export default function IpadAppleCareManager() {
                 </div>
               </div>
 
-              {/* Duration Plan Selector Bar for 1-Year vs 2-Year Plan details */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-zinc-50 border border-zinc-200/80 p-3 rounded-2xl mb-4 gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-zinc-600">Select Plan Duration to Edit:</span>
-                  <div className="inline-flex p-1 bg-zinc-200/80 rounded-xl">
-                    <button
-                      type="button"
-                      onClick={() => handleUpdateRow(idx, 'activePlanTab', '1yr')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border-0 ${
-                        row.activePlanTab === '1yr'
-                          ? 'bg-[#0071e3] text-white shadow-xs'
-                          : 'text-zinc-700 hover:text-zinc-900 bg-transparent'
-                      }`}
-                    >
-                      1-Year Plan Specs
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleUpdateRow(idx, 'activePlanTab', '2yr')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border-0 ${
-                        row.activePlanTab !== '1yr'
-                          ? 'bg-[#0071e3] text-white shadow-xs'
-                          : 'text-zinc-700 hover:text-zinc-900 bg-transparent'
-                      }`}
-                    >
-                      2-Year Plan Specs
-                    </button>
-                  </div>
-                </div>
-                <span className="text-xs font-bold px-3 py-1 bg-blue-50 text-[#0071e3] rounded-full border border-blue-100">
-                  Editing: {row.activePlanTab === '1yr' ? '1 Year Coverage Plan' : '2 Years Coverage Plan'}
-                </span>
-              </div>
-
-              {/* Form Input Fields Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                
+              {/* Common Product Info Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 bg-zinc-50 p-4 rounded-xl border border-zinc-200/60 mb-4">
                 {/* 1. Model Name */}
                 <div>
                   <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
                     <Tag className="w-3.5 h-3.5 text-[#0071e3]" />
-                    Model / Title Name
+                    Model Name
                   </label>
                   <input
                     type="text"
@@ -655,127 +710,79 @@ export default function IpadAppleCareManager() {
                   />
                 </div>
 
-                {/* 3. SKU */}
+                {/* 3. Image URL */}
                 <div>
-                  <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
-                    <Barcode className="w-3.5 h-3.5 text-[#0071e3]" />
-                    SKU Code ({row.activePlanTab === '1yr' ? '1-Yr' : '2-Yr'})
-                  </label>
-                  <input
-                    type="text"
-                    value={row.activePlanTab === '1yr' ? (row.sku1yr || '') : (row.sku2yr || row.sku || '')}
-                    onChange={(e) => {
-                      if (row.activePlanTab === '1yr') handleUpdateRow(idx, 'sku1yr', e.target.value);
-                      else {
-                        handleUpdateRow(idx, 'sku2yr', e.target.value);
-                        handleUpdateRow(idx, 'sku', e.target.value);
-                      }
-                    }}
-                    placeholder={row.activePlanTab === '1yr' ? "e.g. AC-IPAD-AIR-11-1YR" : "e.g. AC-IPAD-AIR-11-2YR"}
-                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
-                  />
-                </div>
-
-                {/* 4. MRP */}
-                <div>
-                  <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
-                    <DollarSign className="w-3.5 h-3.5 text-zinc-500" />
-                    MRP Price ({row.activePlanTab === '1yr' ? '1-Yr' : '2-Yr'})
-                  </label>
-                  <input
-                    type="text"
-                    value={row.activePlanTab === '1yr' ? (row.mrp1yr || '') : (row.mrp2yr || row.mrp || '')}
-                    onChange={(e) => {
-                      if (row.activePlanTab === '1yr') handleUpdateRow(idx, 'mrp1yr', e.target.value);
-                      else {
-                        handleUpdateRow(idx, 'mrp2yr', e.target.value);
-                        handleUpdateRow(idx, 'mrp', e.target.value);
-                      }
-                    }}
-                    placeholder={row.activePlanTab === '1yr' ? "e.g. ₹5,900.00" : "e.g. ₹10,900.00"}
-                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
-                  />
-                </div>
-
-                {/* 5. Discount */}
-                <div>
-                  <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
-                    <Percent className="w-3.5 h-3.5 text-emerald-600" />
-                    Discount ({row.activePlanTab === '1yr' ? '1-Yr' : '2-Yr'})
-                  </label>
-                  <input
-                    type="text"
-                    value={row.activePlanTab === '1yr' ? (row.discount1yr || '') : (row.discount2yr || row.discount || '')}
-                    onChange={(e) => {
-                      if (row.activePlanTab === '1yr') handleUpdateRow(idx, 'discount1yr', e.target.value);
-                      else {
-                        handleUpdateRow(idx, 'discount2yr', e.target.value);
-                        handleUpdateRow(idx, 'discount', e.target.value);
-                      }
-                    }}
-                    placeholder={row.activePlanTab === '1yr' ? "e.g. 17% OFF" : "e.g. 9% OFF"}
-                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
-                  />
-                </div>
-
-                {/* 6. Sale Price */}
-                <div>
-                  <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
-                    <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
-                    Final Sale Price ({row.activePlanTab === '1yr' ? '1-Yr' : '2-Yr'})
-                  </label>
-                  <input
-                    type="text"
-                    value={row.activePlanTab === '1yr' ? (row.salePrice1yr || '') : (row.salePrice2yr || row.salePrice || row.yearly || '')}
-                    onChange={(e) => {
-                      if (row.activePlanTab === '1yr') handleUpdateRow(idx, 'salePrice1yr', e.target.value);
-                      else {
-                        handleUpdateRow(idx, 'salePrice2yr', e.target.value);
-                        handleUpdateRow(idx, 'salePrice', e.target.value);
-                        handleUpdateRow(idx, 'yearly', e.target.value);
-                      }
-                    }}
-                    placeholder={row.activePlanTab === '1yr' ? "e.g. ₹4,900.00" : "e.g. ₹9,900.00"}
-                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-bold text-emerald-700 focus:outline-none focus:border-[#0071e3]"
-                  />
-                </div>
-
-                {/* 7. Image URL */}
-                <div className="sm:col-span-2 md:col-span-3">
                   <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
                     <Upload className="w-3.5 h-3.5 text-zinc-500" />
-                    Product Image URL / Uploaded Asset Path
+                    Product Image URL
                   </label>
                   <input
                     type="text"
                     value={row.image || ''}
                     onChange={(e) => handleUpdateRow(idx, 'image', e.target.value)}
                     placeholder="e.g. /ipad_nav/ipad_air.png"
-                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-mono text-zinc-800 focus:outline-none focus:border-[#0071e3]"
+                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
                   />
                 </div>
+              </div>
 
-                {/* 8. Description */}
-                <div className="sm:col-span-2 md:col-span-3">
-                  <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
-                    <FileText className="w-3.5 h-3.5 text-zinc-500" />
-                    Card Description Paragraph ({row.activePlanTab === '1yr' ? '1-Year Coverage' : '2-Year Coverage'})
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={row.activePlanTab === '1yr' ? (row.description1yr || '') : (row.description2yr || row.description || '')}
-                    onChange={(e) => {
-                      if (row.activePlanTab === '1yr') handleUpdateRow(idx, 'description1yr', e.target.value);
-                      else {
-                        handleUpdateRow(idx, 'description2yr', e.target.value);
-                        handleUpdateRow(idx, 'description', e.target.value);
-                      }
-                    }}
-                    placeholder={row.activePlanTab === '1yr' ? "1 Year Apple-certified coverage for iPad. Technical support & repairs." : "2 Years Apple-certified coverage for iPad. Unlimited accidental damage protection."}
-                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-medium text-zinc-800 focus:outline-none focus:border-[#0071e3]"
-                  />
+              {/* 2-YEAR COVERAGE PLAN SPECS */}
+              <div className="p-4 bg-[#F7F7F9] border border-zinc-200/80 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between border-b border-zinc-200/60 pb-2">
+                  <span className="text-xs font-extrabold uppercase text-[#FF2D55] tracking-wider flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#FF2D55]"></span>
+                    2-Year Plan Specs (AppleCare+)
+                  </span>
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 bg-rose-50 text-[#FF2D55] rounded-full border border-rose-100">
+                    2-Year Coverage
+                  </span>
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-700 mb-1">SKU Code</label>
+                    <input
+                      type="text"
+                      value={row.sku2yr || row.sku || ''}
+                      onChange={(e) => handleUpdateRow(idx, { sku2yr: e.target.value, sku: e.target.value })}
+                      placeholder="e.g. SCV93HN/A"
+                      className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-mono font-semibold text-zinc-900 focus:outline-none focus:border-[#FF2D55]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-700 mb-1">Final Sale Price</label>
+                    <input
+                      type="text"
+                      value={row.salePrice2yr || row.salePrice || row.yearly || ''}
+                      onChange={(e) => handleUpdateRow(idx, { salePrice2yr: e.target.value, salePrice: e.target.value, yearly: e.target.value })}
+                      placeholder="e.g. ₹7,900.00"
+                      className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-bold text-emerald-700 focus:outline-none focus:border-[#FF2D55]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-700 mb-1">MRP Price</label>
+                    <input
+                      type="text"
+                      value={row.mrp2yr || row.mrp || ''}
+                      onChange={(e) => handleUpdateRow(idx, { mrp2yr: e.target.value, mrp: e.target.value })}
+                      placeholder="e.g. ₹9,900.00"
+                      className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#FF2D55]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-700 mb-1">Discount</label>
+                    <input
+                      type="text"
+                      value={row.discount2yr || row.discount || ''}
+                      onChange={(e) => handleUpdateRow(idx, { discount2yr: e.target.value, discount: e.target.value })}
+                      placeholder="e.g. 18% OFF"
+                      className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#FF2D55]"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           ))}

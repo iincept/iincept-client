@@ -12,14 +12,33 @@ const transformWishlistItem = (p) => {
   };
 };
 
+const isAuthenticated = () => !!localStorage.getItem('token');
+
 export const fetchWishlist = createAsyncThunk(
   'wishlist/fetchWishlist',
   async (_, thunkAPI) => {
+    const localItems = localStorage.getItem('wishlistItems')
+      ? JSON.parse(localStorage.getItem('wishlistItems'))
+      : [];
+
+    if (!isAuthenticated()) {
+      return localItems;
+    }
+
     try {
       const data = await wishlistApi.getWishlist();
       const transformed = (data.products || []).map(transformWishlistItem);
-      localStorage.setItem('wishlistItems', JSON.stringify(transformed));
-      return transformed;
+
+      const customItems = localItems.filter(x => x.isAppleCare || (x.id && String(x.id).startsWith('ac-')));
+      const combined = [...transformed];
+      for (const item of customItems) {
+        if (!combined.some(c => (c.id || c._id) === (item.id || item._id))) {
+          combined.push(item);
+        }
+      }
+
+      localStorage.setItem('wishlistItems', JSON.stringify(combined));
+      return combined;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
     }
@@ -29,16 +48,56 @@ export const fetchWishlist = createAsyncThunk(
 export const addToWishlist = createAsyncThunk(
   'wishlist/addToWishlist',
   async (item, thunkAPI) => {
-    try {
-      const productId = item.id || item._id || item.productId;
-      if (!productId) {
-        throw new Error("Product ID is required to add to wishlist.");
+    const state = thunkAPI.getState().wishlist;
+    const currentItems = [...state.wishlistItems];
+
+    const targetObj = typeof item === 'object' ? item : { id: item };
+    const productId = targetObj.id || targetObj._id || targetObj.productId;
+
+    if (!productId) {
+      return thunkAPI.rejectWithValue("Product ID is required to add to wishlist.");
+    }
+
+    const isCustomItem = targetObj.isAppleCare || (productId && String(productId).startsWith('ac-')) || !/^[0-9a-fA-F]{24}$/.test(String(productId).split('-')[0]);
+
+    if (!isAuthenticated() || isCustomItem) {
+      const existIndex = currentItems.findIndex(x => (x.id || x._id) === productId);
+      let updated;
+      if (existIndex > -1) {
+        updated = currentItems.filter(x => (x.id || x._id) !== productId);
+      } else {
+        const newItem = {
+          id: productId,
+          name: targetObj.name || targetObj.title || 'AppleCare+ Plan',
+          title: targetObj.title || targetObj.name || 'AppleCare+ Plan',
+          price: targetObj.price || 0,
+          image: targetObj.image || '/applecare_official_hero.png',
+          category: 'AppleCare',
+          rating: 5.0,
+          isAppleCare: true,
+          sku: targetObj.sku || ''
+        };
+        updated = [...currentItems, newItem];
       }
+      localStorage.setItem('wishlistItems', JSON.stringify(updated));
+      return updated;
+    }
+
+    try {
       await wishlistApi.addToWishlist(productId);
       const data = await wishlistApi.getWishlist();
       const transformed = (data.products || []).map(transformWishlistItem);
-      localStorage.setItem('wishlistItems', JSON.stringify(transformed));
-      return transformed;
+
+      const customItems = currentItems.filter(x => x.isAppleCare || (x.id && String(x.id).startsWith('ac-')));
+      const combined = [...transformed];
+      for (const custom of customItems) {
+        if (!combined.some(c => (c.id || c._id) === (custom.id || custom._id))) {
+          combined.push(custom);
+        }
+      }
+
+      localStorage.setItem('wishlistItems', JSON.stringify(combined));
+      return combined;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
     }
@@ -48,12 +107,30 @@ export const addToWishlist = createAsyncThunk(
 export const removeFromWishlist = createAsyncThunk(
   'wishlist/removeFromWishlist',
   async (id, thunkAPI) => {
+    const state = thunkAPI.getState().wishlist;
+    const isCustomItem = String(id).startsWith('ac-') || !/^[0-9a-fA-F]{24}$/.test(String(id).split('-')[0]);
+
+    if (!isAuthenticated() || isCustomItem) {
+      const updated = state.wishlistItems.filter(x => (x.id || x._id) !== id);
+      localStorage.setItem('wishlistItems', JSON.stringify(updated));
+      return updated;
+    }
+
     try {
       await wishlistApi.removeFromWishlist(id);
       const data = await wishlistApi.getWishlist();
       const transformed = (data.products || []).map(transformWishlistItem);
-      localStorage.setItem('wishlistItems', JSON.stringify(transformed));
-      return transformed;
+
+      const customItems = state.wishlistItems.filter(x => x.isAppleCare || (x.id && String(x.id).startsWith('ac-')));
+      const combined = [...transformed];
+      for (const custom of customItems) {
+        if (custom.id !== id && !combined.some(c => (c.id || c._id) === (custom.id || custom._id))) {
+          combined.push(custom);
+        }
+      }
+
+      localStorage.setItem('wishlistItems', JSON.stringify(combined));
+      return combined;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
     }

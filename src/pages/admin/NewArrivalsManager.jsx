@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import axiosClient from '../../services/axiosClient';
+import { notifyAdminChange } from '../../services/liveSyncService';
 import { 
   Sparkles, 
   Plus, 
@@ -15,7 +17,6 @@ import {
   Image as ImageIcon, 
   Package
 } from 'lucide-react';
-import axiosClient from '../../services/axiosClient';
 
 export default function NewArrivalsManager() {
   const [loading, setLoading] = useState(false);
@@ -230,6 +231,7 @@ export default function NewArrivalsManager() {
       await axiosClient.put('/settings', {
         homeNewArrivals: newArrivals
       });
+      notifyAdminChange('products', { action: 'update_new_arrivals' });
       showSuccessMessage('New Arrivals list saved successfully!');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to save New Arrivals');

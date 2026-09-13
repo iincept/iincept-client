@@ -6,6 +6,7 @@ import { fetchProductById, fetchProducts, setCurrentProduct } from '../redux/pro
 import { addToCart } from '../redux/cartSlice';
 import Loader from '../components/Loader';
 import axiosClient from '../services/axiosClient';
+import { subscribeToLiveSync } from '../services/liveSyncService';
 
 // Fallback definitions removed in favor of real database records
 
@@ -18,11 +19,14 @@ export default function ProductDetails() {
   const { isAuthenticated } = useSelector((state) => state.auth);
 
   const [activeImage, setActiveImage] = useState('');
+  const [processedImage, setProcessedImage] = useState('');
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedStorage, setSelectedStorage] = useState('');
+
+
 
   const handleGalleryMouseMove = (e) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
@@ -106,14 +110,29 @@ export default function ProductDetails() {
     }
   };
 
+
   useEffect(() => {
     if (id) {
+      if (currentProduct && (currentProduct._id !== id && currentProduct.id !== id && currentProduct.slug !== id)) {
+        dispatch(setCurrentProduct(null));
+      }
+      setActiveImage('');
+      setProcessedImage('');
+      setSelectedColor(null);
+
       if (id.match(/^[0-9a-fA-F]{24}$/)) {
         dispatch(fetchProductById(id));
       } else {
-        dispatch(setCurrentProduct(null));
+        dispatch(fetchProducts());
       }
     }
+    const unsubscribe = subscribeToLiveSync(() => {
+      dispatch(fetchProducts());
+      if (id && id.match(/^[0-9a-fA-F]{24}$/)) {
+        dispatch(fetchProductById(id));
+      }
+    });
+    return () => unsubscribe();
   }, [id, dispatch]);
 
   useEffect(() => {
@@ -352,13 +371,13 @@ export default function ProductDetails() {
       price: 164900,
       priceStr: '₹1,64,900',
       category: 'iphone',
-      image: '/iphone17p_white.jpg',
-      images: ['/iphone17p_white.jpg'],
+      image: '/iphone_nav/iphone_18_pro.jpg',
+      images: ['/iphone_nav/iphone_18_pro.jpg'],
       description: 'The pinnacle of mobile engineering and Apple Intelligence.',
       colors: [
-        { name: 'Burgundy', value: '#4a1525', image: '/iphone17p_white.jpg' },
-        { name: 'Glacier', value: '#e4effb', image: '/iphone17p_white.jpg' },
-        { name: 'Silver', value: '#e5e6e8', image: '/iphone17p_white.jpg' }
+        { name: 'Burgundy', value: '#4a1525', image: '/iphone_nav/iphone_18_pro.jpg' },
+        { name: 'Glacier', value: '#e4effb', image: '/iphone_nav/iphone_18_pro.jpg' },
+        { name: 'Silver', value: '#e5e6e8', image: '/iphone_nav/iphone_18_pro.jpg' }
       ],
       storage: ['256GB', '512GB', '1TB', '2TB'],
       variants: [
@@ -390,103 +409,111 @@ export default function ProductDetails() {
         { storage: '1TB', price: 349900 }
       ],
       rating: 5.0
+    },
+    'iphone-duo': {
+      id: 'default-iphone-duo',
+      _id: 'default-iphone-duo',
+      title: 'iPhone Duo',
+      name: 'iPhone Duo',
+      price: 299900,
+      priceStr: '₹2,99,900',
+      category: 'iphone',
+      image: '/iphone_nav/dropdown_iphone_duo.png',
+      images: ['/iphone_nav/dropdown_iphone_duo.png'],
+      description: 'Revolutionary dual display iPhone experience.',
+      colors: [
+        { name: 'Star White', value: '#fafafa', image: '/iphone_nav/dropdown_iphone_duo.png' },
+        { name: 'Night Sky', value: '#353e4a', image: '/iphone_nav/dropdown_iphone_duo.png' }
+      ],
+      storage: ['512GB', '1TB'],
+      variants: [
+        { storage: '512GB', price: 299900 },
+        { storage: '1TB', price: 349900 }
+      ],
+      rating: 5.0
+    },
+    'iphone_duo': {
+      id: 'default-iphone-duo',
+      _id: 'default-iphone-duo',
+      title: 'iPhone Duo',
+      name: 'iPhone Duo',
+      price: 299900,
+      priceStr: '₹2,99,900',
+      category: 'iphone',
+      image: '/iphone_nav/dropdown_iphone_duo.png',
+      images: ['/iphone_nav/dropdown_iphone_duo.png'],
+      description: 'Revolutionary dual display iPhone experience.',
+      colors: [
+        { name: 'Star White', value: '#fafafa', image: '/iphone_nav/dropdown_iphone_duo.png' },
+        { name: 'Night Sky', value: '#353e4a', image: '/iphone_nav/dropdown_iphone_duo.png' }
+      ],
+      storage: ['512GB', '1TB'],
+      variants: [
+        { storage: '512GB', price: 299900 },
+        { storage: '1TB', price: 349900 }
+      ],
+      rating: 5.0
     }
   };
+
+  // Synchronously reset image and selection state when route param `id` changes
+  const [prevId, setPrevId] = useState(id);
+  if (id !== prevId) {
+    setPrevId(id);
+    setActiveImage('');
+    setProcessedImage('');
+    setSelectedColor(null);
+  }
 
   const getProductFromStore = (prodId) => {
     if (!prodId) return null;
 
-    // 1. Direct _id / id match in products array
     if (products && products.length > 0) {
-      const directMatch = products.find(p => (p._id || p.id) === prodId);
+      // 1. Direct _id, id, or slug match in products array
+      const directMatch = products.find(p => (p._id === prodId || p.id === prodId || p.slug === prodId));
       if (directMatch) return directMatch;
-    }
 
-    // 2. Mock map or title substring match
-    const mockIdMap = {
-      'iphone-18-pro': 'iPhone 18 Pro',
-      'default-iphone-18-pro': 'iPhone 18 Pro',
-      'iphone-duo': 'iPhone Duo',
-      'default-iphone-duo': 'iPhone Duo',
-      'ip17pm': 'iPhone 17 Pro Max',
-      'ip17p': 'iPhone 17 Pro',
-      'iphone-17-pro': 'iPhone 17 Pro',
-      'default-iphone-17-pro': 'iPhone 17 Pro',
-      'ipair': 'iPhone Air',
-      'iphone-air': 'iPhone Air',
-      'default-iphone-air': 'iPhone Air',
-      'ip17': 'iPhone 17',
-      'iphone-17': 'iPhone 17',
-      'default-iphone-17': 'iPhone 17',
-      'ip17e': 'iPhone 17e',
-      'iphone-17e': 'iPhone 17e',
-      'default-iphone-17e': 'iPhone 17e',
-      'ip16pm': 'iPhone 16 Pro Max',
-      'ip16p': 'iPhone 16 Pro',
-      'iphone-16-pro': 'iPhone 16 Pro',
-      'default-iphone-16-pro': 'iPhone 16 Pro',
-      'ip16': 'iPhone 16',
-      'iphone-16': 'iPhone 16',
-      'default-iphone-16': 'iPhone 16',
-      'ip15': 'iPhone 15',
-      'iphone-15': 'iPhone 15',
-      'default-iphone-15': 'iPhone 15',
-      'ipse': 'iPhone SE',
-      'iphone-se': 'iPhone SE',
-      'default-iphone-se': 'iPhone SE',
-      'mbneo': 'MacBook Neo',
-      'mac-neo-a18': 'MacBook Neo',
-      'mac-air-13-m5': 'MacBook Air',
-      'mac-pro-14-m5': 'MacBook Pro',
-      'ipadpro13': 'iPad Pro 13',
-      'ipad-pro-13-m4': 'iPad Pro',
-      'ipadair13': 'iPad Air',
-      'ipad-air-11-m2': 'iPad Air',
-      'ipad10': 'iPad 10',
-      'ipad-10th-gen': 'iPad',
-      'ipad-mini-a17': 'iPad mini',
-      'appletv4k': 'Apple TV 4K',
-      'homepodmini': 'HomePod mini',
-      'belkin3in1': 'Belkin UltraCharge',
-      'herschelsling': 'Herschel Cloud Sling',
-      'herscheltote': 'Herschel AirPods',
-      'watchultra2': 'Apple Watch Ultra',
-      'watchseries10': 'Apple Watch Series',
-      'watchse': 'Apple Watch SE',
-      'airpodsmax': 'AirPods Max',
-      'airpodspro2': 'AirPods Pro',
-      'airpods4': 'AirPods 4'
-    };
+      // Do not match aliases for 24-char MongoDB ObjectIds
+      if (prodId.match(/^[0-9a-fA-F]{24}$/)) {
+        return null;
+      }
 
-    const targetTitle = mockIdMap[prodId] || prodId.replace(/^default-/, '').replace(/-/g, ' ');
-    if (products && products.length > 0) {
+      // 2. Title substring match against real database products
+      const mockIdMap = {
+        'iphone-18-pro': 'iPhone 18 Pro',
+        'default-iphone-18-pro': 'iPhone 18 Pro',
+        'iphone-duo': 'iPhone Duo',
+        'default-iphone-duo': 'iPhone Duo',
+        'ip17pm': 'iPhone 17 Pro Max',
+        'ip17p': 'iPhone 17 Pro',
+        'iphone-17-pro': 'iPhone 17 Pro',
+        'ipair': 'iPhone Air',
+        'iphone-air': 'iPhone Air',
+        'ip17': 'iPhone 17',
+        'iphone-17': 'iPhone 17',
+        'ip17e': 'iPhone 17e',
+        'iphone-17e': 'iPhone 17e',
+        'ip16pm': 'iPhone 16 Pro Max',
+        'ip16p': 'iPhone 16 Pro',
+        'iphone-16-pro': 'iPhone 16 Pro',
+        'ip16': 'iPhone 16',
+        'iphone-16': 'iPhone 16',
+        'ip15': 'iPhone 15',
+        'iphone-15': 'iPhone 15',
+        'ipse': 'iPhone SE',
+        'iphone-se': 'iPhone SE'
+      };
+
+      const targetTitle = mockIdMap[prodId] || prodId.replace(/^default-/, '').replace(/-/g, ' ');
       const matchedProduct = products.find(p => {
         const pTitle = (p.title || p.name || '').toLowerCase();
         const tLower = targetTitle.toLowerCase();
-        return pTitle.includes(tLower) || tLower.includes(pTitle);
+        return pTitle === tLower || pTitle.includes(tLower) || tLower.includes(pTitle);
       });
       if (matchedProduct) return matchedProduct;
     }
 
-    // 3. Exact key match in FALLBACK_PRODUCTS_MAP
-    if (FALLBACK_PRODUCTS_MAP[prodId]) {
-      return FALLBACK_PRODUCTS_MAP[prodId];
-    }
-
-    const cleanKey = `default-${prodId.replace(/^default-/, '').toLowerCase()}`;
-    if (FALLBACK_PRODUCTS_MAP[cleanKey]) {
-      return FALLBACK_PRODUCTS_MAP[cleanKey];
-    }
-
-    // 4. Soft match in FALLBACK_PRODUCTS_MAP
-    const fallbackVals = Object.values(FALLBACK_PRODUCTS_MAP);
-    const softFallback = fallbackVals.find(p => {
-      const pTitle = (p.title || p.name || '').toLowerCase();
-      const tLower = targetTitle.toLowerCase();
-      return pTitle.includes(tLower) || tLower.includes(pTitle);
-    });
-
-    return softFallback || null;
+    return null;
   };
 
   const getCategoryGroup = (prod) => {
@@ -555,8 +582,106 @@ export default function ProductDetails() {
     return catId || catName || 'other';
   };
 
+  const isValidCurrentProduct = currentProduct && 
+    (currentProduct._id === id || currentProduct.id === id || currentProduct.slug === id);
+
   const localProduct = getProductFromStore(id);
-  const product = currentProduct || localProduct;
+  const product = isValidCurrentProduct ? currentProduct : localProduct;
+
+  useEffect(() => {
+    const rawTarget = activeImage || (product ? (colors[0]?.image || product.images?.[0] || product.image) : '');
+    if (!rawTarget) return;
+
+    let isMounted = true;
+    let targetSrc = rawTarget.trim();
+    if (targetSrc.startsWith('uploads/')) targetSrc = `/${targetSrc}`;
+
+    setProcessedImage(targetSrc);
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = targetSrc;
+
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        if (w === 0 || h === 0) return;
+
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(img, 0, 0);
+
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+
+        const samplePoints = [
+          [0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1],
+          [Math.floor(w / 2), 0], [0, Math.floor(h / 2)],
+          [w - 1, Math.floor(h / 2)], [Math.floor(w / 2), h - 1]
+        ];
+
+        let bgR = 0, bgG = 0, bgB = 0, validSamples = 0;
+        samplePoints.forEach(([x, y]) => {
+          const idx = (y * w + x) * 4;
+          if (data[idx + 3] > 200) {
+            bgR += data[idx];
+            bgG += data[idx + 1];
+            bgB += data[idx + 2];
+            validSamples++;
+          }
+        });
+
+        if (validSamples > 0) {
+          bgR = Math.round(bgR / validSamples);
+          bgG = Math.round(bgG / validSamples);
+          bgB = Math.round(bgB / validSamples);
+
+          // Clean off-white/light-grey background colors (> 180, e.g. #f5f5f7 or #f0f0f2)
+          if (bgR > 180 && bgG > 180 && bgB > 180) {
+            const tolerance = 45;
+            let modified = false;
+
+            for (let i = 0; i < data.length; i += 4) {
+              const r = data[i];
+              const g = data[i + 1];
+              const b = data[i + 2];
+              const a = data[i + 3];
+
+              if (a > 0) {
+                const diff = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
+                if (diff <= tolerance) {
+                  data[i + 3] = 0;
+                  modified = true;
+                } else if (diff <= tolerance + 25) {
+                  const factor = (diff - tolerance) / 25;
+                  data[i + 3] = Math.round(a * factor);
+                  modified = true;
+                }
+              }
+            }
+
+            if (modified && isMounted) {
+              ctx.putImageData(imgData, 0, 0);
+              setProcessedImage(canvas.toDataURL('image/png'));
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        // Fallback for CORS or canvas errors
+      }
+      if (isMounted) setProcessedImage(targetSrc);
+    };
+
+    img.onerror = () => {
+      if (isMounted) setProcessedImage(targetSrc);
+    };
+
+    return () => { isMounted = false; };
+  }, [activeImage, product]);
 
   const resolveColorValue = (cVal) => {
     if (!cVal) return '#cbd5e1';
@@ -825,8 +950,10 @@ export default function ProductDetails() {
         setActiveImage(imgs[0]);
       } else if (product.images && product.images.length > 0) {
         setActiveImage(product.images[0]);
+      } else if (product.image) {
+        setActiveImage(product.image);
       } else {
-        setActiveImage('/iphone17p_orange_close.jpg');
+        setActiveImage('');
       }
     }
   }, [selectedColor, product]);
@@ -1108,22 +1235,15 @@ export default function ProductDetails() {
   const totalPrice = finalUnitPrice * quantity;
 
   if (!product) {
-    if (loading) {
-      return <Loader message="Loading product details..." />;
-    }
     return (
-      <div className="flex flex-col items-center justify-center p-20 text-slate-400">
-        <ShieldAlert className="h-12 w-12 text-zinc-400 mb-3 animate-bounce" />
-        <h2 className="text-xl font-bold text-zinc-800">Product Not Found</h2>
-        <p className="text-sm text-zinc-550 mt-1">The product you are looking for does not exist in our database.</p>
-        <Link to="/shop" className="mt-6 text-xs font-bold bg-zinc-950 text-white px-5 py-2.5 rounded-xl hover:bg-zinc-850 transition-colors">
-          Explore Products
-        </Link>
+      <div className="page-smooth-enter min-h-[60vh] flex items-center justify-center">
+        <Loader message="Loading product details..." />
       </div>
     );
   }
 
   const handleAddToCart = () => {
+    if (!product) return;
     const colorName = selectedColor?.name || (colors[0]?.name || 'Standard');
     const activeVar = getActiveVariant();
     const partNum = activeVar?.partNumber || product.partNumber || product.modelNumber || '';
@@ -1148,7 +1268,7 @@ export default function ProductDetails() {
       id: `${id}-${selectedSize || 'std'}-${selectedStorage || 'std'}-${selectedRam || 'std'}-${glassVal || 'std'}-${selectedAppleCare ? 'ac' : 'noac'}-${colorName}`,
       name: `${cleanProductTitle(product.name || product.title)} (${nameDetails})`,
       price: finalUnitPrice,
-      image: activeImage,
+      image: activeImage || processedImage || colors[0]?.image || product.images?.[0] || product.image,
       quantity,
       size: selectedSize,
       storage: selectedStorage,
@@ -1192,10 +1312,6 @@ export default function ProductDetails() {
     const whatsappUrl = `https://wa.me/918607222417?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
   };
-
-  if (loading && !localProduct) {
-    return <Loader message="Loading product details..." />;
-  }
 
   const colorName = selectedColor?.name || (colors[0]?.name || 'Standard');
 
@@ -1261,7 +1377,7 @@ export default function ProductDetails() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-[#1D1D1F] font-sans pb-12">
+    <div className="min-h-screen bg-white text-[#1D1D1F] font-sans pb-12 page-smooth-enter">
 
       {/* Dynamic Style Sheet block to inject template layout styles */}
       <style dangerouslySetInnerHTML={{
@@ -1280,13 +1396,14 @@ export default function ProductDetails() {
 
         .gallery { position: sticky; top: 90px; align-self: start; }
         .gallery-main {
-          width: 100%; height: 460px; aspect-ratio: 1/1; border-radius: 18px; background: #ffffff;
+          width: 100%; height: 520px; aspect-ratio: 1/1; border-radius: 20px; background: #ffffff;
           display: flex; align-items: center; justify-content: center;
-          border: 1px solid var(--line); overflow: hidden; padding: 20px;
-          transition: background .3s ease;
+          border: 1px solid var(--line); overflow: hidden; padding: 10px;
+          transition: background .3s ease, border-color .3s ease;
         }
         .gallery-main img {
-          max-width: 90%; max-height: 90%; object-fit: contain; width: auto; height: auto; display: block; margin: 0 auto;
+          max-width: 98%; max-height: 98%; width: 95%; height: 95%; object-fit: contain; display: block; margin: 0 auto;
+          transition: opacity 0.35s ease-out, transform 0.35s ease-out;
         }
         .gallery-thumbs { display: flex; gap: 10px; margin-top: 14px; overflow-x: auto; padding-bottom: 4px; }
         .gthumb { width: 64px; height: 64px; shrink: 0; border-radius: 8px; border: 1px solid var(--line); background: #ffffff; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; flex-shrink: 0; }
@@ -1401,15 +1518,15 @@ export default function ProductDetails() {
               onMouseLeave={handleGalleryMouseLeave}
             >
               <img
-                src={activeImage || product.images?.[0] || '/iphone17p_orange.jpg'}
-                alt={product.name}
+                src={processedImage || activeImage || colors[0]?.image || product.images?.[0] || product.image || ''}
+                alt={product.name || product.title || ''}
                 className="mix-blend-multiply transition-transform duration-150 ease-out pointer-events-none"
                 style={{
-                  transform: isZoomed ? 'scale(2.4)' : 'scale(1)',
+                  transform: isZoomed ? 'scale(2.4)' : 'scale(1.22)',
                   transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`
                 }}
                 onError={(e) => {
-                  e.currentTarget.src = '/iphone17p_orange.jpg';
+                  e.currentTarget.style.opacity = '0.5';
                 }}
               />
               {isZoomed && (

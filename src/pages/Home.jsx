@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchProducts } from '../redux/productSlice';
 import axiosClient from '../services/axiosClient';
+import { subscribeToLiveSync } from '../services/liveSyncService';
 
 // Default Category Icons for the store strip
 const DEFAULT_CATEGORY_STRIP = [
@@ -197,6 +198,11 @@ export default function Home() {
   useEffect(() => {
     dispatch(fetchProducts());
     fetchSiteSettings();
+    const unsubscribe = subscribeToLiveSync(() => {
+      dispatch(fetchProducts());
+      fetchSiteSettings();
+    });
+    return () => unsubscribe();
   }, [dispatch]);
 
   useEffect(() => {

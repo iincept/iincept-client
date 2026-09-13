@@ -83,6 +83,18 @@ const router = createBrowserRouter([
         element: <Iphone />
       },
       {
+        path: 'iphone-duo',
+        element: <Navigate to="/iphone?search=iPhone%20Duo" replace />
+      },
+      {
+        path: 'iphone_duo',
+        element: <Navigate to="/iphone?search=iPhone%20Duo" replace />
+      },
+      {
+        path: 'iphone/duo',
+        element: <Navigate to="/iphone?search=iPhone%20Duo" replace />
+      },
+      {
         path: 'macbook',
         element: <Macbook />
       },

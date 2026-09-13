@@ -9,6 +9,7 @@ import { matchesProductSearch } from '../utils/searchUtils';
 import axiosClient from '../services/axiosClient';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 import CleanProductImage from '../components/CleanProductImage';
+import { subscribeToLiveSync } from '../services/liveSyncService';
 
 const MAC_SUB_NAV_ITEMS = [
   { name: 'MacBook Neo', query: 'MacBook Neo', image: '/mac_nav/macbook_neo.png', scale: 'scale-100' },
@@ -162,10 +163,20 @@ export default function Macbook() {
   // Local state for wishlisted items
   const [localWishlist, setLocalWishlist] = useState({});
 
+
   useEffect(() => {
     dispatch(fetchProducts());
     fetchNavSettings();
+    const unsubscribe = subscribeToLiveSync(() => {
+      dispatch(fetchProducts());
+      fetchNavSettings();
+    });
+    return () => unsubscribe();
   }, [dispatch]);
+
+  useEffect(() => {
+    setSelectedColors({});
+  }, [products]);
 
   useEffect(() => {
     setVisibleCount(6);
@@ -387,7 +398,7 @@ export default function Macbook() {
   };
 
   const getProductImage = (prod) => {
-    const selectedColorName = selectedColors[prod.id];
+    const selectedColorName = selectedColors[prod.id] || (prod.colors && prod.colors[0] ? (prod.colors[0].name || prod.colors[0].rawName || (typeof prod.colors[0] === 'string' ? prod.colors[0] : '')) : null);
     if (selectedColorName) {
       const targetNorm = selectedColorName.replace(/\s+/g, ' ').trim().toLowerCase();
 
@@ -770,7 +781,7 @@ export default function Macbook() {
                                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
                                   
                                   {/* LEFT COLUMN: Media Container Box */}
-                                  <div className="md:col-span-5 bg-[#F7F7F9] rounded-2xl p-4 sm:p-5 relative flex flex-col items-center justify-between min-h-[260px] sm:min-h-[280px] h-full border border-zinc-100/80">
+                                  <div className="md:col-span-5 bg-white group-hover:bg-[#f0f0f2] transition-colors duration-300 rounded-2xl p-4 sm:p-5 relative flex flex-col items-center justify-between min-h-[260px] sm:min-h-[280px] h-full border border-zinc-100/80">
                                     
                                     {/* Top Left Badge */}
                                     <div className="w-full flex items-center justify-start z-10 mb-1">
@@ -1053,6 +1064,8 @@ export default function Macbook() {
               <CleanProductImage
                 src={getProductImage(prod)}
                 alt={prod.name}
+                className="max-h-[92%] max-w-[92%] object-contain group-hover:scale-110 transition-transform duration-500 select-none transform scale-115 sm:scale-125"
+                containerClassName="w-full h-72 sm:h-80 bg-white rounded-2xl flex items-center justify-center p-2 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f0f0f2]"
               />
 
               {/* Title (Clean Product Name) */}
