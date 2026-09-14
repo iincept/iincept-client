@@ -491,6 +491,7 @@ export default function Navbar() {
       title: 'Explore Watch',
       mainLink: { label: 'Explore All Watch', path: '/watch' },
       items: [
+        { label: 'Apple Watch Series 12', path: '/watch?search=Series 12', query: 'Series 12' },
         { label: 'Apple Watch Series 10', path: '/watch?search=Series 10', query: 'Series 10' },
         { label: 'Apple Watch Ultra 2', path: '/watch?search=Ultra', query: 'Ultra' },
         { label: 'Apple Watch SE', path: '/watch?search=SE', query: 'SE' },
@@ -919,11 +920,16 @@ export default function Navbar() {
     'iPhone Air': { name: 'iPhone Air', price: 'Ultra Thin. From ₹89,900', image: '/iphone_category_v2.jpg' },
 
     // Watch
-    'Explore All Apple Watch': { name: 'Apple Watch', price: 'Browse Apple Watches', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/watch/home-img-1757682221_3904.jpg' },
-    'Apple Watch Series 11': { name: 'Apple Watch Series 11', price: 'Advanced fitness tracking. From ₹49,900', image: '/watch_category_uploaded.png' },
-    'Apple Watch SE 3': { name: 'Apple Watch SE 3', price: 'Essential features. From ₹29,900', image: '/watch_category_uploaded.png' },
-    'Apple Watch Ultra 3': { name: 'Apple Watch Ultra 3', price: 'Rugged capability. From ₹89,900', image: '/apple_watch_health.jpg' },
-    'Apple Watch Nike': { name: 'Apple Watch Nike', price: 'Sport bands & faces', image: '/watch_category_uploaded.png' },
+    'Explore All Apple Watch': { name: 'Apple Watch Lineup', price: 'Browse All Apple Watches', image: '/apple_watch_three_models.jpg' },
+    'Apple Watch Series 12': { name: 'Apple Watch Series 12', price: 'Advanced heart & health tracking. From ₹56,900', image: '/apple_watch_series_12.png' },
+    'Apple Watch Series 11': { name: 'Apple Watch Series 11', price: 'Advanced fitness tracking. From ₹49,900', image: '/apple_watch_three_models.jpg' },
+    'Apple Watch Series 10': { name: 'Apple Watch Series 10', price: 'Thinnest watch with biggest display. From ₹46,900', image: '/apple_watch_three_models.jpg' },
+    'Apple Watch SE': { name: 'Apple Watch SE', price: 'Essential features to stay connected. From ₹24,900', image: '/apple_watch_three_models.jpg' },
+    'Apple Watch SE 3': { name: 'Apple Watch SE 3', price: 'Essential features. From ₹29,900', image: '/apple_watch_three_models.jpg' },
+    'Apple Watch Ultra 4': { name: 'Apple Watch Ultra 4', price: 'Ultimate adventure watch. From ₹99,900', image: '/apple_watch_ultra_2_single.png' },
+    'Apple Watch Ultra 3': { name: 'Apple Watch Ultra 3', price: 'Rugged capability. From ₹89,900', image: '/apple_watch_ultra_2_single.png' },
+    'Apple Watch Ultra 2': { name: 'Apple Watch Ultra 2', price: 'Rugged capability & adventure. From ₹89,900', image: '/apple_watch_ultra_2_single.png' },
+    'Apple Watch Nike': { name: 'Apple Watch Nike', price: 'Sport bands & faces', image: '/apple_watch_three_models.jpg' },
 
     // AirPods
     'Explore All AirPods': { name: 'AirPods Family', price: 'High fidelity audio', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/music/home-img-1757682200_3577.jpg' },
@@ -956,7 +962,7 @@ export default function Navbar() {
               src={hoveredProduct.image}
               alt={hoveredProduct.name || 'Preview'}
               className="w-full h-full object-cover p-0 transition-transform duration-500 hover:scale-105"
-              style={{ mixBlendMode: hoveredProduct.image?.includes('18_pro') ? 'normal' : 'multiply', objectPosition: 'center' }}
+              style={{ mixBlendMode: (hoveredProduct.image?.includes('18_pro') || (hoveredProduct?.name || '').includes('Series 12') || (hoveredProduct?.image || '').includes('series_12')) ? 'normal' : 'multiply', objectPosition: 'center' }}
               onError={(e) => {
                 e.currentTarget.onerror = null;
                 e.currentTarget.src = '/macbook_category_v3.jpg';

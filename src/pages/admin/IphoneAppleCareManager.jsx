@@ -126,6 +126,8 @@ export default function IphoneAppleCareManager() {
               monthly: r.monthly || '',
               yearly: r.yearly || r.salePrice || r.salePrice2yr || '',
               image: r.image ?? '',
+              planType: r.planType || 'APPLE CARE+ • 2 YEAR PLAN',
+              duration: r.duration || iphoneTable.durationLabel || '2 Years',
               isActive: r.isActive !== false
             })));
           }
@@ -206,8 +208,8 @@ export default function IphoneAppleCareManager() {
         isActive: true,
         rows: updatedRows.map(r => ({
           model: r.model || '',
-          title: r.title || '',
-          description: r.description || '',
+          title: r.title || `AppleCare+ for ${r.model}`,
+          description: r.description || `2 Years Apple-certified coverage for ${r.model}`,
           sku: r.sku || '',
           mrp: r.mrp || '',
           discount: r.discount || '',
@@ -215,6 +217,8 @@ export default function IphoneAppleCareManager() {
           monthly: r.monthly || '',
           yearly: r.yearly || r.salePrice || '',
           image: r.image ?? '',
+          planType: r.planType || 'APPLE CARE+ • 2 YEAR PLAN',
+          duration: r.duration || durationLabel || '2 Years',
           isActive: r.isActive !== false
         }))
       };
@@ -316,6 +320,8 @@ export default function IphoneAppleCareManager() {
           monthly: r.monthly || '',
           yearly: r.yearly || r.salePrice || '',
           image: r.image ?? '',
+          planType: r.planType || 'APPLE CARE+ • 2 YEAR PLAN',
+          duration: r.duration || durationLabel || '2 Years',
           isActive: r.isActive !== false
         }))
       };

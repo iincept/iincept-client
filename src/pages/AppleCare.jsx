@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ShieldCheck, Zap, Wrench, Smartphone, Laptop, Tablet, Watch, Headphones, CheckCircle2, ArrowRight, MessageSquare, ChevronDown, Monitor, Sparkles, ChevronLeft, ChevronRight, Tv, Radio, Calendar, Globe, Battery, Truck, X } from 'lucide-react';
+import { ShieldCheck, Zap, Wrench, Smartphone, Laptop, Tablet, Watch, Headphones, CheckCircle2, ArrowRight, MessageSquare, ChevronDown, Monitor, Sparkles, ChevronLeft, ChevronRight, Tv, Radio, Calendar, Globe, Battery, Truck, X, Heart, ShoppingBag, Loader2 } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { addToCart } from '../redux/cartSlice';
+import { addToWishlist } from '../redux/wishlistSlice';
 import axiosClient from '../services/axiosClient';
 
 const BENEFIT_CARDS = [
@@ -499,8 +500,7 @@ const PLAN_TILES = {
       'AppleCare+ with Theft and Loss is available for purchase on your device'
     ],
     image: 'https://www.apple.com/in/applecare/images/overview/plans/iphone_single__dkwnumzl55w2_large_2x.jpg',
-    fallbackImage: '/iphone_category_uploaded.jpg',
-    alt: 'iPhone 16 Pro, White Titanium colour, back exterior'
+    alt: 'iPhone Pro back exterior'
   },
   Mac: {
     eyebrow: 'AppleCare+',
@@ -514,8 +514,7 @@ const PLAN_TILES = {
       'Priority support from Apple experts'
     ],
     image: 'https://www.apple.com/in/applecare/images/overview/plans/mac_single__liw1wq012xme_large_2x.jpg',
-    fallbackImage: '/macbook_category_uploaded.png',
-    alt: 'MacBook, Silver colour, top interior, open'
+    alt: 'MacBook open'
   },
   Display: {
     eyebrow: 'AppleCare+',
@@ -529,9 +528,7 @@ const PLAN_TILES = {
       'Priority support from Apple experts'
     ],
     image: 'https://www.apple.com/in/applecare/images/overview/plans/display_single__bcorwfyqszaq_large_2x.jpg',
-    fallbackImage: '/imac_studio_lifestyle.jpg',
-    alt: 'Apple Studio Display with tilt-adjustable stand, silver colour, back exterior',
-    imageClass: 'translate-y-6 sm:translate-y-10'
+    alt: 'Apple Studio Display'
   },
   iPad: {
     eyebrow: 'AppleCare+',
@@ -545,9 +542,7 @@ const PLAN_TILES = {
       'Priority support from Apple experts'
     ],
     image: 'https://www.apple.com/in/applecare/images/overview/plans/ipad_single__dzq694a9v0eq_large_2x.jpg',
-    fallbackImage: '/ipad_category_uploaded.png',
-    alt: 'iPad Pro Silver back view',
-    imageClass: 'translate-y-6 sm:translate-y-10'
+    alt: 'iPad Pro back view'
   },
   Watch: {
     eyebrow: 'AppleCare+',
@@ -561,8 +556,7 @@ const PLAN_TILES = {
       'Priority support from Apple experts'
     ],
     image: 'https://www.apple.com/in/applecare/images/overview/plans/watch_single__nif1z4j14cya_large_2x.jpg',
-    fallbackImage: '/watch_category_uploaded.png',
-    alt: 'Apple Watch Series 10 Jet Black'
+    alt: 'Apple Watch Series'
   },
   AirPods: {
     eyebrow: 'AppleCare+',
@@ -576,8 +570,7 @@ const PLAN_TILES = {
       'Priority support from Apple experts'
     ],
     image: 'https://www.apple.com/in/applecare/images/overview/plans/headphones_single__ev6j5f739ggi_large_2x.jpg',
-    fallbackImage: '/airpods_category_uploaded.jpg',
-    alt: 'AirPods Max and AirPods Pro headphones'
+    alt: 'AirPods Max and AirPods Pro'
   },
   TV: {
     eyebrow: 'AppleCare+',
@@ -590,7 +583,6 @@ const PLAN_TILES = {
       'Priority support from Apple experts'
     ],
     image: 'https://www.apple.com/in/applecare/images/overview/plans/apple_tv_single__b3vn6fascz0i_large_2x.jpg',
-    fallbackImage: '/tv_home_category_uploaded.jpg',
     alt: 'Apple TV 4K & Siri Remote'
   },
   HomePod: {
@@ -604,8 +596,7 @@ const PLAN_TILES = {
       'Priority support from Apple experts'
     ],
     image: 'https://www.apple.com/in/applecare/images/overview/plans/homepod_single__ecv85j2jxzo2_large_2x.jpg',
-    fallbackImage: '/homepod_category.jpg',
-    alt: 'HomePod Midnight smart speaker'
+    alt: 'HomePod smart speaker'
   },
 };
 
@@ -618,10 +609,66 @@ const DEFAULT_PRICING_TABLES = [
     durationLabel: '2 years',
     isActive: true,
     rows: [
-      { model: 'iPhone 17e', monthly: '₹599.00', yearly: '₹11,900.00', isActive: true },
-      { model: 'iPhone 17, iPhone 16', monthly: '₹749.00', yearly: '₹14,900.00', isActive: true },
-      { model: 'iPhone 16 Plus', monthly: '₹899.00', yearly: '₹17,900.00', isActive: true },
-      { model: 'iPhone 17 Pro, iPhone 17 Pro Max', monthly: '₹1,049.00', yearly: '₹20,900.00', isActive: true }
+      {
+        model: 'iPhone 17e',
+        title: 'AppleCare+ for iPhone 17e',
+        description: '2 Years Apple-certified coverage for iPhone 17e',
+        sku: 'SCYW3HN/A',
+        mrp: '₹14,900.00',
+        discount: '18%',
+        salePrice: '11,900.00',
+        monthly: '₹599.00',
+        yearly: '11,900.00',
+        planType: 'APPLE CARE+ • 2 YEAR PLAN',
+        duration: '2 Years',
+        image: '',
+        isActive: true
+      },
+      {
+        model: 'iPhone 17, iPhone 16',
+        title: 'AppleCare+ for iPhone 17',
+        description: '2 Years Apple-certified coverage for iPhone 17, iPhone 16',
+        sku: 'SX2V2HN/A',
+        mrp: '₹27,900.00',
+        discount: '18%',
+        salePrice: '22,900.00',
+        monthly: '₹749.00',
+        yearly: '14,900.00',
+        planType: 'APPLE CARE+ • 2 YEAR PLAN',
+        duration: '2 Years',
+        image: '',
+        isActive: true
+      },
+      {
+        model: 'iPhone 16 Plus',
+        title: 'AppleCare+ for iPhone 16 Plus',
+        description: '2 Years Apple-certified coverage for iPhone 16 Plus',
+        sku: 'SX3V2HN/A',
+        mrp: '₹21,900.00',
+        discount: '18%',
+        salePrice: '17,900.00',
+        monthly: '₹899.00',
+        yearly: '17,900.00',
+        planType: 'APPLE CARE+ • 2 YEAR PLAN',
+        duration: '2 Years',
+        image: '',
+        isActive: true
+      },
+      {
+        model: 'iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max',
+        title: 'AppleCare+ for iPhone 17 Pro',
+        description: '2 Years Apple-certified coverage for iPhone Air, 17 Pro & 17 Pro Max',
+        sku: 'SX4V2HN/A',
+        mrp: '₹25,900.00',
+        discount: '19%',
+        salePrice: '20,900.00',
+        monthly: '₹1,049.00',
+        yearly: '20,900.00',
+        planType: 'APPLE CARE+ • 2 YEAR PLAN',
+        duration: '2 Years',
+        image: '',
+        isActive: true
+      }
     ]
   },
   {
@@ -632,15 +679,15 @@ const DEFAULT_PRICING_TABLES = [
     durationLabel: '3 years',
     isActive: true,
     rows: [
-      { model: 'Mac mini', monthly: '₹429.00', yearly: '₹12,900.00', isActive: true, image: '/mac_nav/mac_mini.png' },
-      { model: 'Mac Studio', monthly: '₹679.00', yearly: '₹19,900.00', isActive: true, image: '/mac_nav/mac_studio.png' },
-      { model: 'iMac', monthly: '₹679.00', yearly: '₹19,900.00', isActive: true, image: '/mac_nav/imac.png' },
-      { model: 'Macbook Neo', monthly: '₹579.00', yearly: '₹16,900.00', isActive: true, image: '/mac_nav/macbook_neo.png' },
-      { model: 'MacBook Air 13″', monthly: '₹779.00', yearly: '₹22,900.00', isActive: true, image: '/mac_nav/macbook_air.png' },
-      { model: 'MacBook Air 15″', monthly: '₹849.00', yearly: '₹24,900.00', isActive: true, image: '/mac_nav/macbook_air.png' },
-      { model: 'MacBook Pro 14″', monthly: '₹999.00', yearly: '₹29,900.00', isActive: true, image: '/mac_nav/macbook_pro.png' },
-      { model: 'MacBook Pro 16″', monthly: '₹1,379.00', yearly: '₹40,900.00', isActive: true, image: '/mac_nav/macbook_pro.png' },
-      { model: 'Mac Pro', monthly: '₹1,699.00', yearly: '₹49,900.00', isActive: true, image: '/mac_nav/mac_studio.png' }
+      { model: 'Mac mini', title: 'AppleCare+ for Mac mini', description: '3 Years Apple-certified coverage for Mac mini', sku: 'AC-MAC-MINI', mrp: '₹14,900.00', discount: '13% OFF', salePrice: '₹12,900.00', monthly: '₹429.00', yearly: '₹12,900.00', isActive: true, image: 'https://www.apple.com/assets-www/en_WW/mac/04_chapternav/small/nav_mac_mini_f628f615d_2x.png' },
+      { model: 'Mac Studio', title: 'AppleCare+ for Mac Studio', description: '3 Years Apple-certified coverage for Mac Studio', sku: 'AC-MAC-STUDIO', mrp: '₹22,900.00', discount: '13% OFF', salePrice: '₹19,900.00', monthly: '₹679.00', yearly: '₹19,900.00', isActive: true, image: '/mac_nav/mac_studio.png' },
+      { model: 'iMac', title: 'AppleCare+ for iMac', description: '3 Years Apple-certified coverage for iMac', sku: 'AC-IMAC-24', mrp: '₹22,900.00', discount: '13% OFF', salePrice: '₹19,900.00', monthly: '₹679.00', yearly: '₹19,900.00', isActive: true, image: '/mac_nav/imac.png' },
+      { model: 'Macbook Neo', title: 'AppleCare+ for Macbook Neo', description: '3 Years Apple-certified coverage for Macbook Neo', sku: 'AC-MACBOOK-NEO', mrp: '₹18,900.00', discount: '11% OFF', salePrice: '₹16,900.00', monthly: '₹579.00', yearly: '₹16,900.00', isActive: true, image: '/mac_nav/macbook_neo.png' },
+      { model: 'MacBook Air 13″', title: 'AppleCare+ for MacBook Air 13″', description: '3 Years Apple-certified coverage for MacBook Air 13″', sku: 'AC-MBA-13', mrp: '₹25,900.00', discount: '12% OFF', salePrice: '₹22,900.00', monthly: '₹779.00', yearly: '₹22,900.00', isActive: true, image: '/mac_nav/macbook_air.png' },
+      { model: 'MacBook Air 15″', title: 'AppleCare+ for MacBook Air 15″', description: '3 Years Apple-certified coverage for MacBook Air 15″', sku: 'AC-MBA-15', mrp: '₹27,900.00', discount: '12% OFF', salePrice: '₹24,900.00', monthly: '₹849.00', yearly: '₹24,900.00', isActive: true, image: '/mac_nav/macbook_air.png' },
+      { model: 'MacBook Pro 14″', title: 'AppleCare+ for MacBook Pro 14″', description: '3 Years Apple-certified coverage for MacBook Pro 14″', sku: 'AC-MBP-14', mrp: '₹33,900.00', discount: '12% OFF', salePrice: '₹29,900.00', monthly: '₹999.00', yearly: '₹29,900.00', isActive: true, image: '/mac_nav/macbook_pro.png' },
+      { model: 'MacBook Pro 16″', title: 'AppleCare+ for MacBook Pro 16″', description: '3 Years Apple-certified coverage for MacBook Pro 16″', sku: 'AC-MBP-16', mrp: '₹45,900.00', discount: '11% OFF', salePrice: '₹40,900.00', monthly: '₹1,379.00', yearly: '₹40,900.00', isActive: true, image: '/mac_nav/macbook_pro.png' },
+      { model: 'Mac Pro', title: 'AppleCare+ for Mac Pro', description: '3 Years Apple-certified coverage for Mac Pro', sku: 'AC-MAC-PRO', mrp: '₹55,900.00', discount: '11% OFF', salePrice: '₹49,900.00', monthly: '₹1,699.00', yearly: '₹49,900.00', isActive: true, image: '/mac_nav/mac_studio.png' }
     ]
   },
   {
@@ -651,11 +698,11 @@ const DEFAULT_PRICING_TABLES = [
     durationLabel: '2 years',
     isActive: true,
     rows: [
-      { model: 'iPad, iPad mini', monthly: '₹449.00', yearly: '₹8,900.00', isActive: true },
-      { model: 'iPad Air 11″', monthly: '₹499.00', yearly: '₹9,900.00', isActive: true },
-      { model: 'iPad Air 13″', monthly: '₹599.00', yearly: '₹11,900.00', isActive: true },
-      { model: 'iPad Pro 11″', monthly: '₹899.00', yearly: '₹17,900.00', isActive: true },
-      { model: 'iPad Pro 13″', monthly: '₹999.00', yearly: '₹19,900.00', isActive: true }
+      { model: 'iPad, iPad mini', title: 'AppleCare+ for iPad', description: '2 Years Apple-certified coverage for iPad', sku: 'AC-IPAD-STD', mrp: '₹9,900.00', discount: '10% OFF', salePrice: '₹8,900.00', monthly: '₹449.00', yearly: '₹8,900.00', isActive: true },
+      { model: 'iPad Air 11″', title: 'AppleCare+ for iPad Air 11″', description: '2 Years Apple-certified coverage for iPad Air 11″', sku: 'AC-IPAD-AIR11', mrp: '₹10,900.00', discount: '9% OFF', salePrice: '₹9,900.00', monthly: '₹499.00', yearly: '₹9,900.00', isActive: true },
+      { model: 'iPad Air 13″', title: 'AppleCare+ for iPad Air 13″', description: '2 Years Apple-certified coverage for iPad Air 13″', sku: 'AC-IPAD-AIR13', mrp: '₹12,900.00', discount: '8% OFF', salePrice: '₹11,900.00', monthly: '₹599.00', yearly: '₹11,900.00', isActive: true },
+      { model: 'iPad Pro 11″', title: 'AppleCare+ for iPad Pro 11″', description: '2 Years Apple-certified coverage for iPad Pro 11″', sku: 'AC-IPAD-PRO11', mrp: '₹19,900.00', discount: '10% OFF', salePrice: '₹17,900.00', monthly: '₹899.00', yearly: '₹17,900.00', isActive: true },
+      { model: 'iPad Pro 13″', title: 'AppleCare+ for iPad Pro 13″', description: '2 Years Apple-certified coverage for iPad Pro 13″', sku: 'AC-IPAD-PRO13', mrp: '₹21,900.00', discount: '9% OFF', salePrice: '₹19,900.00', monthly: '₹999.00', yearly: '₹19,900.00', isActive: true }
     ]
   },
   {
@@ -666,9 +713,9 @@ const DEFAULT_PRICING_TABLES = [
     durationLabel: '2 years',
     isActive: true,
     rows: [
-      { model: 'Apple Watch SE', monthly: '₹249.00', yearly: '₹4,900.00', isActive: true },
-      { model: 'Apple Watch Series 11', monthly: '₹399.00', yearly: '₹7,900.00', isActive: true },
-      { model: 'Apple Watch Ultra 3', monthly: '₹499.00', yearly: '₹9,900.00', isActive: true }
+      { model: 'Apple Watch SE', title: 'AppleCare+ for Apple Watch SE', description: '2 Years Apple-certified coverage for Apple Watch SE', sku: 'AC-WATCH-SE', mrp: '₹5,900.00', discount: '17% OFF', salePrice: '₹4,900.00', monthly: '₹249.00', yearly: '₹4,900.00', isActive: true },
+      { model: 'Apple Watch Series 11', title: 'AppleCare+ for Apple Watch Series 11', description: '2 Years Apple-certified coverage for Apple Watch Series 11', sku: 'AC-WATCH-S11', mrp: '₹8,900.00', discount: '11% OFF', salePrice: '₹7,900.00', monthly: '₹399.00', yearly: '₹7,900.00', isActive: true },
+      { model: 'Apple Watch Ultra 3', title: 'AppleCare+ for Apple Watch Ultra 3', description: '2 Years Apple-certified coverage for Apple Watch Ultra 3', sku: 'AC-WATCH-ULTRA', mrp: '₹11,900.00', discount: '17% OFF', salePrice: '₹9,900.00', monthly: '₹499.00', yearly: '₹9,900.00', isActive: true }
     ]
   },
   {
@@ -679,9 +726,9 @@ const DEFAULT_PRICING_TABLES = [
     durationLabel: '2 years',
     isActive: true,
     rows: [
-      { model: 'AirPods 4, Beats', monthly: '₹149.00', yearly: '₹2,900.00', isActive: true },
-      { model: 'AirPods Pro 3', monthly: '₹249.00', yearly: '₹4,900.00', isActive: true },
-      { model: 'AirPods Max 2', monthly: '₹349.00', yearly: '₹6,900.00', isActive: true }
+      { model: 'AirPods 4, Beats', title: 'AppleCare+ for AirPods 4', description: '2 Years Apple-certified coverage for AirPods 4', sku: 'AC-AIRPODS-4', mrp: '₹3,490.00', discount: '17% OFF', salePrice: '₹2,900.00', monthly: '₹149.00', yearly: '₹2,900.00', isActive: true },
+      { model: 'AirPods Pro 3', title: 'AppleCare+ for AirPods Pro 3', description: '2 Years Apple-certified coverage for AirPods Pro 3', sku: 'AC-AIRPODS-PRO', mrp: '₹5,900.00', discount: '17% OFF', salePrice: '₹4,900.00', monthly: '₹249.00', yearly: '₹4,900.00', isActive: true },
+      { model: 'AirPods Max 2', title: 'AppleCare+ for AirPods Max 2', description: '2 Years Apple-certified coverage for AirPods Max 2', sku: 'AC-AIRPODS-MAX', mrp: '₹7,900.00', discount: '13% OFF', salePrice: '₹6,900.00', monthly: '₹349.00', yearly: '₹6,900.00', isActive: true }
     ]
   },
   {
@@ -692,160 +739,12 @@ const DEFAULT_PRICING_TABLES = [
     durationLabel: '3 years',
     isActive: true,
     rows: [
-      { model: 'Apple TV', monthly: '₹99.00', yearly: '₹2,900.00', isActive: true },
-      { model: 'HomePod mini', monthly: '₹79.00', yearly: '₹1,600.00', isActive: true },
-      { model: 'HomePod', monthly: '₹199.00', yearly: '₹3,900.00', isActive: true }
+      { model: 'Apple TV', title: 'AppleCare+ for Apple TV', description: '3 Years Apple-certified coverage for Apple TV', sku: 'AC-TV-STD', mrp: '₹3,490.00', discount: '17% OFF', salePrice: '₹2,900.00', monthly: '₹99.00', yearly: '₹2,900.00', isActive: true },
+      { model: 'HomePod mini', title: 'AppleCare+ for HomePod mini', description: '2 Years Apple-certified coverage for HomePod mini', sku: 'AC-HOMEPOD-MINI', mrp: '₹1,990.00', discount: '20% OFF', salePrice: '₹1,600.00', monthly: '₹79.00', yearly: '₹1,600.00', isActive: true },
+      { model: 'HomePod', title: 'AppleCare+ for HomePod', description: '2 Years Apple-certified coverage for HomePod', sku: 'AC-HOMEPOD-STD', mrp: '₹4,900.00', discount: '20% OFF', salePrice: '₹3,900.00', monthly: '₹199.00', yearly: '₹3,900.00', isActive: true }
     ]
   }
 ];
-
-const APPLECARE_PLANS = [
-
-  {
-    id: 'ac-iphone',
-    category: 'iPhone',
-    icon: Smartphone,
-    title: 'AppleCare+ for iPhone',
-    subtitle: 'Comprehensive protection for your iPhone 16, iPhone 17 & previous models.',
-    price: 8900,
-    priceStr: '₹8,900',
-    duration: '2 Years Coverage',
-    features: [
-      'Unlimited accidental damage protection',
-      'Apple-certified service with genuine Apple parts',
-      'Battery service if it retains less than 80% original capacity',
-      'Express Replacement Service — get a replacement delivered fast',
-      '24/7 Priority technical support via chat or phone'
-    ],
-    popular: true,
-    image: '/iphone_category_v2.jpg'
-  },
-  {
-    id: 'ac-mac',
-    category: 'Mac',
-    icon: Laptop,
-    title: 'AppleCare+ for Mac',
-    subtitle: 'Extended hardware coverage for MacBook Air, MacBook Pro & Mac mini.',
-    price: 18900,
-    priceStr: '₹18,900',
-    duration: '3 Years Coverage',
-    features: [
-      'Unlimited repair incidents for accidental damage',
-      'Global repair coverage — service while traveling',
-      'Screen, enclosure & battery replacement covered',
-      'Onsite service for desktop Macs',
-      'Direct access to Apple experts for macOS & software questions'
-    ],
-    popular: false,
-    image: '/macbook_category_v3.jpg'
-  },
-  {
-    id: 'ac-ipad',
-    category: 'iPad',
-    icon: Tablet,
-    title: 'AppleCare+ for iPad & Apple Pencil',
-    subtitle: 'Complete protection including Apple Pencil and Apple-branded iPad keyboards.',
-    price: 6900,
-    priceStr: '₹6,900',
-    duration: '2 Years Coverage',
-    features: [
-      'Includes protection for your Apple Pencil & Magic Keyboard',
-      'Unlimited accidental damage incidents',
-      'Express Replacement Service',
-      'Apple original display & battery service',
-      'Priority access to iPadOS experts'
-    ],
-    popular: false,
-    image: '/ipad_category_v3.png'
-  },
-  {
-    id: 'ac-watch',
-    category: 'Watch',
-    icon: Watch,
-    title: 'AppleCare+ for Apple Watch',
-    subtitle: 'Protection for Apple Watch Series 11, Ultra 3 & SE models.',
-    price: 4900,
-    priceStr: '₹4,900',
-    duration: '2 Years Coverage',
-    features: [
-      'Unlimited accidental damage protection',
-      'Titanium, sapphire glass & band coverage',
-      'Battery replacement service',
-      'Express Replacement Service worldwide',
-      '24/7 Priority support for watchOS'
-    ],
-    popular: false,
-    image: '/watch_category.jpg'
-  },
-  {
-    id: 'ac-airpods',
-    category: 'AirPods',
-    icon: Headphones,
-    title: 'AppleCare+ for Headphones',
-    subtitle: 'Coverage for AirPods Pro, AirPods Max & Beats headphones.',
-    price: 2900,
-    priceStr: '₹2,900',
-    duration: '2 Years Coverage',
-    features: [
-      'Unlimited accidental damage protection',
-      'Charging case & earpiece replacement',
-      'Battery service below 80% health',
-      'Apple genuine parts service',
-      'Priority access to Audio experts'
-    ],
-    popular: false,
-    image: '/airpods_category.jpg'
-  }
-];
-
-const FAQS = [
-  {
-    q: 'What is the difference between limited warranty and AppleCare+ coverage?',
-    a: 'Most Apple products come with 1 year of hardware coverage through the limited warranty. AppleCare plans extend that hardware coverage and provide additional features like accidental damage protection and priority support.'
-  },
-  {
-    q: 'How do I buy AppleCare?',
-    a: 'You can start an AppleCare+ plan when buying a new product with Apple in person. For 60 days, after a new Apple purchase, you can get a new plan through the settings app on your iPhone, iPad or Mac, or by calling 000800 1009009. Or within 60 days, you can go to an Apple Store to purchase a plan.'
-  },
-  {
-    q: 'Which products include AppleCare+ with Theft and Loss?',
-    a: 'AppleCare+ with Theft and Loss for iPhone is available for purchase when you buy AppleCare on your device.'
-  },
-  {
-    q: 'Does AppleCare cover accessories?',
-    a: 'When you protect your iPad with AppleCare+, you’ll get coverage for accidental damage for one Apple Pencil and one Apple-branded iPad keyboard. AppleCare+ also covers any in-box cables and power adapters that came with your covered Apple product.'
-  },
-  {
-    q: 'How can I get my device repaired?',
-    a: 'You can get Apple-certified repairs at Apple Stores and Apple Authorised Service Providers worldwide, or schedule a pickup and delivery service online or through the Apple Support app.'
-  }
-];
-
-const getModelImage = (row) => {
-  if (row?.image) return row.image;
-  const name = (row?.model || '').toLowerCase();
-
-  if (name.includes('mini')) return '/mac_nav/mac_mini.png';
-  if (name.includes('studio')) return '/mac_nav/mac_studio.png';
-  if (name.includes('imac')) return '/mac_nav/imac.png';
-  if (name.includes('neo')) return '/mac_nav/macbook_neo.png';
-  if (name.includes('air')) return '/mac_nav/macbook_air.png';
-  if (name.includes('pro') && (name.includes('14') || name.includes('16') || name.includes('macbook'))) return '/mac_nav/macbook_pro.png';
-  if (name.includes('mac pro')) return '/mac_nav/mac_studio.png';
-
-  if (name.includes('17 pro')) return '/iphone17p_white.jpg';
-  if (name.includes('17e')) return '/iphone17e_purple_fb.jpg';
-  if (name.includes('17') || name.includes('16')) return '/iphone17_group.jpg';
-
-  if (name.includes('ipad air')) return '/ipad_air_blue.jpg';
-  if (name.includes('ipad pro')) return '/ipad_category_v3.png';
-  if (name.includes('ipad')) return '/ipad_category_v2.jpg';
-
-  if (name.includes('watch')) return '/apple_watch_health.jpg';
-  if (name.includes('airpods') || name.includes('beats')) return '/airpods_category.jpg';
-
-  return null;
-};
 
 export default function AppleCare() {
   const dispatch = useDispatch();
@@ -857,6 +756,8 @@ export default function AppleCare() {
     catParam ? (catParam.toLowerCase() === 'airpods' ? 'AirPods' : catParam.toLowerCase() === 'tv' ? 'TV' : catParam.charAt(0).toUpperCase() + catParam.slice(1).toLowerCase()) : 'iPhone'
   );
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(openModalParam);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [wishlistMap, setWishlistMap] = useState({});
 
   useEffect(() => {
     if (openModalParam) {
@@ -869,23 +770,16 @@ export default function AppleCare() {
       window.history.replaceState({}, '', newUrl);
     }
   }, [openModalParam]);
+
   const [dbPlans, setDbPlans] = useState([]);
   const [dbCategoryIcons, setDbCategoryIcons] = useState([]);
-  const [pricingTables, setPricingTables] = useState(() => {
-    try {
-      const cached = localStorage.getItem('iincept_applecare_pricing_tables_v2');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) { }
-    return DEFAULT_PRICING_TABLES;
-  });
+  const [pricingTables, setPricingTables] = useState(DEFAULT_PRICING_TABLES);
   const scrollRef = useRef(null);
   const repairsScrollRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
+    setIsLoadingSettings(true);
     axiosClient.get('/settings')
       .then(res => {
         if (res.data?.appleCarePlans) {
@@ -898,27 +792,30 @@ export default function AppleCare() {
           }
         }
         if (res.data?.appleCarePricingTables && res.data.appleCarePricingTables.length > 0) {
-          // Merge DB data with defaults — DB overrides defaults per categoryKey
           const dbTables = res.data.appleCarePricingTables.filter(t => t.isActive !== false);
-          setPricingTables(prev => {
-            const updated = DEFAULT_PRICING_TABLES.map(def => {
-              const found = dbTables.find(d => d.categoryKey === def.categoryKey);
-              if (!found) return def;
-              const dbRows = (found.rows || []).filter(r => r.isActive !== false);
-              return {
-                ...def,
-                ...found,
-                rows: dbRows.length > 0 ? dbRows : def.rows
-              };
-            });
-            try {
-              localStorage.setItem('iincept_applecare_pricing_tables_v2', JSON.stringify(updated));
-            } catch (e) { }
-            return updated;
+          
+          const merged = DEFAULT_PRICING_TABLES.map(def => {
+            const found = dbTables.find(d => d.categoryKey === def.categoryKey);
+            if (!found) return def;
+            const dbRows = (found.rows || []).filter(r => r.isActive !== false);
+            return {
+              ...def,
+              ...found,
+              rows: dbRows.length > 0 ? dbRows : def.rows
+            };
           });
+
+          dbTables.forEach(d => {
+            if (!merged.some(m => m.categoryKey === d.categoryKey)) {
+              merged.push(d);
+            }
+          });
+
+          setPricingTables(merged);
         }
       })
-      .catch(err => console.error('Error fetching AppleCare settings:', err));
+      .catch(err => console.error('Error fetching AppleCare settings:', err))
+      .finally(() => setIsLoadingSettings(false));
   }, []);
 
   useEffect(() => {
@@ -948,36 +845,61 @@ export default function AppleCare() {
     setCurrentIndex(Math.min(Math.max(index, 0), BENEFIT_CARDS.length - 1));
   };
 
-  const scroll = (direction) => {
-    if (!scrollRef.current) return;
-    const scrollAmount = scrollRef.current.clientWidth * 0.75;
-    scrollRef.current.scrollBy({
-      left: direction === 'next' ? scrollAmount : -scrollAmount,
-      behavior: 'smooth'
-    });
+  const currentCategoryKey = (selectedCategory || 'iPhone').toLowerCase() === 'tv' || (selectedCategory || '').toLowerCase() === 'homepod'
+    ? 'tv-home'
+    : (selectedCategory || 'iPhone').toLowerCase();
+
+  const activeCategoryTable = pricingTables.find(t => t.categoryKey === currentCategoryKey)
+    || DEFAULT_PRICING_TABLES.find(t => t.categoryKey === currentCategoryKey)
+    || DEFAULT_PRICING_TABLES[0];
+
+  const activeRows = (activeCategoryTable?.rows || []).filter(r => r.isActive !== false);
+
+  const handleAddAppleCareToCart = (rowObj) => {
+    const planTitle = rowObj.title || `AppleCare+ for ${rowObj.model}`;
+    const sku = rowObj.sku || '';
+    const priceStr = String(rowObj.salePrice || rowObj.yearly || '0');
+    const numericPrice = parseFloat(priceStr.replace(/[^0-9.]/g, '')) || 11900;
+    const image = rowObj.image || '';
+    const itemId = `ac-${sku || rowObj.model}`;
+
+    dispatch(
+      addToCart({
+        id: itemId,
+        productId: itemId,
+        name: planTitle,
+        title: planTitle,
+        price: numericPrice,
+        image: image,
+        quantity: 1,
+        isAppleCare: true,
+        sku: sku
+      })
+    );
   };
 
-  const scrollToIndex = (index) => {
-    if (!scrollRef.current) return;
-    const cards = scrollRef.current.children;
-    if (cards[index]) {
-      cards[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-    }
-  };
+  const handleAddAppleCareToWishlist = (rowObj) => {
+    const planTitle = rowObj.title || `AppleCare+ for ${rowObj.model}`;
+    const sku = rowObj.sku || '';
+    const priceStr = String(rowObj.salePrice || rowObj.yearly || '0');
+    const numericPrice = parseFloat(priceStr.replace(/[^0-9.]/g, '')) || 11900;
+    const image = rowObj.image || '';
+    const itemId = `ac-${sku || rowObj.model}`;
 
-  const filteredPlans = selectedCategory === 'All'
-    ? APPLECARE_PLANS
-    : APPLECARE_PLANS.filter(p => p.category.toLowerCase() === selectedCategory.toLowerCase());
+    setWishlistMap((prev) => ({ ...prev, [itemId]: !prev[itemId] }));
 
-  const handleAddToCart = (plan) => {
-    dispatch(addToCart({
-      id: plan.id,
-      name: plan.title,
-      price: plan.price,
-      image: plan.image,
-      quantity: 1
-    }));
-    alert(`Added ${plan.title} to your bag!`);
+    dispatch(
+      addToWishlist({
+        id: itemId,
+        name: planTitle,
+        title: planTitle,
+        price: numericPrice,
+        image: image,
+        rating: 5.0,
+        isAppleCare: true,
+        sku: sku
+      })
+    );
   };
 
   const handleWhatsAppInquiry = (planTitle) => {
@@ -985,11 +907,20 @@ export default function AppleCare() {
     window.open(`https://wa.me/918607222417?text=${text}`, '_blank');
   };
 
+  if (isLoadingSettings) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="w-10 h-10 text-[#FF2D55] animate-spin" />
+        <span className="text-base font-semibold text-[#1D1D1F]">Loading AppleCare+ Plans & Data...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white text-[#1d1d1f] font-sans animate-in fade-in duration-300">
 
-      {/* Official AppleCare Hero Section - Pure White Background */}
-      <section className="section-hero bg-white !bg-white pt-16 sm:pt-20 md:pt-24 pb-16 px-6 sm:px-12 text-center border-b border-[#D2D2D7]/60 overflow-hidden w-full" style={{ backgroundColor: '#ffffff', background: '#ffffff' }} data-anim-scroll-group="Hero" data-analytics-section-engagement="name:hero">
+      {/* Official AppleCare Hero Section */}
+      <section className="section-hero bg-white !bg-white pt-16 sm:pt-20 md:pt-24 pb-16 px-6 sm:px-12 text-center border-b border-[#D2D2D7]/60 overflow-hidden w-full" style={{ backgroundColor: '#ffffff', background: '#ffffff' }}>
         <div className="section-content text-center max-w-6xl mx-auto px-6">
           <div className="select-none mb-2 sm:mb-3">
             <span className="sr-only">AppleCare</span>
@@ -1007,7 +938,7 @@ export default function AppleCare() {
           </h2>
         </div>
 
-        {/* Large Official AppleCare Device Lineup Banner Image - Extra Large & Centered */}
+        {/* Large Official AppleCare Device Lineup Banner Image */}
         <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mt-4 sm:mt-8 md:mt-10 py-6 sm:py-10 md:py-14 bg-white flex items-center justify-center overflow-hidden text-center">
           <picture className="w-full flex items-center justify-center text-center overflow-visible">
             <source srcSet="https://www.apple.com/in/applecare/images/overview/hero/hero__d4bput78wzu6_small_2x.jpg 2x" media="(max-width:734px)" />
@@ -1024,7 +955,7 @@ export default function AppleCare() {
 
         <div className="content max-w-3xl mx-auto flex flex-col items-center justify-center text-center space-y-6 mt-16 sm:mt-24 md:mt-32 pt-0 px-6 relative z-10">
           <p className="section-copy typography-eyebrow-reduced font-semibold text-[#1D1D1F] text-base sm:text-lg md:text-xl leading-relaxed text-center max-w-2xl sm:max-w-3xl mx-auto">
-            AppleCare offers one-stop support and service for all of your Apple products — from the people who know them best. Get easy, fast repairs for accidents like drops and spills. A replacement battery when yours drops below 80% capacity. And priority care with just a&nbsp;chat, call or&nbsp;tap.<sup className="footnote footnote-number"><a href="#footnote-1" aria-label="Footnote 1" className="underline ml-0.5">1</a></sup>
+            AppleCare offers one-stop support and service for all of your Apple products — from the people who know them best. Get easy, fast repairs for accidents like drops and spills. A replacement battery when yours drops below 80% capacity. And priority care with just a&nbsp;chat, call or&nbsp;tap.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2 w-full mx-auto">
@@ -1032,7 +963,6 @@ export default function AppleCare() {
               href="#plans"
               aria-label="Get coverage, AppleCare"
               className="cta button button-elevated bg-[#0071E3] hover:bg-[#0077ED] text-[#FFFFFF] px-8 py-3.5 rounded-full text-base font-semibold tracking-tight shadow-sm transition-all hover:scale-105 inline-flex items-center gap-2"
-              data-analytics-title="get coverage"
             >
               <span className="icon-copy">Get coverage</span>
               <ArrowRight className="w-4 h-4" />
@@ -1051,17 +981,14 @@ export default function AppleCare() {
 
       {/* Plans & Pricing Section */}
       <section id="plans" className="py-20 px-6 sm:px-12 lg:px-20 max-w-7xl mx-auto">
-        {/* Official Apple Plans Header */}
         <div className="text-center max-w-3xl mx-auto mb-14 space-y-3">
-
           <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-[#1D1D1F] tracking-tight leading-[1.08]">
             Peace of mind<br />in every plan.
           </h2>
-
         </div>
 
         {/* Device Category Icon Nav Bar */}
-        <div className="relative border-b border-[#D2D2D7]/80 pb-0 mb-16">
+        <div className="relative border-b border-[#D2D2D7]/80 pb-0 mb-12">
           <div className="flex items-end justify-center gap-6 sm:gap-10 md:gap-12 overflow-x-auto scrollbar-none px-4">
             {[
               { id: 'iPhone', label: 'iPhone', icon: IPhoneSvgIcon },
@@ -1093,7 +1020,7 @@ export default function AppleCare() {
           </div>
         </div>
 
-        {/* Official Apple Tile Container for Selected Category */}
+        {/* Category Hero Summary Banner Tile */}
         {(() => {
           const defaultPlan = PLAN_TILES[selectedCategory] || PLAN_TILES.iPhone;
           const adminPlan = dbPlans.find(p => p.category?.toLowerCase() === selectedCategory?.toLowerCase());
@@ -1111,24 +1038,16 @@ export default function AppleCare() {
           return (
             <div
               key={selectedCategory}
-              className="bg-[#FBFBFD] rounded-[28px] sm:rounded-[32px] p-6 sm:p-10 md:p-12 lg:p-14 border border-[#D2D2D7]/50 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-8 sm:gap-12 shadow-xs apple-smooth-fade"
+              className="bg-[#FBFBFD] rounded-[28px] sm:rounded-[32px] p-6 sm:p-10 md:p-12 lg:p-14 border border-[#D2D2D7]/50 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-8 sm:gap-12 shadow-xs apple-smooth-fade mb-16"
             >
-
-              {/* Left Column: Product Image Graphic */}
-              <div className="flex-1 flex items-center justify-center relative w-full lg:w-auto min-h-[300px] sm:min-h-[380px] lg:min-h-[440px] py-4">
+              <div className="flex-1 flex items-center justify-center relative w-full lg:w-auto min-h-[260px] sm:min-h-[340px] lg:min-h-[400px] py-4">
                 <img
                   src={currentPlan.image}
                   alt={currentPlan.alt}
-                  className="max-h-[340px] sm:max-h-[430px] lg:max-h-[490px] w-auto object-contain transition-all duration-300"
-                  onError={(e) => {
-                    if (currentPlan.fallbackImage && e.currentTarget.src !== currentPlan.fallbackImage) {
-                      e.currentTarget.src = currentPlan.fallbackImage;
-                    }
-                  }}
+                  className="max-h-[300px] sm:max-h-[380px] lg:max-h-[440px] w-auto object-contain transition-all duration-300"
                 />
               </div>
 
-              {/* Right Column: Text Content */}
               <div className="flex-1 text-left space-y-5 z-10 max-w-xl">
                 <div>
                   <p className="text-sm sm:text-base font-semibold text-[#FF2D55] tracking-tight mb-1">
@@ -1157,37 +1076,213 @@ export default function AppleCare() {
                   ))}
                 </ul>
 
-                {/* CTAs matching Screenshot 1 */}
                 <div className="flex flex-wrap items-center gap-3.5 pt-3">
                   <button
-                    onClick={() => handleAddToCart({
-                      id: `ac-${selectedCategory.toLowerCase()}`,
-                      title: `${currentPlan.eyebrow} for ${selectedCategory}`,
-                      price: currentPlan.priceVal,
-                      image: currentPlan.image
-                    })}
-                    className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-7 py-3 rounded-full text-sm sm:text-base font-medium transition-all hover:scale-105 active:scale-95 shadow-xs cursor-pointer"
-                  >
-                    Get coverage
-                  </button>
-
-                  <button
                     onClick={() => setIsPricingModalOpen(true)}
-                    className="bg-transparent hover:bg-[#0071E3]/5 border border-[#0071E3] text-[#0071E3] px-6 py-3 rounded-full text-sm sm:text-base font-medium transition-all hover:scale-105 cursor-pointer"
+                    className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-7 py-3 rounded-full text-sm sm:text-base font-medium transition-all hover:scale-105 active:scale-95 shadow-xs cursor-pointer inline-flex items-center gap-2"
                   >
-                    All model pricing
+                    <span>All model pricing</span>
+                    <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-
             </div>
           );
         })()}
+
+        {/* Dynamic AppleCare+ Product Cards Grid (Matching Screenshot 2) */}
+        <div className="space-y-8">
+          <div className="flex items-center justify-between border-b border-zinc-200/80 pb-4">
+            <div>
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight">
+                AppleCare+ Product Plans for {selectedCategory}
+              </h3>
+              <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-1">
+                Official Apple-certified coverage, fast repairs, and 24/7 priority support.
+              </p>
+            </div>
+            <span className="text-xs font-bold px-3 py-1 bg-rose-50 text-[#FF2D55] rounded-full border border-rose-100">
+              {activeRows.length} {selectedCategory} Products
+            </span>
+          </div>
+
+          {activeRows.length === 0 ? (
+            <div className="bg-[#FBFBFD] rounded-3xl p-10 text-center border border-zinc-200/60">
+              <ShieldCheck className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
+              <p className="text-base font-semibold text-zinc-700">No active AppleCare+ products available for {selectedCategory}.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {activeRows.map((row, idx) => {
+                const displaySalePrice = row.salePrice || row.yearly || '11,900.00';
+                const formattedPrice = String(displaySalePrice).includes('₹')
+                  ? displaySalePrice
+                  : `₹${Number(String(displaySalePrice).replace(/[^0-9.]/g, '')).toLocaleString('en-IN')}.00`;
+
+                return (
+                  <div
+                    key={idx}
+                    className="bg-white rounded-[28px] sm:rounded-[32px] p-6 sm:p-8 border border-[#D2D2D7]/60 shadow-xs flex flex-col justify-between space-y-6 hover:shadow-md transition-all duration-200"
+                  >
+                    {/* Top Grid: Left Graphic & Right Details */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-start">
+                      
+                      {/* Left Column: Image Box */}
+                      <div className="sm:col-span-5 bg-[#F5F5F7] rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-between min-h-[260px] relative border border-zinc-200/60">
+                        <div className="absolute top-3 left-3 bg-[#FF2D55] text-white font-extrabold text-[10px] sm:text-[11px] px-3 py-1 rounded-full shadow-2xs">
+                          AppleCare+ ({row.duration || activeCategoryTable?.durationLabel || '2 Years'})
+                        </div>
+
+                        <div className="my-auto flex items-center justify-center h-[150px] w-full pt-4">
+                          {row.image ? (
+                            <img
+                              src={row.image}
+                              alt={row.title || row.model}
+                              className="max-h-[130px] w-auto object-contain transition-transform hover:scale-105 duration-300"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                if (e.currentTarget.nextSibling) {
+                                  e.currentTarget.nextSibling.style.display = 'flex';
+                                }
+                              }}
+                            />
+                          ) : null}
+                          <div
+                            className={`flex flex-col items-center justify-center text-zinc-400 space-y-2 ${row.image ? 'hidden' : ''}`}
+                          >
+                            <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-2xs border border-zinc-200/80">
+                              <ShieldCheck className="w-8 h-8 text-[#FF2D55]" />
+                            </div>
+                            <span className="text-xs font-bold text-zinc-600 text-center">AppleCare+ Protected</span>
+                          </div>
+                        </div>
+
+                        <div className="text-center w-full pt-2.5 border-t border-zinc-200/60">
+                          <div className="font-extrabold text-[#1D1D1F] text-sm sm:text-base tracking-tight flex items-center justify-center gap-1">
+                            <span></span>
+                            <span>{row.model}</span>
+                          </div>
+                          <div className="text-[11px] text-zinc-500 font-mono font-semibold mt-0.5">
+                            {row.sku ? `SKU: ${row.sku}` : 'SKU: N/A'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Column: Title & Pricing */}
+                      <div className="sm:col-span-7 space-y-3 flex flex-col justify-between h-full">
+                        <div>
+                          <div className="text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-[#FF2D55] mb-1">
+                            {row.planType || `APPLE CARE+ • ${(row.duration || activeCategoryTable?.durationLabel || '2 YEAR PLAN').toUpperCase()}`}
+                          </div>
+                          <h3 className="font-extrabold text-[#1D1D1F] text-lg sm:text-xl leading-snug tracking-tight">
+                            {row.title || `AppleCare+ for ${row.model}`}
+                          </h3>
+                          <p className="text-xs text-zinc-500 font-medium mt-1 leading-relaxed">
+                            {row.description || `${row.duration || '2 Years'} Apple-certified coverage for ${row.model}`}
+                          </p>
+                        </div>
+
+                        {/* Pricing Block */}
+                        <div className="space-y-1.5 pt-2.5 border-t border-zinc-100">
+                          <div className="flex items-center justify-between text-xs text-zinc-500">
+                            <span className="font-semibold text-zinc-500">MRP</span>
+                            <div className="flex items-center gap-2">
+                              {row.mrp && <span className="line-through text-zinc-400 font-medium">{row.mrp}</span>}
+                              {row.discount && (
+                                <span className="bg-[#FF2D55] text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md shadow-2xs">
+                                  {row.discount.includes('%') ? row.discount : `${row.discount} OFF`}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {row.discount ? (
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-semibold text-zinc-500">Discount</span>
+                              <span className="font-bold text-[#FF2D55]">-{row.discount.replace(/OFF/i, '').trim()}</span>
+                            </div>
+                          ) : (
+                            <div className="h-4"></div>
+                          )}
+
+                          <div className="border-b border-zinc-100 my-1"></div>
+
+                          <div className="flex items-baseline justify-between">
+                            <span className="font-extrabold text-[#1D1D1F] text-sm sm:text-base">Final Price</span>
+                            <div className="text-xl sm:text-2xl font-extrabold text-[#00875A] tabular-nums tracking-tight">
+                              {formattedPrice}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-end gap-1 text-[11px] text-zinc-400 font-medium">
+                            <span>GST Paid</span>
+                            <span className="text-xs">ⓘ</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Middle Feature Highlights Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-4 border-t border-zinc-100 text-center">
+                      <div className="bg-[#F9F9FB] rounded-xl p-2.5 flex flex-col items-center justify-center space-y-1 border border-zinc-100">
+                        <Wrench className="w-4 h-4 text-[#FF2D55]" />
+                        <span className="text-[10px] sm:text-[11px] font-bold text-[#1D1D1F] leading-tight">
+                          {row.duration || '2 Years'} Peace of Mind
+                        </span>
+                      </div>
+                      <div className="bg-[#F9F9FB] rounded-xl p-2.5 flex flex-col items-center justify-center space-y-1 border border-zinc-100">
+                        <MessageSquare className="w-4 h-4 text-[#FF2D55]" />
+                        <span className="text-[10px] sm:text-[11px] font-bold text-[#1D1D1F] leading-tight">
+                          Priority Support
+                        </span>
+                      </div>
+                      <div className="bg-[#F9F9FB] rounded-xl p-2.5 flex flex-col items-center justify-center space-y-1 border border-zinc-100">
+                        <ShieldCheck className="w-4 h-4 text-[#FF2D55]" />
+                        <span className="text-[10px] sm:text-[11px] font-bold text-[#1D1D1F] leading-tight">
+                          Damage Protection
+                        </span>
+                      </div>
+                      <div className="bg-[#F9F9FB] rounded-xl p-2.5 flex flex-col items-center justify-center space-y-1 border border-zinc-100">
+                        <Battery className="w-4 h-4 text-[#FF2D55]" />
+                        <span className="text-[10px] sm:text-[11px] font-bold text-[#1D1D1F] leading-tight">
+                          Battery Coverage
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bottom Action Buttons */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => handleAddAppleCareToWishlist(row)}
+                        className={`w-full border font-bold py-3 px-4 rounded-xl text-xs sm:text-sm transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer ${
+                          wishlistMap[`ac-${row.sku || row.model}`]
+                            ? 'bg-rose-50 border-rose-200 text-rose-600'
+                            : 'bg-[#1D1D1F] text-white border-zinc-900 hover:bg-zinc-800'
+                        }`}
+                      >
+                        <Heart className={`w-4 h-4 ${wishlistMap[`ac-${row.sku || row.model}`] ? 'fill-current text-rose-500' : 'text-white'}`} />
+                        <span>{wishlistMap[`ac-${row.sku || row.model}`] ? 'Wishlisted' : 'Add to Wishlist'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleAddAppleCareToCart(row)}
+                        className="w-full bg-[#0071E3] hover:bg-[#0077ED] active:scale-[0.98] text-white font-bold py-3 px-4 rounded-xl text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <ShoppingBag className="w-4 h-4 text-white" />
+                        <span>Add to Cart</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </section>
 
-
-
-      {/* iPhone Repairs Made Easy Section */}
+      {/* Repairs Made Easy Section */}
       <section className="pt-10 pb-20 px-6 sm:px-12 lg:px-20 max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-6">
           <div className="section-content text-left max-w-2xl">
@@ -1196,11 +1291,10 @@ export default function AppleCare() {
             </h3>
             <p className="subhead typography-label font-normal text-xl sm:text-2xl text-[#1D1D1F] leading-snug">
               AppleCare+ offers quick and convenient repair options <br className="hidden sm:inline" />
-              with low service fees.<sup className="footnote footnote-number underline text-sm ml-0.5 font-normal text-[#1D1D1F]">4</sup>
+              with low service fees.
             </p>
           </div>
 
-          {/* Navigation Controls */}
           <div className="flex items-center gap-3 shrink-0 self-start sm:self-auto">
             <button
               onClick={() => scrollRepairs('left')}
@@ -1219,7 +1313,6 @@ export default function AppleCare() {
           </div>
         </div>
 
-        {/* Scrollable Gallery Container */}
         <div
           key={`repairs-${selectedCategory}`}
           ref={repairsScrollRef}
@@ -1255,21 +1348,17 @@ export default function AppleCare() {
         </div>
       </section>
 
-      {/* Covered from every angle - AppleCare Benefits Interactive Slider Section */}
+      {/* Covered from every angle Section */}
       <section className="py-16 bg-[#F5F5F7] border-b border-[#D2D2D7]/60 w-full overflow-hidden">
         <div className="w-full max-w-[2200px] mx-auto px-4 sm:px-8 lg:px-12">
-          {/* Header */}
           <div className="max-w-6xl mx-auto mb-12">
             <div className="text-center space-y-2 max-w-4xl mx-auto px-4">
-
               <h3 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-[#1D1D1F] tracking-tight leading-tight">
                 Covered from every angle.
               </h3>
-
             </div>
           </div>
 
-          {/* Cards Horizontal Slider Container */}
           <div
             ref={scrollRef}
             onScroll={handleScroll}
@@ -1307,39 +1396,32 @@ export default function AppleCare() {
                 <p className="text-sm sm:text-base text-[#1D1D1F] leading-relaxed font-normal px-1">
                   <span className="font-bold">{card.boldText}</span>
                   {card.text}
-                  {card.footnote && (
-                    <sup className="text-xs underline ml-0.5 cursor-pointer">{card.footnote}</sup>
-                  )}
                 </p>
               </div>
             ))}
           </div>
-
-
         </div>
       </section>
 
-      {/* Pricing Modal Overlay for All Models */}
+      {/* Pricing Modal Overlay for All Models (Matching Screenshot 1) */}
       {isPricingModalOpen && (
-        <div className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 pt-4 sm:pt-8 pb-4 bg-black/60 backdrop-blur-md sm:backdrop-blur-lg animate-in fade-in duration-200" role="dialog" aria-modal="true">
-          <div className="modal-content-container bg-white rounded-[24px] sm:rounded-[30px] max-w-xl sm:max-w-2xl md:max-w-3xl w-full h-[92vh] max-h-[94vh] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden p-6 sm:p-10 md:p-12 pt-6 sm:pt-8 relative shadow-2xl space-y-8 animate-in zoom-in-95 duration-200 text-left mt-0">
+        <div className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-6 pt-3 sm:pt-6 pb-3 bg-black/65 backdrop-blur-md sm:backdrop-blur-xl animate-in fade-in duration-200" role="dialog" aria-modal="true">
+          <div className="modal-content-container bg-white rounded-[28px] sm:rounded-[36px] max-w-4xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-[1380px] w-full h-[94vh] max-h-[96vh] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden p-6 sm:p-12 md:p-16 pt-6 sm:pt-10 relative shadow-2xl space-y-10 animate-in zoom-in-95 duration-200 text-left mt-0">
 
-            {/* Close Button matching official Apple SVG */}
             <button
               onClick={() => setIsPricingModalOpen(false)}
-              className="modal-close-button absolute top-5 right-5 sm:top-7 sm:right-7 w-9 h-9 rounded-full bg-[#E8E8ED] hover:bg-[#D2D2D7] text-[#1D1D1F] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 z-20"
+              className="modal-close-button absolute top-6 right-6 sm:top-8 sm:right-8 w-11 h-11 rounded-full bg-[#E8E8ED] hover:bg-[#D2D2D7] text-[#1D1D1F] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 z-20"
               aria-label="Close"
             >
-              <span className="modal-close-icon w-4 h-4 text-[#1D1D1F]">
+              <span className="modal-close-icon w-5 h-5 text-[#1D1D1F]">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M12.121 10l3.44-3.44a1.5 1.5 0 1 0-2.121-2.12L10 7.878l-3.44-3.44A1.5 1.5 0 1 0 4.44 6.56L7.878 10l-3.44 3.44a1.5 1.5 0 1 0 2.121 2.12L10 12.122l3.44 3.44a1.495 1.495 0 0 0 2.12 0 1.5 1.5 0 0 0 0-2.122L12.12 10z" />
                 </svg>
               </span>
             </button>
 
-            {/* Modal Headline */}
             <h2
-              className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#1D1D1F] tracking-tight leading-[1.1] pr-10 -mt-1 sm:-mt-2"
+              className="text-4xl sm:text-5xl md:text-6xl font-black text-[#1D1D1F] tracking-tight leading-[1.1] pr-12 -mt-1 sm:-mt-2"
               id={`modal-headline-${selectedCategory.toLowerCase()}`}
             >
               {selectedCategory === 'Mac'
@@ -1359,45 +1441,44 @@ export default function AppleCare() {
                             : `Pricing for all ${getDeviceLabel(selectedCategory)} models.`}
             </h2>
 
-            {/* Modal Tables Container */}
-            <div className="space-y-12 pt-2">
+            <div className="space-y-14 pt-4 w-full">
 
-              {/* Table 1: AppleCare+ with Theft and Loss */}
+              {/* Table 1: AppleCare+ with Theft and Loss (for iPhone) */}
               {(selectedCategory === 'iPhone' || !['Mac', 'Display', 'TV', 'HomePod', 'Watch', 'AirPods'].includes(selectedCategory)) && (
-                <div className="container space-y-2 max-w-[540px]">
+                <div className="container space-y-3 max-w-full w-full">
                   <div className="table flex flex-col w-full">
-                    <div className="flex items-center w-full mb-1">
+                    <div className="flex items-center w-full mb-2">
                       <div className="flex-1"></div>
-                      <div className="w-28 sm:w-32 text-right pr-0">
-                        <p className="header font-semibold text-sm sm:text-base text-[#FF2D55] leading-tight whitespace-nowrap">
+                      <div className="w-44 sm:w-56 text-right pr-0">
+                        <p className="header font-bold text-base sm:text-lg text-[#FF2D55] leading-tight whitespace-nowrap">
                           AppleCare+ with Theft and Loss
                         </p>
                       </div>
                     </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm sm:text-base border-collapse">
+                    <div className="overflow-x-auto w-full">
+                      <table className="w-full text-left text-lg sm:text-xl border-collapse">
                         <thead>
-                          <tr className="text-[#1D1D1F] border-b border-[#D2D2D7]/70">
-                            <th className="py-2.5 font-bold text-left pr-4">Models</th>
-                            <th className="py-2.5 font-bold text-right pl-2 sm:pl-4 pr-0 w-28 sm:w-32">Annually</th>
+                          <tr className="text-[#1D1D1F] border-b-2 border-[#D2D2D7]/80">
+                            <th className="py-4 font-extrabold text-left pr-6">Models</th>
+                            <th className="py-4 font-extrabold text-right pl-2 sm:pl-6 pr-0 w-44 sm:w-56">Annually</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[#E8E8ED] text-[#1D1D1F]">
                           <tr>
-                            <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">iPhone 17e</td>
-                            <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹9999.00</td>
+                            <td className="py-5 font-semibold text-[#1D1D1F] pr-6">iPhone 17e</td>
+                            <td className="py-5 text-right font-medium pl-2 sm:pl-6 pr-0">₹9999.00</td>
                           </tr>
                           <tr>
-                            <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">iPhone 17, iPhone 16</td>
-                            <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹11499.00</td>
+                            <td className="py-5 font-semibold text-[#1D1D1F] pr-6">iPhone 17, iPhone 16</td>
+                            <td className="py-5 text-right font-medium pl-2 sm:pl-6 pr-0">₹11499.00</td>
                           </tr>
                           <tr>
-                            <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">iPhone 16 Plus</td>
-                            <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹12999.00</td>
+                            <td className="py-5 font-semibold text-[#1D1D1F] pr-6">iPhone 16 Plus</td>
+                            <td className="py-5 text-right font-medium pl-2 sm:pl-6 pr-0">₹12999.00</td>
                           </tr>
                           <tr>
-                            <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max</td>
-                            <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹14499.00</td>
+                            <td className="py-5 font-semibold text-[#1D1D1F] pr-6">iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max</td>
+                            <td className="py-5 text-right font-medium pl-2 sm:pl-6 pr-0">₹14499.00</td>
                           </tr>
                         </tbody>
                       </table>
@@ -1406,179 +1487,46 @@ export default function AppleCare() {
                 </div>
               )}
 
-              {/* Table 2: Standard AppleCare+ */}
-              <div className="container space-y-2 max-w-[540px]">
+              {/* Table 2: Standard AppleCare+ (DYNAMIC DATA FROM MONGODB / BACKEND) */}
+              <div className="container space-y-3 max-w-full w-full">
                 <div className="table flex flex-col w-full">
-                  <div className="flex items-center w-full mb-1">
+                  <div className="flex items-center w-full mb-2">
                     <div className="flex-1"></div>
-                    <div className="w-28 sm:w-32 text-right pr-0">
-                      <p className="header font-semibold text-sm sm:text-base text-[#FF2D55] whitespace-nowrap">
+                    <div className="w-44 sm:w-56 text-right pr-0">
+                      <p className="header font-bold text-base sm:text-lg text-[#FF2D55] whitespace-nowrap">
                         AppleCare+
                       </p>
                     </div>
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm sm:text-base border-collapse">
+                  <div className="overflow-x-auto w-full">
+                    <table className="w-full text-left text-lg sm:text-xl border-collapse">
                       <thead>
-                        <tr className="text-[#1D1D1F] border-b border-[#D2D2D7]/70">
-                          <th className="py-2.5 font-bold text-left pr-4">Models</th>
-                          <th className="py-2.5 font-bold text-right pl-2 sm:pl-4 pr-0 w-28 sm:w-32">
-                            {selectedCategory === 'Mac' || selectedCategory === 'TV' || selectedCategory === 'Display' ? '3 years' : '2 years'}
+                        <tr className="text-[#1D1D1F] border-b-2 border-[#D2D2D7]/80">
+                          <th className="py-4 font-extrabold text-left pr-6">Models</th>
+                          <th className="py-4 font-extrabold text-right pl-2 sm:pl-6 pr-0 w-44 sm:w-56">
+                            {activeCategoryTable?.durationLabel || (selectedCategory === 'Mac' || selectedCategory === 'TV' || selectedCategory === 'Display' ? '3 years' : '2 years')}
                           </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#E8E8ED] text-[#1D1D1F]">
-                        {selectedCategory === 'iPhone' ? (
-                          <>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">iPhone 17e</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹11900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">iPhone 17, iPhone 16</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹14900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">iPhone 16 Plus</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹17900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹20900.00</td>
-                            </tr>
-                          </>
-                        ) : selectedCategory === 'Mac' ? (
-                          <>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">Mac mini</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹12900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">Mac Studio</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹19900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">iMac</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹19900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">Macbook Neo</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹16900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">MacBook Air 13″</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹22900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">MacBook Air 15″</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹24900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">MacBook Pro 14″</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹29900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">MacBook Pro 16″</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹40900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">Mac Pro</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹49900.00</td>
-                            </tr>
-                          </>
-                        ) : selectedCategory === 'Display' ? (
-                          <>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">Studio Display</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹14900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">Studio Display XDR</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹29900.00</td>
-                            </tr>
-                          </>
-                        ) : selectedCategory === 'iPad' ? (
-                          <>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">iPad, iPad mini</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹8900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">iPad Air 11″ (M4)</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹9900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">iPad Air 13″ (M4)</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹11900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">iPad Pro 11″ (M5)</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹17900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">iPad Pro 13″ (M5)</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹19900.00</td>
-                            </tr>
-                          </>
-                        ) : selectedCategory === 'Watch' ? (
-                          <>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">Apple Watch SE</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹4900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">Apple Watch Series 11</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹7900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">Apple Watch Ultra 3</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹9900.00</td>
-                            </tr>
-                          </>
-                        ) : selectedCategory === 'AirPods' || selectedCategory === 'Headphones' ? (
-                          <>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">AirPods 4, Beats</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹2900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">AirPods Pro 3</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹4900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">AirPods Max 2</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹6900.00</td>
-                            </tr>
-                          </>
-                        ) : selectedCategory === 'TV' ? (
-                          <>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">Apple TV</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹2900.00</td>
-                            </tr>
-                          </>
-                        ) : selectedCategory === 'HomePod' ? (
-                          <>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">HomePod mini</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹1600.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">HomePod</td>
-                              <td className="py-3.5 text-right font-normal pl-2 sm:pl-4 pr-0">₹3900.00</td>
-                            </tr>
-                          </>
+                        {activeRows.length > 0 ? (
+                          activeRows.map((row, idx) => {
+                            const displayPrice = row.yearly || row.salePrice || '11,900.00';
+                            const formattedPrice = String(displayPrice).includes('₹')
+                              ? displayPrice
+                              : `₹${Number(String(displayPrice).replace(/[^0-9.]/g, '')).toLocaleString('en-IN')}.00`;
+
+                            return (
+                              <tr key={idx}>
+                                <td className="py-5 font-semibold text-[#1D1D1F] pr-6">{row.model}</td>
+                                <td className="py-5 text-right font-medium pl-2 sm:pl-6 pr-0">{formattedPrice}</td>
+                              </tr>
+                            );
+                          })
                         ) : (
-                          <>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">Standard {getDeviceLabel(selectedCategory)} Model</td>
-                              <td className="py-3.5 text-right font-normal pl-4">₹4900.00</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3.5 font-medium text-[#1D1D1F] pr-4">Pro / Ultra {getDeviceLabel(selectedCategory)} Model</td>
-                              <td className="py-3.5 text-right font-normal pl-4">₹8900.00</td>
-                            </tr>
-                          </>
+                          <tr>
+                            <td className="py-5 text-zinc-500 font-medium" colSpan={2}>No active AppleCare+ models found for {selectedCategory}.</td>
+                          </tr>
                         )}
                       </tbody>
                     </table>
@@ -1588,25 +1536,16 @@ export default function AppleCare() {
 
             </div>
 
-            {/* Disclaimer & CTA Footer matching official Apple structure */}
             <div className="disclaimer-container space-y-5 pt-4">
               <p className="disclaimer typography-body-reduced-tight text-xs text-[#6E6E73] font-normal">
-                For applicable service fees, see terms &amp; conditions.<sup className="footnote footnote-number"><a href="#footnote-3" aria-label="Footnote 3" className="underline ml-0.5 text-[#6E6E73]">3</a></sup>
+                For applicable service fees, see terms &amp; conditions.
               </p>
               <div>
                 <button
-                  onClick={() => {
-                    setIsPricingModalOpen(false);
-                    handleAddToCart({
-                      id: `ac-${selectedCategory.toLowerCase()}`,
-                      title: `AppleCare+ for ${selectedCategory}`,
-                      price: 11900,
-                      image: ''
-                    });
-                  }}
+                  onClick={() => setIsPricingModalOpen(false)}
                   className="button bg-[#0071E3] hover:bg-[#0077ED] text-white px-6 py-2.5 rounded-full text-sm font-semibold tracking-tight transition-all hover:scale-105 active:scale-95 shadow-xs cursor-pointer inline-flex items-center gap-2"
                 >
-                  <span className="icon-copy">Get coverage</span>
+                  <span className="icon-copy">Close pricing table</span>
                 </button>
               </div>
             </div>
