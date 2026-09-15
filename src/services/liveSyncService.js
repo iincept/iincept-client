@@ -19,19 +19,8 @@ export const invalidateCache = (type = 'all') => {
       const key = localStorage.key(i);
       if (!key || PROTECTED_KEYS.has(key)) continue;
 
-      if (type === 'products') {
-        if (key.includes('sub_items') || key.includes('new_arrivals') || key.includes('product')) {
-          keysToRemove.push(key);
-        }
-      } else if (type === 'categories') {
-        if (key.includes('category') || key.includes('apple_categories') || key.includes('sub_items')) {
-          keysToRemove.push(key);
-        }
-      } else {
-        // 'settings' or 'all' -> invalidate all site content cache keys starting with 'iincept_'
-        if (key.startsWith('iincept_')) {
-          keysToRemove.push(key);
-        }
+      if (key.startsWith('iincept_')) {
+        keysToRemove.push(key);
       }
     }
 

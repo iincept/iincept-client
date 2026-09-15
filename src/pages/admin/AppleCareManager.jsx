@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axiosClient from '../../services/axiosClient';
+import { notifyAdminChange } from '../../services/liveSyncService';
 import { 
   ShieldCheck, 
   Plus, 
@@ -280,6 +281,7 @@ export default function AppleCareManager() {
         setPricingTables(res.data.appleCarePricingTables);
       }
 
+      notifyAdminChange('settings', { action: 'update_mac_applecare' });
       showMessage('success', 'MacBook AppleCare products saved successfully!');
     } catch (err) {
       console.error('Failed to save settings:', err);

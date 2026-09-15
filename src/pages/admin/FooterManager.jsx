@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axiosClient from '../../services/axiosClient';
+import { notifyAdminChange } from '../../services/liveSyncService';
 import { 
   LayoutGrid, 
   Plus, 
@@ -221,6 +222,7 @@ export default function FooterManager() {
     setError(null);
     try {
       await axiosClient.put('/settings', { footerSections: sections });
+      notifyAdminChange('settings', { action: 'update_footer' });
       showSuccessMessage('Footer Sections and links updated successfully!');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to save footer settings');

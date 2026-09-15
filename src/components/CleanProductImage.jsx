@@ -37,6 +37,7 @@ export default function CleanProductImage({
   const [processedSrc, setProcessedSrc] = useState(initialSrc);
   const [isBlackBg, setIsBlackBg] = useState(false);
   const [hasFailed, setHasFailed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -45,6 +46,7 @@ export default function CleanProductImage({
     setProcessedSrc(currentSrc);
     setIsBlackBg(false);
     setHasFailed(false);
+    setIsLoading(true);
 
     if (!currentSrc) return;
 
@@ -53,6 +55,7 @@ export default function CleanProductImage({
     img.src = currentSrc;
 
     img.onload = () => {
+      if (isMounted) setIsLoading(false);
       try {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -153,6 +156,7 @@ export default function CleanProductImage({
           setProcessedSrc(fb);
           setHasFailed(true);
         }
+        setIsLoading(false);
       }
     };
 
@@ -162,19 +166,24 @@ export default function CleanProductImage({
   }, [src, alt]);
 
   return (
-    <div className={containerClassName}>
+    <div className={`${containerClassName} relative overflow-hidden`}>
+      {isLoading && (
+        <div className="absolute inset-0 bg-zinc-100 animate-pulse flex items-center justify-center rounded-2xl z-10" />
+      )}
       <img
         src={processedSrc}
         alt={alt}
+        onLoad={() => setIsLoading(false)}
         className={`${className} ${
           mixBlend && !isBlackBg ? 'mix-blend-multiply' : ''
-        }`}
+        } ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
         onError={() => {
           if (!hasFailed) {
             const fb = getSmartFallback(alt, src);
             setProcessedSrc(fb);
             setHasFailed(true);
           }
+          setIsLoading(false);
         }}
       />
     </div>

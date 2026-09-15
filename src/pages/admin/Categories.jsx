@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { getCategories, createCategory, deleteCategory } from '../../services/categoryApi';
 import axiosClient from '../../services/axiosClient';
+import { notifyAdminChange } from '../../services/liveSyncService';
 
 export default function Categories() {
   const [categories, setCategories] = useState([]);
@@ -86,6 +87,7 @@ export default function Categories() {
 
     try {
       await createCategory(categoryForm);
+      notifyAdminChange('categories', { action: 'create' });
       showSuccessMessage('Category created successfully!');
       resetCategoryForm();
       fetchData();
@@ -101,6 +103,7 @@ export default function Categories() {
     setLoading(true);
     try {
       await deleteCategory(id);
+      notifyAdminChange('categories', { action: 'delete', id });
       showSuccessMessage('Category deleted successfully!');
       fetchData();
     } catch (err) {

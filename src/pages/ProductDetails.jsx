@@ -523,63 +523,92 @@ export default function ProductDetails() {
     const catName = (catObj && typeof catObj === 'object') ? (catObj.name || catObj.title || '') : (typeof catObj === 'string' ? catObj : '');
     const catSlug = (catObj && typeof catObj === 'object') ? (catObj.slug || '') : '';
 
-    const directTitle = prod.title || prod.name || '';
-    const variantTitles = (prod.variants || []).map(v => `${v.title || ''} ${v.displayTitle || ''} ${v.name || ''}`).join(' ');
-    const desc = prod.description || '';
-    const brand = prod.brand || '';
+    const title = (prod.title || prod.name || '').toLowerCase();
+    const catText = `${catName} ${catSlug} ${catId}`.toLowerCase();
 
-    const fullText = `${catId} ${catName} ${catSlug} ${directTitle} ${variantTitles} ${desc} ${brand}`.toLowerCase();
+    // Explicit accessory keywords in product title (cases, sleeves, adapters, guards)
+    const isExplicitAccessoryTitle = [
+      'case', 'sleeve', 'cover', 'bag', 'backpack', 'folio', 'screen protector',
+      'guard', 'film', 'skin', 'stand', 'mount', 'hub', 'dock', 'dongle', 'converter',
+      'adapter', 'charger', 'charging', 'cable', 'cord', 'connector', 'strap', 'band', 'loop'
+    ].some(kw => title.includes(kw));
 
-    // 1. Check for accessories FIRST (keyboards, power adapters, chargers, cables, cases, sleeve, magsafe, etc.)
-    const accessoryKeywords = [
-      'keyboard', 'keypad', 'mouse', 'trackpad', 'adapter', 'charger', 'charging', 
-      'cable', 'cord', 'connector', 'case', 'sleeve', 'cover', 'bag', 'backpack', 
-      'folio', 'display', 'monitor', 'screen protector', 'guard', 'protector', 
-      'film', 'skin', 'stand', 'mount', 'hub', 'dock', 'dongle', 'converter', 
-      'pencil', 'stylus', 'strap', 'band', 'loop', 'magsafe', 'power', 'accessories', 
-      'audio', 'headphone', 'earphone', 'earbuds', 'speaker'
-    ];
+    // 1. Pure Mac Laptops & Computers
+    const isMacHardware = (
+      title.includes('macbook') ||
+      title.includes('mac mini') ||
+      title.includes('imac') ||
+      title.includes('mac studio') ||
+      title.includes('mac pro') ||
+      title.includes('macbook air') ||
+      title.includes('macbook pro') ||
+      title.includes('macbook neo') ||
+      catText.includes('macbook') ||
+      catText.includes('laptops') ||
+      (catText.includes('mac') && !catText.includes('accessories'))
+    );
 
-    const isAccessory = accessoryKeywords.some(kw => fullText.includes(kw)) ||
-                        catName.toLowerCase().includes('accessories') ||
-                        catSlug.toLowerCase().includes('accessories');
-
-    if (isAccessory) {
-      return 'accessories';
-    }
-
-    // 2. Pure Mac Laptops & Computers
-    if (
-      fullText.includes('macbook') ||
-      fullText.includes('mac mini') ||
-      fullText.includes('imac') ||
-      fullText.includes('mac studio') ||
-      fullText.includes('mac pro') ||
-      fullText.includes('laptops & pcs') ||
-      fullText.includes('laptops-pcs') ||
-      fullText.includes('macbook air') ||
-      fullText.includes('macbook pro') ||
-      fullText.includes('macbook neo')
-    ) {
+    if (isMacHardware && !isExplicitAccessoryTitle) {
       return 'mac';
     }
 
-    if (fullText.includes('iphone') || fullText.includes('smartphones')) {
+    // 2. iPhone Hardware
+    const isIphoneHardware = (
+      title.includes('iphone') ||
+      catText.includes('iphone') ||
+      catText.includes('smartphones')
+    );
+    if (isIphoneHardware && !isExplicitAccessoryTitle) {
       return 'iphone';
     }
-    if (fullText.includes('ipad') || fullText.includes('tablets')) {
+
+    // 3. iPad Hardware
+    const isIpadHardware = (
+      title.includes('ipad') ||
+      catText.includes('ipad') ||
+      catText.includes('tablets')
+    );
+    if (isIpadHardware && !isExplicitAccessoryTitle) {
       return 'ipad';
     }
-    if (fullText.includes('watch') || fullText.includes('wearable')) {
+
+    // 4. Apple Watch Hardware
+    const isWatchHardware = (
+      title.includes('watch') ||
+      catText.includes('watch') ||
+      catText.includes('wearable')
+    );
+    if (isWatchHardware && !isExplicitAccessoryTitle) {
       return 'watch';
     }
-    if (fullText.includes('airpod') || fullText.includes('premium audio')) {
+
+    // 5. AirPods & Audio Hardware
+    const isAirpodsHardware = (
+      title.includes('airpods') ||
+      title.includes('airpod') ||
+      catText.includes('airpods')
+    );
+    if (isAirpodsHardware && !isExplicitAccessoryTitle) {
       return 'airpods';
     }
-    if (fullText.includes('tv') || fullText.includes('homepod')) {
+
+    // 6. TV & Home Hardware
+    const isTvHomeHardware = (
+      title.includes('apple tv') ||
+      title.includes('homepod') ||
+      catText.includes('tv') ||
+      catText.includes('homepod')
+    );
+    if (isTvHomeHardware && !isExplicitAccessoryTitle) {
       return 'tv-home';
     }
-    return catId || catName || 'other';
+
+    // 7. General Accessories
+    if (isExplicitAccessoryTitle || catText.includes('accessories')) {
+      return 'accessories';
+    }
+
+    return catName.toLowerCase() || 'other';
   };
 
   const isValidCurrentProduct = currentProduct && 
@@ -833,14 +862,18 @@ export default function ProductDetails() {
     });
   }
   rawStorages.forEach(st => {
-    const trimmed = (st || '').toString().trim();
-    if (trimmed && !storages.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
-      storages.push(trimmed);
+    let trimmed = (st || '').toString().trim();
+    if (trimmed) {
+      const formatted = trimmed.replace(/^(\d+)\s*(GB|TB|MB)$/i, '$1 $2').toUpperCase();
+      const normKey = formatted.replace(/\s+/g, '').toLowerCase();
+      if (!storages.some(s => s.replace(/\s+/g, '').toLowerCase() === normKey)) {
+        storages.push(formatted);
+      }
     }
   });
 
   if (storages.length === 0 && ((product?.title || product?.name || '').toLowerCase().includes('18 pro'))) {
-    storages = ['256GB', '512GB', '1TB', '2TB'];
+    storages = ['256 GB', '512 GB', '1 TB', '2 TB'];
   }
 
   let rams = [];
@@ -856,6 +889,26 @@ export default function ProductDetails() {
       rams.push(trimmed);
     }
   });
+
+  let chipRamLabel = '';
+  if (rams.length === 0) {
+    const titleUpper = (product?.title || product?.name || '').toUpperCase();
+    if (titleUpper.includes('M5-MAX') || titleUpper.includes('M5 MAX')) {
+      chipRamLabel = 'M5-MAX';
+    } else if (titleUpper.includes('M6')) {
+      chipRamLabel = 'M6-CHIP';
+    } else if (titleUpper.includes('M5')) {
+      chipRamLabel = 'M5-CHIP';
+    } else if (titleUpper.includes('M4')) {
+      chipRamLabel = 'M4-CHIP';
+    } else if (titleUpper.includes('M3')) {
+      chipRamLabel = 'M3-CHIP';
+    } else if (titleUpper.includes('M2')) {
+      chipRamLabel = 'M2-CHIP';
+    } else if (titleUpper.includes('MAC') || titleUpper.includes('PC')) {
+      chipRamLabel = 'STANDARD';
+    }
+  }
 
   let glasses = Array.isArray(product?.glasses) ? [...product.glasses] : [];
   if (product?.variants && product.variants.length > 0) {
@@ -882,7 +935,16 @@ export default function ProductDetails() {
   }
 
   const activeColorName = selectedColor?.name || (colors[0]?.name || '');
-  const galleryImages = getColorImages(activeColorName);
+  const rawGalleryImages = getColorImages(activeColorName);
+  let galleryImages = [];
+  rawGalleryImages.forEach(img => {
+    if (img && !galleryImages.includes(img)) {
+      galleryImages.push(img);
+    }
+  });
+  if (galleryImages.length > 5) {
+    galleryImages = galleryImages.slice(0, 5);
+  }
 
   const getCategoryLink = () => {
     const category = (product?.category?.name || product?.category || '').toString().toLowerCase();
@@ -1398,11 +1460,11 @@ export default function ProductDetails() {
         .gallery-main {
           width: 100%; height: 520px; aspect-ratio: 1/1; border-radius: 20px; background: #ffffff;
           display: flex; align-items: center; justify-content: center;
-          border: 1px solid var(--line); overflow: hidden; padding: 10px;
+          border: 1px solid var(--line); overflow: hidden;
           transition: background .3s ease, border-color .3s ease;
         }
         .gallery-main img {
-          max-width: 98%; max-height: 98%; width: 95%; height: 95%; object-fit: contain; display: block; margin: 0 auto;
+          max-width: 90%; max-height: 90%; width: auto; height: auto; object-fit: contain; display: block; margin: auto;
           transition: opacity 0.35s ease-out, transform 0.35s ease-out;
         }
         .gallery-thumbs { display: flex; gap: 10px; margin-top: 14px; overflow-x: auto; padding-bottom: 4px; }
@@ -1427,16 +1489,11 @@ export default function ProductDetails() {
         .opt {
           border: 1.5px solid rgba(0, 0, 0, 0.14);
           padding: 12px 18px;
-          border-radius: 12px;
-          font-size: 13.5px;
-          font-weight: 600;
+          border-radius: 14px;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: -0.01em;
           cursor: pointer;
-          transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-          background: #ffffff;
-          color: #1d1d1f;
-          text-align: center;
-          display: inline-flex;
-          align-items: center;
           justify-content: center;
           box-sizing: border-box;
           user-select: none;
@@ -1505,7 +1562,7 @@ export default function ProductDetails() {
 
       <div className="wrap">
         <div className="breadcrumb">
-          <Link to="/">Home</Link><span>/</span><Link to={getCategoryLink()}>{getCategoryName()}</Link><span>/</span>{product.name}
+          <Link to="/">Home</Link><span>/</span><Link to={getCategoryLink()}>{getCategoryName()}</Link><span>/</span>{cleanProductTitle(product.name || product.title)}
         </div>
 
         <div className="pdp">
@@ -1522,8 +1579,8 @@ export default function ProductDetails() {
                 alt={product.name || product.title || ''}
                 className="mix-blend-multiply transition-transform duration-150 ease-out pointer-events-none"
                 style={{
-                  transform: isZoomed ? 'scale(2.4)' : 'scale(1.22)',
-                  transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`
+                  transform: isZoomed ? 'scale(2.2)' : 'scale(1)',
+                  transformOrigin: isZoomed ? `${zoomPos.x}% ${zoomPos.y}%` : 'center center'
                 }}
                 onError={(e) => {
                   e.currentTarget.style.opacity = '0.5';
@@ -1738,19 +1795,25 @@ export default function ProductDetails() {
             )}
 
             {/* RAM options */}
-            {rams && rams.length > 0 && (
-              <div className="optgroup mb-8">
-                <label className="block text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">RAM (Memory)</label>
+            {((rams && rams.length > 0) || chipRamLabel) && (
+              <div className="optgroup mb-8 text-left">
+                <label className="block text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">RAM (MEMORY)</label>
                 <div className="optrow flex flex-wrap gap-3">
-                  {rams.map((r) => (
-                    <div
-                      key={r}
-                      onClick={() => handleRamSelect(r)}
-                      className={`opt ${selectedRam === r ? 'active' : ''}`}
-                    >
-                      {r}
+                  {rams && rams.length > 0 ? (
+                    rams.map((r) => (
+                      <div
+                        key={r}
+                        onClick={() => handleRamSelect(r)}
+                        className={`opt ${selectedRam === r ? 'active' : ''}`}
+                      >
+                        {r}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="opt active">
+                      {chipRamLabel}
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             )}

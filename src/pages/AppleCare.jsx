@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { addToCart } from '../redux/cartSlice';
 import { addToWishlist } from '../redux/wishlistSlice';
 import axiosClient from '../services/axiosClient';
+import { subscribeToLiveSync } from '../services/liveSyncService';
 
 const BENEFIT_CARDS = [
   {
@@ -462,6 +463,24 @@ const HeadphonesSvgIcon = ({ className }) => (
   </svg>
 );
 
+const TvHomeCombinedIcon = ({ className }) => (
+  <svg viewBox="0 0 68 56" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="68" height="56" fill="none" />
+    {/* TV Screen */}
+    <rect x="3" y="11" width="42" height="25" rx="3.5" stroke="currentColor" strokeWidth="2.4" fill="none" />
+    {/* TV Stand Neck & Base */}
+    <path d="M20 36v3.5h8V36" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <path d="M15 39.5h18" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" fill="none" />
+    
+    {/* HomePod Cutout Mask */}
+    <rect x="33" y="19" width="22" height="24" rx="7" fill="white" />
+    {/* HomePod Outer Outline */}
+    <rect x="33.5" y="19.5" width="21" height="23" rx="6.5" stroke="currentColor" strokeWidth="2.4" fill="none" />
+    {/* HomePod Top Touch Interface */}
+    <ellipse cx="44" cy="22" rx="5.5" ry="1.8" stroke="currentColor" strokeWidth="2" fill="none" />
+  </svg>
+);
+
 const TVSvgIcon = ({ className }) => (
   <svg viewBox="0 0 40 56" className={className} fill="currentColor">
     <path d="m0 0h40v56h-40z" fill="none" />
@@ -598,6 +617,20 @@ const PLAN_TILES = {
     image: 'https://www.apple.com/in/applecare/images/overview/plans/homepod_single__ecv85j2jxzo2_large_2x.jpg',
     alt: 'HomePod smart speaker'
   },
+  'TV & Home': {
+    eyebrow: 'AppleCare+',
+    headline: 'Cover your TV & Home products.',
+    priceText: 'From ₹1600.00 for 2 years',
+    monthlyText: 'or ₹79.00/mo. until cancelled.',
+    priceVal: 1600,
+    features: [
+      'Unlimited repairs for accidents like drops and spills',
+      'Priority support from Apple experts',
+      'Full coverage for Apple TV, HomePod, and HomePod mini'
+    ],
+    image: 'https://www.apple.com/in/applecare/images/overview/plans/apple_tv_single__b3vn6fascz0i_large_2x.jpg',
+    alt: 'TV & Home products'
+  },
 };
 
 const DEFAULT_PRICING_TABLES = [
@@ -691,6 +724,18 @@ const DEFAULT_PRICING_TABLES = [
     ]
   },
   {
+    categoryKey: 'display',
+    image: 'https://www.apple.com/in/applecare/images/overview/plans/display_single__bcorwfyqszaq_large_2x.jpg',
+    headline: 'Cover your display.',
+    subheadline: 'AppleCare+ for Display provides up to 3 years of expert support and hardware coverage.',
+    durationLabel: '3 years',
+    isActive: true,
+    rows: [
+      { model: 'Studio Display', title: 'AppleCare+ for Studio Display', description: '3 Years Apple-certified coverage for Studio Display', sku: 'AC-STUDIO-DISPLAY', mrp: '₹14,900.00', discount: '13% OFF', salePrice: '12,900.00', monthly: '₹499.00', yearly: '12,900.00', isActive: true },
+      { model: 'Pro Display XDR', title: 'AppleCare+ for Pro Display XDR', description: '3 Years Apple-certified coverage for Pro Display XDR', sku: 'AC-PRO-DISPLAY-XDR', mrp: '₹49,900.00', discount: '10% OFF', salePrice: '44,900.00', monthly: '₹1,499.00', yearly: '44,900.00', isActive: true }
+    ]
+  },
+  {
     categoryKey: 'ipad',
     image: '/ipad_category_v3.png',
     headline: 'Cover your iPad.',
@@ -734,14 +779,37 @@ const DEFAULT_PRICING_TABLES = [
   {
     categoryKey: 'tv-home',
     image: '/applecare_official_hero.png',
-    headline: 'Cover your Apple TV.',
-    subheadline: 'AppleCare+ for Apple TV and HomePod includes 3 years of hardware support.',
+    headline: 'Cover your TV & Home products.',
+    subheadline: 'AppleCare+ for TV & Home provides expert technical support and hardware coverage.',
     durationLabel: '3 years',
     isActive: true,
     rows: [
-      { model: 'Apple TV', title: 'AppleCare+ for Apple TV', description: '3 Years Apple-certified coverage for Apple TV', sku: 'AC-TV-STD', mrp: '₹3,490.00', discount: '17% OFF', salePrice: '₹2,900.00', monthly: '₹99.00', yearly: '₹2,900.00', isActive: true },
-      { model: 'HomePod mini', title: 'AppleCare+ for HomePod mini', description: '2 Years Apple-certified coverage for HomePod mini', sku: 'AC-HOMEPOD-MINI', mrp: '₹1,990.00', discount: '20% OFF', salePrice: '₹1,600.00', monthly: '₹79.00', yearly: '₹1,600.00', isActive: true },
-      { model: 'HomePod', title: 'AppleCare+ for HomePod', description: '2 Years Apple-certified coverage for HomePod', sku: 'AC-HOMEPOD-STD', mrp: '₹4,900.00', discount: '20% OFF', salePrice: '₹3,900.00', monthly: '₹199.00', yearly: '₹3,900.00', isActive: true }
+      { model: 'Apple TV 4K', title: 'AppleCare+ for Apple TV 4K', description: '3 Years Apple-certified coverage for Apple TV 4K', sku: 'AC-TV-4K', mrp: '₹3,490.00', discount: '17% OFF', salePrice: '2,900.00', monthly: '₹99.00', yearly: '2,900.00', isActive: true },
+      { model: 'HomePod mini', title: 'AppleCare+ for HomePod mini', description: '2 Years Apple-certified coverage for HomePod mini', sku: 'AC-HOMEPOD-MINI', mrp: '₹1,990.00', discount: '20% OFF', salePrice: '1,600.00', monthly: '₹79.00', yearly: '1,600.00', isActive: true },
+      { model: 'HomePod', title: 'AppleCare+ for HomePod', description: '2 Years Apple-certified coverage for HomePod', sku: 'AC-HOMEPOD-STD', mrp: '₹4,900.00', discount: '20% OFF', salePrice: '3,900.00', monthly: '₹199.00', yearly: '3,900.00', isActive: true }
+    ]
+  },
+  {
+    categoryKey: 'tv',
+    image: '/applecare_official_hero.png',
+    headline: 'Cover your Apple TV.',
+    subheadline: 'AppleCare+ for Apple TV includes 3 years of hardware support.',
+    durationLabel: '3 years',
+    isActive: true,
+    rows: [
+      { model: 'Apple TV 4K', title: 'AppleCare+ for Apple TV 4K', description: '3 Years Apple-certified coverage for Apple TV 4K', sku: 'AC-TV-4K', mrp: '₹3,490.00', discount: '17% OFF', salePrice: '2,900.00', monthly: '₹99.00', yearly: '2,900.00', isActive: true }
+    ]
+  },
+  {
+    categoryKey: 'homepod',
+    image: 'https://www.apple.com/in/applecare/images/overview/plans/homepod_single__ecv85j2jxzo2_large_2x.jpg',
+    headline: 'Cover your HomePod.',
+    subheadline: 'AppleCare+ for HomePod covers HomePod and HomePod mini.',
+    durationLabel: '2 years',
+    isActive: true,
+    rows: [
+      { model: 'HomePod mini', title: 'AppleCare+ for HomePod mini', description: '2 Years Apple-certified coverage for HomePod mini', sku: 'AC-HOMEPOD-MINI', mrp: '₹1,990.00', discount: '20% OFF', salePrice: '1,600.00', monthly: '₹79.00', yearly: '1,600.00', isActive: true },
+      { model: 'HomePod', title: 'AppleCare+ for HomePod', description: '2 Years Apple-certified coverage for HomePod', sku: 'AC-HOMEPOD-STD', mrp: '₹4,900.00', discount: '20% OFF', salePrice: '3,900.00', monthly: '₹199.00', yearly: '3,900.00', isActive: true }
     ]
   }
 ];
@@ -752,17 +820,34 @@ export default function AppleCare() {
   const catParam = searchParams.get('category') || searchParams.get('cat');
   const openModalParam = searchParams.get('modal') === 'true' || searchParams.get('openModal') === 'true';
 
-  const [selectedCategory, setSelectedCategory] = useState(
-    catParam ? (catParam.toLowerCase() === 'airpods' ? 'AirPods' : catParam.toLowerCase() === 'tv' ? 'TV' : catParam.charAt(0).toUpperCase() + catParam.slice(1).toLowerCase()) : 'iPhone'
-  );
-  const [isPricingModalOpen, setIsPricingModalOpen] = useState(openModalParam);
-  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const resolveCategoryParam = (param) => {
+    if (!param) return 'iPhone';
+    const lower = param.toLowerCase().trim();
+    if (lower === 'airpods' || lower === 'headphones') return 'AirPods';
+    if (lower === 'tv' || lower === 'homepod' || lower === 'tv-home' || lower.includes('tv') || lower.includes('home')) return 'TV & Home';
+    if (lower === 'mac') return 'Mac';
+    if (lower === 'ipad') return 'iPad';
+    if (lower === 'watch') return 'Watch';
+    if (lower === 'display') return 'Display';
+    return param.charAt(0).toUpperCase() + param.slice(1).toLowerCase();
+  };
+
+  const [selectedCategory, setSelectedCategory] = useState(() => resolveCategoryParam(catParam));
+  const [selectedAppleCarePlan, setSelectedAppleCarePlan] = useState(null);
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   const [wishlistMap, setWishlistMap] = useState({});
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+
+  useEffect(() => {
+    if (catParam) {
+      setSelectedCategory(resolveCategoryParam(catParam));
+    }
+  }, [catParam]);
 
   useEffect(() => {
     if (openModalParam) {
       setIsPricingModalOpen(true);
-      const newParams = new URLSearchParams(window.location.search);
+      const newParams = new URLSearchParams(searchParams);
       newParams.delete('modal');
       newParams.delete('openModal');
       const newSearch = newParams.toString();
@@ -778,7 +863,7 @@ export default function AppleCare() {
   const repairsScrollRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  useEffect(() => {
+  const fetchAppleCareSettings = () => {
     setIsLoadingSettings(true);
     axiosClient.get('/settings')
       .then(res => {
@@ -795,12 +880,17 @@ export default function AppleCare() {
           const dbTables = res.data.appleCarePricingTables.filter(t => t.isActive !== false);
           
           const merged = DEFAULT_PRICING_TABLES.map(def => {
-            const found = dbTables.find(d => d.categoryKey === def.categoryKey);
+            const found = dbTables.find(d => 
+              d.categoryKey === def.categoryKey ||
+              ((def.categoryKey === 'tv' || def.categoryKey === 'homepod' || def.categoryKey === 'tv-home') &&
+               (d.categoryKey === 'tv-home' || d.categoryKey === 'tv' || d.categoryKey === 'homepod'))
+            );
             if (!found) return def;
             const dbRows = (found.rows || []).filter(r => r.isActive !== false);
             return {
               ...def,
               ...found,
+              categoryKey: def.categoryKey,
               rows: dbRows.length > 0 ? dbRows : def.rows
             };
           });
@@ -816,6 +906,14 @@ export default function AppleCare() {
       })
       .catch(err => console.error('Error fetching AppleCare settings:', err))
       .finally(() => setIsLoadingSettings(false));
+  };
+
+  useEffect(() => {
+    fetchAppleCareSettings();
+    const unsub = subscribeToLiveSync(() => {
+      fetchAppleCareSettings();
+    });
+    return () => unsub();
   }, []);
 
   useEffect(() => {
@@ -845,15 +943,48 @@ export default function AppleCare() {
     setCurrentIndex(Math.min(Math.max(index, 0), BENEFIT_CARDS.length - 1));
   };
 
-  const currentCategoryKey = (selectedCategory || 'iPhone').toLowerCase() === 'tv' || (selectedCategory || '').toLowerCase() === 'homepod'
-    ? 'tv-home'
-    : (selectedCategory || 'iPhone').toLowerCase();
+  const currentCategoryKey = (selectedCategory || 'iPhone').toLowerCase();
 
-  const activeCategoryTable = pricingTables.find(t => t.categoryKey === currentCategoryKey)
-    || DEFAULT_PRICING_TABLES.find(t => t.categoryKey === currentCategoryKey)
-    || DEFAULT_PRICING_TABLES[0];
+  let activeRows = [];
+  const isTvHomeCategory =
+    currentCategoryKey === 'tv' ||
+    currentCategoryKey === 'homepod' ||
+    currentCategoryKey === 'tv-home' ||
+    currentCategoryKey === 'tv & home' ||
+    currentCategoryKey.includes('tv') ||
+    currentCategoryKey.includes('home');
 
-  const activeRows = (activeCategoryTable?.rows || []).filter(r => r.isActive !== false);
+  if (isTvHomeCategory) {
+    const tvTables = pricingTables.filter(t => t.categoryKey === 'tv' || t.categoryKey === 'tv-home' || t.categoryKey === 'homepod');
+    tvTables.forEach(t => {
+      if (t.rows && t.rows.length > 0) {
+        t.rows.forEach(r => {
+          if (r.isActive !== false) {
+            const normModel = (r.model || r.title || '').toString().toLowerCase().trim();
+            if (normModel) {
+              const existingIdx = activeRows.findIndex(x => (x.model || x.title || '').toString().toLowerCase().trim() === normModel);
+              if (existingIdx === -1) {
+                activeRows.push(r);
+              } else {
+                activeRows[existingIdx] = { ...activeRows[existingIdx], ...r };
+              }
+            }
+          }
+        });
+      }
+    });
+    if (activeRows.length === 0) {
+      const activeCategoryTable = pricingTables.find(t => t.categoryKey === 'tv-home' || t.categoryKey === 'tv' || t.categoryKey === 'homepod')
+        || DEFAULT_PRICING_TABLES.find(t => t.categoryKey === 'tv-home')
+        || DEFAULT_PRICING_TABLES[0];
+      activeRows = (activeCategoryTable?.rows || []).filter(r => r.isActive !== false);
+    }
+  } else {
+    const activeCategoryTable = pricingTables.find(t => t.categoryKey === currentCategoryKey)
+      || DEFAULT_PRICING_TABLES.find(t => t.categoryKey === currentCategoryKey)
+      || DEFAULT_PRICING_TABLES[0];
+    activeRows = (activeCategoryTable?.rows || []).filter(r => r.isActive !== false);
+  }
 
   const handleAddAppleCareToCart = (rowObj) => {
     const planTitle = rowObj.title || `AppleCare+ for ${rowObj.model}`;
@@ -997,8 +1128,7 @@ export default function AppleCare() {
               { id: 'iPad', label: 'iPad', icon: IPadSvgIcon },
               { id: 'Watch', label: 'Watch', icon: WatchSvgIcon },
               { id: 'AirPods', label: 'AirPods', icon: HeadphonesSvgIcon },
-              { id: 'TV', label: 'TV', icon: TVSvgIcon },
-              { id: 'HomePod', label: 'HomePod', icon: HomePodIcon }
+              { id: 'TV & Home', label: 'TV & Home', icon: TvHomeCombinedIcon }
             ].map((item) => {
               const IconComponent = item.icon;
               const isActive = selectedCategory.toLowerCase() === item.id.toLowerCase();
@@ -1020,75 +1150,7 @@ export default function AppleCare() {
           </div>
         </div>
 
-        {/* Category Hero Summary Banner Tile */}
-        {(() => {
-          const defaultPlan = PLAN_TILES[selectedCategory] || PLAN_TILES.iPhone;
-          const adminPlan = dbPlans.find(p => p.category?.toLowerCase() === selectedCategory?.toLowerCase());
 
-          const currentPlan = {
-            ...defaultPlan,
-            eyebrow: adminPlan?.eyebrow || defaultPlan.eyebrow,
-            headline: adminPlan?.headline || defaultPlan.headline,
-            priceText: adminPlan?.priceText || (adminPlan?.price ? `From ₹${adminPlan.price.toLocaleString('en-IN')}.00 for ${selectedCategory === 'Mac' || selectedCategory === 'Display' || selectedCategory === 'TV' ? '3 years' : '2 years'}` : defaultPlan.priceText),
-            monthlyText: adminPlan?.monthlyText || defaultPlan.monthlyText,
-            priceVal: adminPlan?.price || defaultPlan.priceVal,
-            features: adminPlan?.features && adminPlan.features.length > 0 ? adminPlan.features : defaultPlan.features,
-            image: adminPlan?.image || defaultPlan.image
-          };
-          return (
-            <div
-              key={selectedCategory}
-              className="bg-[#FBFBFD] rounded-[28px] sm:rounded-[32px] p-6 sm:p-10 md:p-12 lg:p-14 border border-[#D2D2D7]/50 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-8 sm:gap-12 shadow-xs apple-smooth-fade mb-16"
-            >
-              <div className="flex-1 flex items-center justify-center relative w-full lg:w-auto min-h-[260px] sm:min-h-[340px] lg:min-h-[400px] py-4">
-                <img
-                  src={currentPlan.image}
-                  alt={currentPlan.alt}
-                  className="max-h-[300px] sm:max-h-[380px] lg:max-h-[440px] w-auto object-contain transition-all duration-300"
-                />
-              </div>
-
-              <div className="flex-1 text-left space-y-5 z-10 max-w-xl">
-                <div>
-                  <p className="text-sm sm:text-base font-semibold text-[#FF2D55] tracking-tight mb-1">
-                    {currentPlan.eyebrow}
-                  </p>
-                  <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#1D1D1F] tracking-tight leading-tight">
-                    {currentPlan.headline}
-                  </h3>
-                </div>
-
-                <div className="space-y-1">
-                  <p className="text-lg sm:text-xl font-semibold text-[#1D1D1F]">
-                    {currentPlan.priceText}
-                  </p>
-                  <p className="text-sm sm:text-base text-[#1D1D1F] font-semibold">
-                    {currentPlan.monthlyText}
-                  </p>
-                </div>
-
-                <ul className="space-y-3 pt-1 text-sm sm:text-base text-[#1D1D1F]" role="list">
-                  {currentPlan.features.map((feat, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-[#1D1D1F] shrink-0 mt-0.5" />
-                      <span className="leading-snug text-[#1D1D1F]">{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="flex flex-wrap items-center gap-3.5 pt-3">
-                  <button
-                    onClick={() => setIsPricingModalOpen(true)}
-                    className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-7 py-3 rounded-full text-sm sm:text-base font-medium transition-all hover:scale-105 active:scale-95 shadow-xs cursor-pointer inline-flex items-center gap-2"
-                  >
-                    <span>All model pricing</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
 
         {/* Dynamic AppleCare+ Product Cards Grid (Matching Screenshot 2) */}
         <div className="space-y-8">
@@ -1139,6 +1201,7 @@ export default function AppleCare() {
                               src={row.image}
                               alt={row.title || row.model}
                               className="max-h-[130px] w-auto object-contain transition-transform hover:scale-105 duration-300"
+                              style={{ mixBlendMode: 'multiply' }}
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
                                 if (e.currentTarget.nextSibling) {

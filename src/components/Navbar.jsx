@@ -32,9 +32,9 @@ export default function Navbar() {
   const isIphonePage = true;
 
   const getNavBtnClass = (isOpen) => {
-    return `transition-colors duration-200 uppercase font-bold text-[11px] cursor-pointer bg-transparent border-0 focus:outline-none ${isOpen
-      ? (isIphonePage ? 'text-black font-extrabold font-sans' : 'text-white font-extrabold')
-      : (isIphonePage ? 'text-zinc-500 hover:text-black font-sans' : 'text-zinc-400 hover:text-white')
+    return `transition-colors duration-200 font-semibold text-[13px] tracking-tight cursor-pointer bg-transparent border-0 focus:outline-none ${isOpen
+      ? (isIphonePage ? 'text-black font-bold font-sans' : 'text-white font-bold')
+      : (isIphonePage ? 'text-zinc-600 hover:text-black font-sans' : 'text-zinc-400 hover:text-white')
       }`;
   };
 
@@ -159,6 +159,27 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Body scroll locking and ESC key listener for Mobile Navigation Drawer
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMobileMenuOpen]);
 
   const macTimeoutRef = useRef(null);
   const ipadTimeoutRef = useRef(null);
@@ -514,6 +535,18 @@ export default function Navbar() {
         { label: 'Apple TV 4K', path: '/tv-home?search=Apple TV', query: 'Apple TV' },
         { label: 'HomePod', path: '/tv-home?search=HomePod', query: 'HomePod' },
         { label: 'HomePod Mini', path: '/tv-home?search=HomePod Mini', query: 'HomePod Mini' }
+      ]
+    },
+    accessories: {
+      title: 'Explore Accessories',
+      mainLink: { label: 'Explore All Accessories', path: '/accessories' },
+      items: [
+        { label: 'Mac Accessories', path: '/accessories?product=mac', query: 'Mac' },
+        { label: 'iPad Accessories', path: '/accessories?product=ipad', query: 'iPad' },
+        { label: 'iPhone Accessories', path: '/accessories?product=iphone', query: 'iPhone' },
+        { label: 'Apple Watch Accessories', path: '/accessories?product=watch', query: 'Watch' },
+        { label: 'AirPods Accessories', path: '/accessories?product=airpods', query: 'AirPods' },
+        { label: 'TV & Home Accessories', path: '/accessories?product=tv-home', query: 'TV & Home' }
       ]
     }
   };
@@ -957,12 +990,15 @@ export default function Navbar() {
     return (
       <div className="hidden md:flex md:col-span-6 pl-4 flex-col text-left shrink-0 justify-center items-center">
         {hoveredProduct ? (
-          <div className="w-full h-[340px] rounded-2xl bg-[#f5f5f7] border border-zinc-200/80 p-0 shadow-sm overflow-hidden flex items-center justify-center transition-all duration-300 animate-in fade-in">
+          <div className="w-full h-[360px] rounded-2xl bg-white border border-zinc-200/80 p-3 shadow-sm overflow-hidden flex items-center justify-center transition-all duration-300 animate-in fade-in">
             <img
               src={hoveredProduct.image}
               alt={hoveredProduct.name || 'Preview'}
-              className="w-full h-full object-cover p-0 transition-transform duration-500 hover:scale-105"
-              style={{ mixBlendMode: (hoveredProduct.image?.includes('18_pro') || (hoveredProduct?.name || '').includes('Series 12') || (hoveredProduct?.image || '').includes('series_12')) ? 'normal' : 'multiply', objectPosition: 'center' }}
+              className="w-[92%] h-[92%] object-contain transition-transform duration-500 hover:scale-[1.03]"
+              style={{
+                mixBlendMode: (hoveredProduct.image?.includes('18_pro') || (hoveredProduct?.name || '').includes('Series 12') || (hoveredProduct?.image || '').includes('series_12')) ? 'normal' : 'multiply',
+                objectPosition: 'center'
+              }}
               onError={(e) => {
                 e.currentTarget.onerror = null;
                 e.currentTarget.src = '/macbook_category_v3.jpg';
@@ -970,7 +1006,7 @@ export default function Navbar() {
             />
           </div>
         ) : (
-          <div className="w-full h-[340px] rounded-2xl bg-[#f5f5f7] border border-dashed border-zinc-200 flex items-center justify-center">
+          <div className="w-full h-[360px] rounded-2xl bg-white border border-dashed border-zinc-200 flex items-center justify-center">
             <span className="text-zinc-400 text-xs uppercase font-bold tracking-wider">Hover to Preview</span>
           </div>
         )}
@@ -1300,6 +1336,20 @@ export default function Navbar() {
                     </button>
                   );
                 }
+                if (labelLower.includes('applecare')) {
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        closeAllDropdowns();
+                        navigate('/applecare');
+                      }}
+                      className={getNavBtnClass(location.pathname === '/applecare')}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                }
                 if (labelLower.includes('bulk pricing')) {
                   return (
                     <a
@@ -1414,80 +1464,103 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Mobile Drawer menu */}
+          {/* Full Screen Mobile/Tablet Navigation Overlay */}
           {isMobileMenuOpen && (
-            <div className={`lg:hidden border-t px-4 pt-2 pb-4 space-y-3 text-left transition-colors duration-300 ${isIphonePage ? 'border-zinc-200 bg-white' : 'border-zinc-800 bg-zinc-950'}`}>
-              <div className="grid grid-cols-2 gap-2 text-center text-xs font-semibold">
+            <div className="fixed inset-0 w-screen h-screen z-[9999] lg:hidden bg-white text-zinc-900 flex flex-col justify-between overflow-y-auto animate-in fade-in duration-200 select-none">
+              {/* Header inside Menu Overlay */}
+              <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b border-zinc-100">
                 <Link
                   to="/"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`py-2.5 rounded-xl border transition-colors ${isIphonePage ? 'bg-zinc-100 border-zinc-200 text-black hover:bg-zinc-200' : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-850'}`}
+                  className="flex items-center shrink-0 group py-1"
                 >
-                  Home
+                  <img
+                    src="/iincept_navbar_logo.png"
+                    alt="iiNCEPT"
+                    className="h-8 sm:h-9 w-auto object-contain"
+                    style={{ mixBlendMode: 'multiply' }}
+                  />
                 </Link>
-                <Link
-                  to="/shop"
+                <button
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`py-2.5 rounded-xl border transition-colors ${isIphonePage ? 'bg-zinc-100 border-zinc-200 text-black hover:bg-zinc-200' : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-850'}`}
+                  className="p-2.5 rounded-full hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950 transition-colors focus:outline-none cursor-pointer"
+                  aria-label="Close menu"
                 >
-                  Shop
-                </Link>
+                  <X className="h-7 w-7" />
+                </button>
+              </div>
 
-                <div className={`col-span-2 text-left rounded-xl p-3 space-y-2 border transition-colors ${isIphonePage ? 'bg-zinc-100 border-zinc-200' : 'bg-zinc-900 border-zinc-800'}`}>
-                  <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider block">Menu Categories</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    {menuItems.map((item, idx) => {
-                      if (item.label === 'Bulk Pricing') {
-                        return (
-                          <a
-                            key={idx}
-                            href="/?scroll=procurement"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setIsMobileMenuOpen(false);
-                              if (location.pathname === '/') {
-                                const section = document.getElementById('procurement-section');
-                                if (section) {
-                                  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }
-                              } else {
-                                navigate('/?scroll=procurement');
-                              }
-                            }}
-                            className={`py-1.5 px-2.5 rounded-lg border text-[11px] font-bold transition-all ${isIphonePage ? 'bg-zinc-950 border-zinc-950 text-white hover:bg-zinc-900' : 'bg-white border-white text-zinc-900 hover:bg-zinc-100'}`}
-                          >
-                            {item.label}
-                          </a>
-                        );
-                      }
+              {/* Main Navigation Links */}
+              <div className="flex-1 px-8 sm:px-12 py-8 overflow-y-auto">
+                <nav className="flex flex-col space-y-4 text-left max-w-xl">
+                  {activeMenuItems.map((item, idx) => {
+                    if (item.label === 'Bulk Pricing') {
                       return (
-                        <Link
+                        <a
                           key={idx}
-                          to={item.path}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className={`py-1.5 px-2.5 rounded-lg border text-[11px] font-bold transition-all ${isIphonePage ? 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-100' : 'bg-zinc-950 border-zinc-800 text-zinc-300 hover:bg-zinc-850'}`}
+                          href="/?scroll=procurement"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setIsMobileMenuOpen(false);
+                            if (location.pathname === '/') {
+                              const section = document.getElementById('procurement-section');
+                              if (section) {
+                                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                              }
+                            } else {
+                              navigate('/?scroll=procurement');
+                            }
+                          }}
+                          className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 hover:text-zinc-500 transition-colors block py-2 border-b border-zinc-100/70"
                         >
                           {item.label}
-                        </Link>
+                        </a>
                       );
-                    })}
-                  </div>
-                </div>
+                    }
+                    return (
+                      <Link
+                        key={idx}
+                        to={item.path}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 hover:text-zinc-500 transition-colors block py-2 border-b border-zinc-100/70"
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </div>
 
-                <Link
-                  to="/wishlist"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`py-2.5 rounded-xl border col-span-1 text-rose-500 font-bold transition-colors ${isIphonePage ? 'bg-zinc-100 border-zinc-200 hover:bg-zinc-200' : 'bg-zinc-900 border-zinc-800 hover:bg-zinc-850'}`}
-                >
-                  Wishlist ({wishlistCount})
-                </Link>
-                <Link
-                  to="/cart"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`py-2.5 rounded-xl border col-span-1 font-bold transition-colors ${isIphonePage ? 'bg-zinc-100 border-zinc-200 text-black hover:bg-zinc-200' : 'bg-zinc-900 border-zinc-800 text-white hover:bg-zinc-850'}`}
-                >
-                  Cart ({cartCount})
-                </Link>
+              {/* Menu Footer Shortcuts */}
+              <div className="p-6 sm:p-8 border-t border-zinc-100 bg-zinc-50/80">
+                <div className="grid grid-cols-2 gap-4 max-w-xl">
+                  <Link
+                    to="/wishlist"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-2xl bg-white border border-zinc-200 text-zinc-800 font-semibold text-sm shadow-sm hover:bg-zinc-100 transition-colors"
+                  >
+                    <Heart className="h-5 w-5 text-rose-500" />
+                    <span>Wishlist</span>
+                    {wishlistCount > 0 && (
+                      <span className="ml-1 bg-rose-100 text-rose-600 text-xs font-bold px-2 py-0.5 rounded-full">
+                        {wishlistCount}
+                      </span>
+                    )}
+                  </Link>
+                  <Link
+                    to="/cart"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-2xl bg-zinc-950 text-white font-semibold text-sm shadow-sm hover:bg-zinc-850 transition-colors"
+                  >
+                    <ShoppingBag className="h-5 w-5 text-white" />
+                    <span>Cart</span>
+                    {cartCount > 0 && (
+                      <span className="ml-1 bg-zinc-800 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                        {cartCount}
+                      </span>
+                    )}
+                  </Link>
+                </div>
               </div>
             </div>
           )}
@@ -1682,40 +1755,8 @@ export default function Navbar() {
                 className={dropdownClass}
               >
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 font-sans items-start">
-
-                  {/* Column 1: Shop Accessories */}
-                  <div className="md:col-span-6 space-y-3 text-left">
-                    <span className="text-[12px] font-medium text-zinc-400 block mb-1">
-                      Shop Accessories
-                    </span>
-                    <div className="flex flex-col gap-2">
-                      {[
-                        { label: 'Shop All Accessories', path: '/accessories' },
-                        { label: 'Mac', path: '/accessories?product=mac' },
-                        { label: 'iPad', path: '/accessories?product=ipad' },
-                        { label: 'iPhone', path: '/accessories?product=iphone' },
-                        { label: 'Apple Watch', path: '/accessories?product=watch' },
-                        { label: 'AirPods', path: '/accessories?product=airpods' },
-                        { label: 'TV & Home', path: '/accessories?product=tv-home' }
-                      ].map((sub, sIdx) => (
-                        <Link
-                          key={sIdx}
-                          to={sub.path}
-                          onMouseEnter={() => setHoveredProduct(productPreviews[sub.label] || { name: sub.label, price: '', image: '/favicon.svg' })}
-                          onClick={() => {
-                            setIsAccessoriesDropdownOpen(false);
-                            setHoveredProduct(null);
-                          }}
-                          className="text-[13.5px] font-semibold tracking-wide transition-colors block py-1"
-                        >
-                          {sub.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-
+                  {renderProductCategoryList('accessories', 'Explore Accessories', '/accessories', () => setIsAccessoriesDropdownOpen(false))}
                   {renderProductPreview()}
-
                 </div>
               </div>
             </>

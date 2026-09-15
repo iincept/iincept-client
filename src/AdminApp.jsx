@@ -15,6 +15,7 @@ import Testimonials from './pages/admin/Testimonials';
 import NavbarManager from './pages/admin/NavbarManager';
 import CategoryIconsManager from './pages/admin/CategoryIconsManager';
 import AppleCareManager from './pages/admin/AppleCareManager';
+import DisplayAppleCareManager from './pages/admin/DisplayAppleCareManager';
 import ProductAppleCareManager from './pages/admin/ProductAppleCareManager';
 import FooterManager from './pages/admin/FooterManager';
 import AdminReturns from './pages/admin/Returns';
@@ -51,6 +52,7 @@ const adminRouter = createBrowserRouter([
       { path: 'navbar-menu', element: <NavbarManager /> },
       { path: 'category-icons', element: <CategoryIconsManager /> },
       { path: 'applecare', element: <AppleCareManager /> },
+      { path: 'display-applecare', element: <DisplayAppleCareManager /> },
       { path: 'product-applecare', element: <ProductAppleCareManager /> },
       { path: 'footer-menu', element: <FooterManager /> },
       { path: 'settings', element: <Settings /> },

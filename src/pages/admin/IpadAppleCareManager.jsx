@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axiosClient from '../../services/axiosClient';
+import { notifyAdminChange } from '../../services/liveSyncService';
 import {
   ShieldCheck,
   Plus,
@@ -429,6 +430,7 @@ export default function IpadAppleCareManager() {
         setPricingTables(res.data.appleCarePricingTables);
       }
 
+      notifyAdminChange('settings', { action: 'update_ipad_applecare' });
       showMessage('success', 'iPad AppleCare products saved successfully!');
     } catch (err) {
       console.error('Failed to save settings:', err);

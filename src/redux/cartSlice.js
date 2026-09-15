@@ -1,18 +1,43 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as cartApi from '../services/cartApi';
 
+const safeGetLocalStorage = (key, fallback = []) => {
+  try {
+    const item = localStorage.getItem(key);
+    if (!item) return fallback;
+    const parsed = JSON.parse(item);
+    return Array.isArray(parsed) || typeof parsed === 'object' ? parsed : fallback;
+  } catch (err) {
+    return fallback;
+  }
+};
+
+const safeSetLocalStorage = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (err) {
+    // Ignore quota or write errors
+  }
+};
+
 // Helper to check authentication status
-const isAuthenticated = () => !!localStorage.getItem('token');
+const isAuthenticated = () => {
+  try {
+    return !!localStorage.getItem('token');
+  } catch (err) {
+    return false;
+  }
+};
 
 // Helper to format backend database cart items for client consumption
 const transformCartItem = (dbItem) => {
   const p = dbItem.product || {};
   return {
-    id: p._id || dbItem._id, // Map product ID to UI item.id
-    name: p.title || p.name,
-    price: p.price,
+    id: p._id || dbItem._id,
+    name: p.title || p.name || 'Apple Product',
+    price: typeof p.price === 'number' ? p.price : Number(p.price || 0),
     image: (p.images && p.images[0]) || p.image || '/avatar.png',
-    quantity: dbItem.quantity,
+    quantity: dbItem.quantity || 1,
     stock: p.stock || 10,
     color: dbItem.color || '',
     size: dbItem.size || '',
@@ -22,9 +47,7 @@ const transformCartItem = (dbItem) => {
 export const fetchCart = createAsyncThunk(
   'cart/fetchCart',
   async (_, thunkAPI) => {
-    const localItems = localStorage.getItem('cartItems')
-      ? JSON.parse(localStorage.getItem('cartItems'))
-      : [];
+    const localItems = safeGetLocalStorage('cartItems', []);
 
     if (!isAuthenticated()) {
       return localItems;
@@ -191,9 +214,7 @@ export const mergeGuestCart = createAsyncThunk(
   }
 );
 
-const initialCartItems = localStorage.getItem('cartItems')
-  ? JSON.parse(localStorage.getItem('cartItems'))
-  : [];
+const initialCartItems = safeGetLocalStorage('cartItems', []);
 
 const initialState = {
   cartItems: initialCartItems,

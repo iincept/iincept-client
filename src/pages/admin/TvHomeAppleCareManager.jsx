@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axiosClient from '../../services/axiosClient';
+import { notifyAdminChange } from '../../services/liveSyncService';
 import { 
   ShieldCheck, 
   Plus, 
@@ -224,35 +225,39 @@ export default function TvHomeAppleCareManager() {
       setSaving(true);
       let updatedTables = [...pricingTables];
 
-      const tvHomeTableIndex = updatedTables.findIndex(t => t.categoryKey === 'tv-home');
-      const newTvHomeTable = {
-        categoryKey: 'tv-home',
-        image: '/applecare_official_hero.png',
-        headline: 'Cover your Apple TV.',
-        headerTitle: headerTitle ?? 'AppleCare+',
-        subheadline: 'AppleCare+ for Apple TV and HomePod includes 3 years of hardware support.',
-        durationLabel: durationLabel ?? '3 Years',
-        isActive: true,
-        rows: tvHomeRows.map(r => ({
-          model: r.model || '',
-          title: r.title || `AppleCare+ for ${r.model}`,
-          description: r.description || `Apple-certified coverage for ${r.model}`,
-          sku: r.sku || '',
-          mrp: r.mrp || '',
-          discount: r.discount || '',
-          salePrice: r.salePrice || r.yearly || '',
-          monthly: r.monthly || '',
-          yearly: r.yearly || r.salePrice || '',
-          image: r.image ?? '',
-          isActive: r.isActive !== false
-        }))
-      };
+      const formattedRows = tvHomeRows.map(r => ({
+        model: r.model || '',
+        title: r.title || `AppleCare+ for ${r.model}`,
+        description: r.description || `Apple-certified coverage for ${r.model}`,
+        sku: r.sku || '',
+        mrp: r.mrp || '',
+        discount: r.discount || '',
+        salePrice: r.salePrice || r.yearly || '',
+        monthly: r.monthly || '',
+        yearly: r.yearly || r.salePrice || '',
+        image: r.image ?? '',
+        isActive: r.isActive !== false
+      }));
 
-      if (tvHomeTableIndex !== -1) {
-        updatedTables[tvHomeTableIndex] = newTvHomeTable;
-      } else {
-        updatedTables.push(newTvHomeTable);
-      }
+      ['tv-home', 'tv', 'homepod'].forEach(key => {
+        const idx = updatedTables.findIndex(t => t.categoryKey === key);
+        const newTable = {
+          categoryKey: key,
+          image: '/applecare_official_hero.png',
+          headline: 'Cover your TV & Home products.',
+          headerTitle: headerTitle ?? 'AppleCare+',
+          subheadline: 'AppleCare+ for TV & Home provides expert technical support and hardware coverage.',
+          durationLabel: durationLabel ?? '3 Years',
+          isActive: true,
+          rows: formattedRows
+        };
+
+        if (idx !== -1) {
+          updatedTables[idx] = newTable;
+        } else {
+          updatedTables.push(newTable);
+        }
+      });
 
       const res = await axiosClient.put('/settings', {
         appleCarePricingTables: updatedTables
@@ -262,6 +267,7 @@ export default function TvHomeAppleCareManager() {
         setPricingTables(res.data.appleCarePricingTables);
       }
 
+      notifyAdminChange('settings', { action: 'update_tv_home_applecare' });
       showMessage('success', 'TV & Home AppleCare products saved successfully!');
     } catch (err) {
       console.error('Failed to save settings:', err);

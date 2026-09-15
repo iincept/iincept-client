@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import Home from '../pages/Home';
@@ -5,10 +6,6 @@ import Shop from '../pages/Shop';
 import ProductDetails from '../pages/ProductDetails';
 import Cart from '../pages/Cart';
 import Checkout from '../pages/Checkout';
-import Login from '../pages/Login';
-import Signup from '../pages/Signup';
-import Profile from '../pages/Profile';
-import Orders from '../pages/Orders';
 import Wishlist from '../pages/Wishlist';
 import Categories from '../pages/Categories';
 import Iphone from '../pages/Iphone';
@@ -20,281 +17,165 @@ import TvHome from '../pages/TvHome';
 import Accessories from '../pages/Accessories';
 import AppleCare from '../pages/AppleCare';
 import About from '../pages/About';
+import NotFound from '../pages/NotFound';
 import ProtectedRoute from '../components/ProtectedRoute';
 import AdminProtectedRoute from '../components/AdminProtectedRoute';
-import AdminLayout from '../layouts/AdminLayout';
-import AdminLogin from '../pages/admin/AdminLogin';
-import Dashboard from '../pages/admin/Dashboard';
-import Products from '../pages/admin/Products';
-import AdminCategories from '../pages/admin/Categories';
-import AdminOrders from '../pages/admin/Orders';
-import Users from '../pages/admin/Users';
-import Coupons from '../pages/admin/Coupons';
-import Settings from '../pages/admin/Settings';
-import HeroBanners from '../pages/admin/HeroBanners';
-import AppleCategories from '../pages/admin/AppleCategories';
-import Testimonials from '../pages/admin/Testimonials';
-import NavbarManager from '../pages/admin/NavbarManager';
-import CategoryIconsManager from '../pages/admin/CategoryIconsManager';
-import AppleCareManager from '../pages/admin/AppleCareManager';
-import IpadAppleCareManager from '../pages/admin/IpadAppleCareManager';
-import IphoneAppleCareManager from '../pages/admin/IphoneAppleCareManager';
-import WatchAppleCareManager from '../pages/admin/WatchAppleCareManager';
-import AirpodsAppleCareManager from '../pages/admin/AirpodsAppleCareManager';
-import TvHomeAppleCareManager from '../pages/admin/TvHomeAppleCareManager';
-import ProductAppleCareManager from '../pages/admin/ProductAppleCareManager';
-import FooterManager from '../pages/admin/FooterManager';
-import AdminReturns from '../pages/admin/Returns';
-import AdminEnquiries from '../pages/admin/Enquiries';
-import AdminSalesReport from '../pages/admin/SalesReport';
+import ErrorBoundary from '../components/ErrorBoundary';
+import Loader from '../components/Loader';
 
-// New enhancements
-import NotFound from '../pages/NotFound';
-import Search from '../pages/Search';
-import OrderDetails from '../pages/OrderDetails';
-import SavedAddresses from '../pages/SavedAddresses';
-import ForgotPassword from '../pages/ForgotPassword';
-import ResetPassword from '../pages/ResetPassword';
-import Contact from '../pages/Contact';
-import Faq from '../pages/Faq';
-import Policies from '../pages/Policies';
-import ShippingPolicy from '../pages/ShippingPolicy';
-import ReturnsRefundPolicy from '../pages/ReturnsRefundPolicy';
-import PrivacyPolicy from '../pages/PrivacyPolicy';
-import TermsOfService from '../pages/TermsOfService';
-import BulkOrders from '../pages/BulkOrders';
-import Compare from '../pages/Compare';
+// Lazy-loaded Admin Layout & Pages for bundle optimization
+const AdminLayout = lazy(() => import('../layouts/AdminLayout'));
+const AdminLogin = lazy(() => import('../pages/admin/AdminLogin'));
+const Dashboard = lazy(() => import('../pages/admin/Dashboard'));
+const Products = lazy(() => import('../pages/admin/Products'));
+const AdminCategories = lazy(() => import('../pages/admin/Categories'));
+const AdminOrders = lazy(() => import('../pages/admin/Orders'));
+const Users = lazy(() => import('../pages/admin/Users'));
+const Coupons = lazy(() => import('../pages/admin/Coupons'));
+const Settings = lazy(() => import('../pages/admin/Settings'));
+const HeroBanners = lazy(() => import('../pages/admin/HeroBanners'));
+const AppleCategories = lazy(() => import('../pages/admin/AppleCategories'));
+const Testimonials = lazy(() => import('../pages/admin/Testimonials'));
+const NavbarManager = lazy(() => import('../pages/admin/NavbarManager'));
+const CategoryIconsManager = lazy(() => import('../pages/admin/CategoryIconsManager'));
+const AppleCareManager = lazy(() => import('../pages/admin/AppleCareManager'));
+const DisplayAppleCareManager = lazy(() => import('../pages/admin/DisplayAppleCareManager'));
+const IpadAppleCareManager = lazy(() => import('../pages/admin/IpadAppleCareManager'));
+const IphoneAppleCareManager = lazy(() => import('../pages/admin/IphoneAppleCareManager'));
+const WatchAppleCareManager = lazy(() => import('../pages/admin/WatchAppleCareManager'));
+const AirpodsAppleCareManager = lazy(() => import('../pages/admin/AirpodsAppleCareManager'));
+const TvHomeAppleCareManager = lazy(() => import('../pages/admin/TvHomeAppleCareManager'));
+const HomePodAppleCareManager = lazy(() => import('../pages/admin/HomePodAppleCareManager'));
+const ProductAppleCareManager = lazy(() => import('../pages/admin/ProductAppleCareManager'));
+const FooterManager = lazy(() => import('../pages/admin/FooterManager'));
+const AdminReturns = lazy(() => import('../pages/admin/Returns'));
+const AdminEnquiries = lazy(() => import('../pages/admin/Enquiries'));
+const AdminSalesReport = lazy(() => import('../pages/admin/SalesReport'));
+
+// Lazy-loaded secondary user pages
+const Search = lazy(() => import('../pages/Search'));
+const Contact = lazy(() => import('../pages/Contact'));
+const Faq = lazy(() => import('../pages/Faq'));
+const Policies = lazy(() => import('../pages/Policies'));
+const ShippingPolicy = lazy(() => import('../pages/ShippingPolicy'));
+const ReturnsRefundPolicy = lazy(() => import('../pages/ReturnsRefundPolicy'));
+const PrivacyPolicy = lazy(() => import('../pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('../pages/TermsOfService'));
+const BulkOrders = lazy(() => import('../pages/BulkOrders'));
+const Compare = lazy(() => import('../pages/Compare'));
+
+const SuspenseWrapper = ({ children, message = 'Loading content...' }) => (
+  <Suspense fallback={<Loader fullscreen={false} message={message} />}>
+    <ErrorBoundary>
+      {children}
+    </ErrorBoundary>
+  </Suspense>
+);
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <MainLayout />,
+    element: (
+      <ErrorBoundary>
+        <MainLayout />
+      </ErrorBoundary>
+    ),
     children: [
-      {
-        path: '',
-        element: <Home />
-      },
-      {
-        path: 'shop',
-        element: <Shop />
-      },
-      {
-        path: 'iphone',
-        element: <Iphone />
-      },
-      {
-        path: 'iphone-duo',
-        element: <Navigate to="/iphone?search=iPhone%20Duo" replace />
-      },
-      {
-        path: 'iphone_duo',
-        element: <Navigate to="/iphone?search=iPhone%20Duo" replace />
-      },
-      {
-        path: 'iphone/duo',
-        element: <Navigate to="/iphone?search=iPhone%20Duo" replace />
-      },
-      {
-        path: 'macbook',
-        element: <Macbook />
-      },
-      {
-        path: 'ipad',
-        element: <Ipad />
-      },
-      {
-        path: 'watch',
-        element: <Watch />
-      },
-      {
-        path: 'airpods',
-        element: <Airpods />
-      },
-      {
-        path: 'tv-home',
-        element: <TvHome />
-      },
-      {
-        path: 'accessories',
-        element: <Accessories />
-      },
-      {
-        path: 'applecare',
-        element: <AppleCare />
-      },
-      {
-        path: 'categories',
-        element: <Categories />
-      },
-      {
-        path: 'product/:id',
-        element: <ProductDetails />
-      },
-      {
-        path: 'cart',
-        element: <Cart />
-      },
-      {
-        path: 'checkout',
-        element: <Checkout />
-      },
-      {
-        path: 'profile',
-        element: <Navigate to="/" replace />
-      },
-      {
-        path: 'orders',
-        element: <Navigate to="/" replace />
-      },
-      {
-        path: 'orders/:id',
-        element: <Navigate to="/" replace />
-      },
-      {
-        path: 'addresses',
-        element: <Navigate to="/checkout" replace />
-      },
+      { path: '', element: <Home /> },
+      { path: 'shop', element: <Shop /> },
+      { path: 'iphone', element: <Iphone /> },
+      { path: 'iphone-duo', element: <Navigate to="/iphone?search=iPhone%20Duo" replace /> },
+      { path: 'iphone_duo', element: <Navigate to="/iphone?search=iPhone%20Duo" replace /> },
+      { path: 'iphone/duo', element: <Navigate to="/iphone?search=iPhone%20Duo" replace /> },
+      { path: 'macbook', element: <Macbook /> },
+      { path: 'ipad', element: <Ipad /> },
+      { path: 'watch', element: <Watch /> },
+      { path: 'airpods', element: <Airpods /> },
+      { path: 'tv-home', element: <TvHome /> },
+      { path: 'accessories', element: <Accessories /> },
+      { path: 'applecare', element: <AppleCare /> },
+      { path: 'categories', element: <Categories /> },
+      { path: 'product/:id', element: <ProductDetails /> },
+      { path: 'cart', element: <Cart /> },
+      { path: 'checkout', element: <Checkout /> },
+      { path: 'profile', element: <Navigate to="/" replace /> },
+      { path: 'orders', element: <Navigate to="/" replace /> },
+      { path: 'orders/:id', element: <Navigate to="/" replace /> },
+      { path: 'addresses', element: <Navigate to="/checkout" replace /> },
       {
         path: 'wishlist',
         element: <ProtectedRoute><Wishlist /></ProtectedRoute>
       },
-      {
-        path: 'about',
-        element: <About />
-      },
-      {
-        path: 'search',
-        element: <Search />
-      },
-      {
-        path: 'contact',
-        element: <Contact />
-      },
-      {
-        path: 'faq',
-        element: <Faq />
-      },
-      // Dedicated Standalone Policy Pages
-      {
-        path: 'shipping-policy',
-        element: <ShippingPolicy />
-      },
-      {
-        path: 'returns-refund-policy',
-        element: <ReturnsRefundPolicy />
-      },
-      {
-        path: 'returns-policy',
-        element: <ReturnsRefundPolicy />
-      },
-      {
-        path: 'privacy-policy',
-        element: <PrivacyPolicy />
-      },
-      {
-        path: 'privacy',
-        element: <PrivacyPolicy />
-      },
-      {
-        path: 'terms-of-service',
-        element: <TermsOfService />
-      },
-      {
-        path: 'terms',
-        element: <TermsOfService />
-      },
-
-      {
-        path: 'policies/shipping',
-        element: <ShippingPolicy />
-      },
-      {
-        path: 'policies/returns',
-        element: <ReturnsRefundPolicy />
-      },
-      {
-        path: 'policies/privacy',
-        element: <PrivacyPolicy />
-      },
-      {
-        path: 'policies/terms',
-        element: <TermsOfService />
-      },
-      {
-        path: 'policies/:type',
-        element: <Policies />
-      },
-      {
-        path: 'policies',
-        element: <Navigate to="/shipping-policy" replace />
-      },
-      {
-        path: 'bulk-orders',
-        element: <BulkOrders />
-      },
-      {
-        path: 'compare',
-        element: <Compare />
-      }
+      { path: 'about', element: <About /> },
+      { path: 'search', element: <SuspenseWrapper><Search /></SuspenseWrapper> },
+      { path: 'contact', element: <SuspenseWrapper><Contact /></SuspenseWrapper> },
+      { path: 'faq', element: <SuspenseWrapper><Faq /></SuspenseWrapper> },
+      { path: 'shipping-policy', element: <SuspenseWrapper><ShippingPolicy /></SuspenseWrapper> },
+      { path: 'returns-refund-policy', element: <SuspenseWrapper><ReturnsRefundPolicy /></SuspenseWrapper> },
+      { path: 'returns-policy', element: <SuspenseWrapper><ReturnsRefundPolicy /></SuspenseWrapper> },
+      { path: 'privacy-policy', element: <SuspenseWrapper><PrivacyPolicy /></SuspenseWrapper> },
+      { path: 'privacy', element: <SuspenseWrapper><PrivacyPolicy /></SuspenseWrapper> },
+      { path: 'terms-of-service', element: <SuspenseWrapper><TermsOfService /></SuspenseWrapper> },
+      { path: 'terms', element: <SuspenseWrapper><TermsOfService /></SuspenseWrapper> },
+      { path: 'policies/shipping', element: <SuspenseWrapper><ShippingPolicy /></SuspenseWrapper> },
+      { path: 'policies/returns', element: <SuspenseWrapper><ReturnsRefundPolicy /></SuspenseWrapper> },
+      { path: 'policies/privacy', element: <SuspenseWrapper><PrivacyPolicy /></SuspenseWrapper> },
+      { path: 'policies/terms', element: <SuspenseWrapper><TermsOfService /></SuspenseWrapper> },
+      { path: 'policies/:type', element: <SuspenseWrapper><Policies /></SuspenseWrapper> },
+      { path: 'policies', element: <Navigate to="/shipping-policy" replace /> },
+      { path: 'bulk-orders', element: <SuspenseWrapper><BulkOrders /></SuspenseWrapper> },
+      { path: 'compare', element: <SuspenseWrapper><Compare /></SuspenseWrapper> }
     ]
   },
   {
     path: '/admin/login',
-    element: <AdminLogin />
+    element: <SuspenseWrapper message="Loading Admin Panel..."><AdminLogin /></SuspenseWrapper>
   },
   {
     path: '/admin',
-    element: <AdminProtectedRoute><AdminLayout /></AdminProtectedRoute>,
+    element: (
+      <AdminProtectedRoute>
+        <SuspenseWrapper message="Loading Admin Panel...">
+          <AdminLayout />
+        </SuspenseWrapper>
+      </AdminProtectedRoute>
+    ),
     children: [
       { path: '', element: <Navigate to="/admin/dashboard" replace /> },
-      { path: 'dashboard', element: <Dashboard /> },
-      { path: 'products', element: <Products /> },
-      { path: 'categories', element: <AdminCategories /> },
-      { path: 'orders', element: <AdminOrders /> },
-      { path: 'users', element: <Users /> },
-      { path: 'coupons', element: <Coupons /> },
-      { path: 'hero-banners', element: <HeroBanners /> },
-      { path: 'apple-categories', element: <AppleCategories /> },
-      { path: 'testimonials', element: <Testimonials /> },
-      { path: 'navbar-menu', element: <NavbarManager /> },
-      { path: 'category-icons', element: <CategoryIconsManager /> },
-      { path: 'applecare', element: <AppleCareManager /> },
-      { path: 'ipad-applecare', element: <IpadAppleCareManager /> },
-      { path: 'iphone-applecare', element: <IphoneAppleCareManager /> },
-      { path: 'watch-applecare', element: <WatchAppleCareManager /> },
-      { path: 'airpods-applecare', element: <AirpodsAppleCareManager /> },
-      { path: 'tv-home-applecare', element: <TvHomeAppleCareManager /> },
-      { path: 'tvhome-applecare', element: <TvHomeAppleCareManager /> },
-      { path: 'product-applecare', element: <ProductAppleCareManager /> },
-      { path: 'footer-menu', element: <FooterManager /> },
-      { path: 'settings', element: <Settings /> },
-      { path: 'returns', element: <AdminReturns /> },
-      { path: 'enquiries', element: <AdminEnquiries /> },
-      { path: 'sales-report', element: <AdminSalesReport /> }
+      { path: 'dashboard', element: <SuspenseWrapper><Dashboard /></SuspenseWrapper> },
+      { path: 'products', element: <SuspenseWrapper><Products /></SuspenseWrapper> },
+      { path: 'categories', element: <SuspenseWrapper><AdminCategories /></SuspenseWrapper> },
+      { path: 'orders', element: <SuspenseWrapper><AdminOrders /></SuspenseWrapper> },
+      { path: 'users', element: <SuspenseWrapper><Users /></SuspenseWrapper> },
+      { path: 'coupons', element: <SuspenseWrapper><Coupons /></SuspenseWrapper> },
+      { path: 'hero-banners', element: <SuspenseWrapper><HeroBanners /></SuspenseWrapper> },
+      { path: 'apple-categories', element: <SuspenseWrapper><AppleCategories /></SuspenseWrapper> },
+      { path: 'testimonials', element: <SuspenseWrapper><Testimonials /></SuspenseWrapper> },
+      { path: 'navbar-menu', element: <SuspenseWrapper><NavbarManager /></SuspenseWrapper> },
+      { path: 'category-icons', element: <SuspenseWrapper><CategoryIconsManager /></SuspenseWrapper> },
+      { path: 'applecare', element: <SuspenseWrapper><AppleCareManager /></SuspenseWrapper> },
+      { path: 'display-applecare', element: <SuspenseWrapper><DisplayAppleCareManager /></SuspenseWrapper> },
+      { path: 'displayapplecare', element: <SuspenseWrapper><DisplayAppleCareManager /></SuspenseWrapper> },
+      { path: 'ipad-applecare', element: <SuspenseWrapper><IpadAppleCareManager /></SuspenseWrapper> },
+      { path: 'iphone-applecare', element: <SuspenseWrapper><IphoneAppleCareManager /></SuspenseWrapper> },
+      { path: 'watch-applecare', element: <SuspenseWrapper><WatchAppleCareManager /></SuspenseWrapper> },
+      { path: 'airpods-applecare', element: <SuspenseWrapper><AirpodsAppleCareManager /></SuspenseWrapper> },
+      { path: 'tv-home-applecare', element: <SuspenseWrapper><TvHomeAppleCareManager /></SuspenseWrapper> },
+      { path: 'tvhome-applecare', element: <SuspenseWrapper><TvHomeAppleCareManager /></SuspenseWrapper> },
+      { path: 'homepod-applecare', element: <SuspenseWrapper><HomePodAppleCareManager /></SuspenseWrapper> },
+      { path: 'product-applecare', element: <SuspenseWrapper><ProductAppleCareManager /></SuspenseWrapper> },
+      { path: 'footer-menu', element: <SuspenseWrapper><FooterManager /></SuspenseWrapper> },
+      { path: 'settings', element: <SuspenseWrapper><Settings /></SuspenseWrapper> },
+      { path: 'returns', element: <SuspenseWrapper><AdminReturns /></SuspenseWrapper> },
+      { path: 'enquiries', element: <SuspenseWrapper><AdminEnquiries /></SuspenseWrapper> },
+      { path: 'sales-report', element: <SuspenseWrapper><AdminSalesReport /></SuspenseWrapper> }
     ]
   },
-  {
-    path: '/login',
-    element: <Navigate to="/" replace />
-  },
-  {
-    path: '/signup',
-    element: <Navigate to="/" replace />
-  },
-  {
-    path: '/forgot-password',
-    element: <Navigate to="/" replace />
-  },
-  {
-    path: '/reset-password',
-    element: <Navigate to="/" replace />
-  },
-  {
-    path: '*',
-    element: <NotFound />
-  }
+  { path: '/login', element: <Navigate to="/" replace /> },
+  { path: '/signup', element: <Navigate to="/" replace /> },
+  { path: '/forgot-password', element: <Navigate to="/" replace /> },
+  { path: '/reset-password', element: <Navigate to="/" replace /> },
+  { path: '*', element: <NotFound /> }
 ]);
 
 export default router;
-
-

@@ -159,11 +159,12 @@ body {
 
 /* Aptronix Loyalty Banner Styles */
 .loyalty-banner-container {
-  width: 100vw;
-  margin-left: calc(-50vw + 50%);
+  width: 100%;
+  max-width: 100%;
   position: relative;
-  padding-left: 3rem;
-  padding-right: 3rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  box-sizing: border-box;
 }
 
 .loyalty-banner {

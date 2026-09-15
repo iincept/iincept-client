@@ -2,24 +2,40 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as wishlistApi from '../services/wishlistApi';
 
 const transformWishlistItem = (p) => {
+  if (!p) return {};
   return {
     id: p._id || p.id,
-    name: p.title || p.name,
-    price: p.price,
+    name: p.title || p.name || 'Apple Product',
+    price: typeof p.price === 'number' ? p.price : Number(p.price || 0),
     image: (p.images && p.images[0]) || p.image || '/avatar.png',
     category: p.brand || '',
     rating: p.rating || 0
   };
 };
 
-const isAuthenticated = () => !!localStorage.getItem('token');
+const safeGetLocalStorage = (key, fallback = []) => {
+  try {
+    const item = localStorage.getItem(key);
+    if (!item) return fallback;
+    const parsed = JSON.parse(item);
+    return Array.isArray(parsed) || typeof parsed === 'object' ? parsed : fallback;
+  } catch (err) {
+    return fallback;
+  }
+};
+
+const isAuthenticated = () => {
+  try {
+    return !!localStorage.getItem('token');
+  } catch (err) {
+    return false;
+  }
+};
 
 export const fetchWishlist = createAsyncThunk(
   'wishlist/fetchWishlist',
   async (_, thunkAPI) => {
-    const localItems = localStorage.getItem('wishlistItems')
-      ? JSON.parse(localStorage.getItem('wishlistItems'))
-      : [];
+    const localItems = safeGetLocalStorage('wishlistItems', []);
 
     if (!isAuthenticated()) {
       return localItems;
@@ -137,9 +153,7 @@ export const removeFromWishlist = createAsyncThunk(
   }
 );
 
-const initialWishlistItems = localStorage.getItem('wishlistItems')
-  ? JSON.parse(localStorage.getItem('wishlistItems'))
-  : [];
+const initialWishlistItems = safeGetLocalStorage('wishlistItems', []);
 
 const initialState = {
   wishlistItems: initialWishlistItems,

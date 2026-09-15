@@ -13,6 +13,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import axiosClient from '../../services/axiosClient';
+import { notifyAdminChange } from '../../services/liveSyncService';
 
 export default function ProductAppleCareManager() {
   const [loading, setLoading] = useState(true);
@@ -75,6 +76,7 @@ export default function ProductAppleCareManager() {
       if (res?.data?.productAppleCare) {
         setProductAppleCare(res.data.productAppleCare);
       }
+      notifyAdminChange('settings', { action: 'update_product_applecare' });
       showMessage('success', 'Product AppleCare settings saved successfully!');
     } catch (err) {
       console.error('Failed to save Product AppleCare settings:', err);

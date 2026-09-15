@@ -50,11 +50,11 @@ const TVHOME_SUB_NAV_ITEMS = [
 ];
 
 const resolveSubItemPath = (item) => {
+  if (item.path && item.path !== '/tv-home') return item.path;
   const lowerName = (item.name || item.label || '').toLowerCase();
   if (lowerName.includes('care')) {
     return '/tv-home?tab=applecare';
   }
-  if (item.path && item.path !== '/tv-home') return item.path;
   if (item.query) {
     return `/tv-home?search=${encodeURIComponent(item.query)}`;
   }
@@ -186,29 +186,44 @@ export default function TvHome() {
       if (response.data) {
         // Load TV & Home AppleCare Pricing Table
         if (response.data.appleCarePricingTables && response.data.appleCarePricingTables.length > 0) {
-          const tvTable = response.data.appleCarePricingTables.find(t => t.categoryKey === 'tv-home');
-          if (tvTable) {
-            setDbHeaderTitle(tvTable.headerTitle || 'AppleCare+');
-            setDbDurationLabel(tvTable.durationLabel || '3 Years');
-            if (tvTable.rows && tvTable.rows.length > 0) {
-              const activeRows = tvTable.rows.filter(r => r.isActive !== false);
-              if (activeRows.length > 0) {
-                const mappedRows = activeRows.map(r => ({
-                  model: r.model || '',
-                  title: r.title || `AppleCare+ for ${r.model}`,
-                  description: r.description || `3 Years Apple-certified coverage for ${r.model}`,
-                  sku: r.sku || '',
-                  mrp: r.mrp || '',
-                  discount: r.discount || '',
-                  salePrice: r.salePrice || r.yearly || '',
-                  monthly: r.monthly || '',
-                  yearly: r.yearly || r.salePrice || '',
-                  image: r.image || getModelImageByName(r.model),
-                  isActive: r.isActive !== false
-                }));
-                setDbAppleCareRows(prev => (JSON.stringify(prev) !== JSON.stringify(mappedRows) ? mappedRows : prev));
-                setSelectedAppleCareModel(activeRows[0]);
+          const tvTables = response.data.appleCarePricingTables.filter(t => 
+            t.categoryKey === 'tv-home' || t.categoryKey === 'tv' || t.categoryKey === 'homepod'
+          );
+          if (tvTables.length > 0) {
+            const firstTable = tvTables.find(t => t.categoryKey === 'tv-home') || tvTables[0];
+            setDbHeaderTitle(firstTable.headerTitle || 'AppleCare+');
+            setDbDurationLabel(firstTable.durationLabel || '3 Years');
+            
+            let allRows = [];
+            tvTables.forEach(t => {
+              if (t.rows && t.rows.length > 0) {
+                t.rows.forEach(r => {
+                  if (r.isActive !== false) {
+                    const normModel = (r.model || r.title || '').toString().toLowerCase().trim();
+                    if (normModel && !allRows.some(x => (x.model || x.title || '').toString().toLowerCase().trim() === normModel)) {
+                      allRows.push(r);
+                    }
+                  }
+                });
               }
+            });
+
+            if (allRows.length > 0) {
+              const mappedRows = allRows.map(r => ({
+                model: r.model || '',
+                title: r.title || `AppleCare+ for ${r.model}`,
+                description: r.description || `Apple-certified coverage for ${r.model}`,
+                sku: r.sku || '',
+                mrp: r.mrp || '',
+                discount: r.discount || '',
+                salePrice: r.salePrice || r.yearly || '',
+                monthly: r.monthly || '',
+                yearly: r.yearly || r.salePrice || '',
+                image: r.image || getModelImageByName(r.model),
+                isActive: r.isActive !== false
+              }));
+              setDbAppleCareRows(prev => (JSON.stringify(prev) !== JSON.stringify(mappedRows) ? mappedRows : prev));
+              setSelectedAppleCareModel(allRows[0]);
             }
           }
         }
@@ -517,7 +532,8 @@ export default function TvHome() {
               return (
                 <Link
                   key={item.name || item.query || idx}
-                      className={`flex flex-col items-center gap-2 shrink-0 group cursor-pointer opacity-100 ${
+                  to={resolveSubItemPath(item)}
+                  className={`flex flex-col items-center gap-2 shrink-0 group cursor-pointer opacity-100 ${
                     isActive ? 'font-bold' : ''
                   }`}
                 >
@@ -533,7 +549,8 @@ export default function TvHome() {
                           e.currentTarget.src = '/tv_home_nav/apple_tv_4k.png';
                         }
                       }}
-                      className="max-h-full max-w-full object-contain filter drop-shadow-sm transition-all duration-300 ease-out group-hover:scale-112 group-hover:-translate-y-1"
+                      className="max-h-full max-w-full object-contain transition-all duration-300 ease-out group-hover:scale-112 group-hover:-translate-y-1"
+                      style={{ mixBlendMode: 'multiply', filter: 'contrast(1.06) brightness(1.02)' }}
                     />
                   </div>
                   <span className={`text-xs tracking-tight transition-colors duration-200 ${isActive ? 'font-bold text-zinc-950' : 'font-semibold text-zinc-700 group-hover:text-zinc-950'}`}>

@@ -7,9 +7,13 @@ const axiosClient = axios.create({
 // Request interceptor to automatically add authorization header
 axiosClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (err) {
+      // Ignore local storage read errors
     }
     return config;
   },
