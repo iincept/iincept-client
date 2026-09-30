@@ -6,7 +6,7 @@
  */
 
 // Keys that MUST NEVER be invalidated by cache sync
-const PROTECTED_KEYS = new Set(['token', 'user', 'cartItems', 'wishlistItems']);
+const PROTECTED_KEYS = new Set(['token', 'user', 'cartItems', 'wishlistItems', 'orders']);
 
 /**
  * Selectively removes cached frontend data from localStorage
@@ -52,27 +52,28 @@ export const notifyAdminChange = (type = 'settings', details = {}) => {
     const channel = new BroadcastChannel('iincept_live_sync');
     channel.postMessage(payload);
     channel.close();
-  } catch (err) {
-    // Fallback for older browsers
-    try {
-      localStorage.setItem('iincept_sync_trigger', JSON.stringify(payload));
-    } catch (e) {}
-  }
+  } catch (err) {}
 
-  // 3. Dispatch CustomEvent for same-tab listeners
+  // 3. Storage event fallback
+  try {
+    localStorage.setItem('iincept_sync_trigger', JSON.stringify(payload));
+  } catch (e) {}
+
+  // 4. Dispatch CustomEvent for same-tab listeners
   window.dispatchEvent(new CustomEvent('iincept_data_sync', { detail: payload }));
 };
 
 /**
- * React hook / listener helper for storefront pages to subscribe to live sync events
+ * React hook / listener helper for storefront pages to subscribe to live sync events.
+ * Automatically invalidates cache on window focus / tab activation and periodic polling.
  * 
  * @param {Function} callback Function called with payload when admin changes occur
  * @returns {Function} Unsubscribe function
  */
 export const subscribeToLiveSync = (callback) => {
   const handlePayload = (payload) => {
-    if (!payload || !payload.type) return;
-    invalidateCache(payload.type);
+    if (!payload) return;
+    invalidateCache(payload.type || 'all');
     callback(payload);
   };
 
@@ -95,9 +96,34 @@ export const subscribeToLiveSync = (callback) => {
   };
   window.addEventListener('storage', storageListener);
 
+  // Tab switch / Window Focus Listener
+  const focusListener = () => {
+    invalidateCache();
+    callback({ type: 'focus', timestamp: Date.now() });
+  };
+  window.addEventListener('focus', focusListener);
+
+  const visibilityListener = () => {
+    if (document.visibilityState === 'visible') {
+      invalidateCache();
+      callback({ type: 'visibility', timestamp: Date.now() });
+    }
+  };
+  document.addEventListener('visibilitychange', visibilityListener);
+
+  // Background Polling Fallback (Every 10s if tab active)
+  const pollInterval = setInterval(() => {
+    if (document.visibilityState === 'visible') {
+      callback({ type: 'polling', timestamp: Date.now() });
+    }
+  }, 10000);
+
   return () => {
     if (channel) channel.close();
     window.removeEventListener('iincept_data_sync', customEventListener);
     window.removeEventListener('storage', storageListener);
+    window.removeEventListener('focus', focusListener);
+    document.removeEventListener('visibilitychange', visibilityListener);
+    clearInterval(pollInterval);
   };
 };

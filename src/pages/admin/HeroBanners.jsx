@@ -27,7 +27,7 @@ export default function HeroBanners() {
     homeHeroTitle: 'The latest.\nThe best. Authorised.',
     homeHeroSubtitle: 'Genuine Apple products from India’s trusted mono-brand premium resellers. Exclusive offers, EMI & expert support.',
     homeHeroPrimaryBtnText: 'Shop Now',
-    homeHeroPrimaryBtnLink: '/iphone',
+    homeHeroPrimaryBtnLink: '#shop-by-category',
     homeHeroSecondaryBtnText: 'Find Nearest Store',
     homeHeroSecondaryBtnLink: '#store-locator',
     homeHeroImage: '',

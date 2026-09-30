@@ -5,7 +5,8 @@ import { Heart, SlidersHorizontal, ArrowUpDown, X, ShoppingBag, Check, ShieldChe
 import { addToCart } from '../redux/cartSlice';
 import { addToWishlist } from '../redux/wishlistSlice';
 import { fetchProducts } from '../redux/productSlice';
-import { matchesProductSearch } from '../utils/searchUtils';
+import { matchesProductSearch, normalizeTargetPath } from '../utils/searchUtils';
+import { getProductCardPricing } from '../utils/pricingUtils';
 import axiosClient from '../services/axiosClient';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 import CleanProductImage from '../components/CleanProductImage';
@@ -120,11 +121,13 @@ const resolveSubItemPath = (item) => {
   if (nameLower.includes('compare') || queryLower.includes('compare') || pathLower.includes('compare')) {
     return '/compare?category=mac';
   }
-  if (item?.path && item.path !== '/macbook' && item.path.trim() && !item.path.includes('search=AppleCare')) {
-    return item.path;
+  if (item?.path && item.path.trim()) {
+    const normalized = normalizeTargetPath(item.path.trim());
+    if (normalized && normalized !== '/macbook') return normalized;
   }
-  if (item?.query && item.query.trim()) {
-    return `/macbook?search=${encodeURIComponent(item.query.trim())}`;
+  const queryVal = item?.query || item?.label || item?.name || '';
+  if (queryVal && queryVal.trim()) {
+    return `/macbook?search=${encodeURIComponent(queryVal.trim())}`;
   }
   return '/macbook';
 };
@@ -211,24 +214,22 @@ export default function Macbook() {
           if (macTbl) {
             setDbHeaderTitle(macTbl.headerTitle || '');
             setDbDurationLabel(macTbl.durationLabel || '');
-            if (macTbl.rows && macTbl.rows.length > 0) {
+            if (macTbl.rows && Array.isArray(macTbl.rows)) {
               const activeRows = macTbl.rows.filter(r => r.isActive !== false);
-              if (activeRows.length > 0) {
-                const mapped = activeRows.map(r => ({
-                  model: r.model || r.title || '',
-                  title: r.title || r.model || '',
-                  description: r.description || '',
-                  sku: r.sku || '',
-                  mrp: r.mrp || '',
-                  discount: r.discount || '',
-                  salePrice: r.salePrice || r.yearly || '',
-                  monthly: r.monthly || '',
-                  yearly: r.yearly || r.salePrice || '',
-                  image: r.image || getModelImageByName(r.model),
-                  isActive: r.isActive !== false
-                }));
-                setDbAppleCareRows(prev => (JSON.stringify(prev) !== JSON.stringify(mapped) ? mapped : prev));
-              }
+              const mapped = activeRows.map(r => ({
+                model: r.model || r.title || '',
+                title: r.title || r.model || '',
+                description: r.description || '',
+                sku: r.sku || '',
+                mrp: r.mrp || '',
+                discount: r.discount || '',
+                salePrice: r.salePrice || r.yearly || '',
+                monthly: r.monthly || '',
+                yearly: r.yearly || r.salePrice || '',
+                image: r.image || getModelImageByName(r.model),
+                isActive: r.isActive !== false
+              }));
+              setDbAppleCareRows(mapped);
             }
           }
         }
@@ -398,9 +399,41 @@ export default function Macbook() {
   };
 
   const getProductImage = (prod) => {
-    const selectedColorName = selectedColors[prod.id] || (prod.colors && prod.colors[0] ? (prod.colors[0].name || prod.colors[0].rawName || (typeof prod.colors[0] === 'string' ? prod.colors[0] : '')) : null);
+    if (!prod) return '/mac_nav/macbook_air.png';
+
+    const hasUserSelectedColor = Boolean(selectedColors[prod.id]);
+    
+    // When no color is explicitly selected by user interaction, ALWAYS return the primary product image
+    if (!hasUserSelectedColor) {
+      if (prod.displayImage) return prod.displayImage;
+      if (prod.image && !prod.image.includes('macbook_category')) return prod.image;
+      const extracted = extractFirstValidImage(prod);
+      if (extracted) return extracted;
+      const firstImg = prod.image || (prod.images && prod.images[0]);
+      if (firstImg && !firstImg.includes('mock-cloud') && !firstImg.includes('macbook_category_v3')) {
+        return firstImg;
+      }
+      const title = (prod.name || prod.title || '').toLowerCase();
+      if (title.includes('neo')) return '/mac_nav/macbook_neo.png';
+      if (title.includes('air')) return '/mac_nav/macbook_air.png';
+      if (title.includes('pro')) return '/macbook_user_pro.png';
+      if (title.includes('imac')) return '/imac_studio_lifestyle.jpg';
+      if (title.includes('mini')) return '/mac_nav/mac_mini.png';
+      if (title.includes('studio') && !title.includes('display')) return '/mac_nav/mac_studio.png';
+      if (title.includes('display')) return '/mac_nav/mac_displays.png';
+      return '/mac_nav/macbook_air.png';
+    }
+
+    const selectedColorName = selectedColors[prod.id];
     if (selectedColorName) {
       const targetNorm = selectedColorName.replace(/\s+/g, ' ').trim().toLowerCase();
+
+      if (prod.colorImages && typeof prod.colorImages === 'object') {
+        const matchedKey = Object.keys(prod.colorImages).find(k => k.replace(/\s+/g, ' ').trim().toLowerCase() === targetNorm);
+        if (matchedKey && prod.colorImages[matchedKey]) {
+          return prod.colorImages[matchedKey];
+        }
+      }
 
       // 1. Match in prod.colors by name or rawName
       const foundColor = prod.colors?.find((c) => {
@@ -435,9 +468,8 @@ export default function Macbook() {
       }
     }
 
-    if (prod.image && !prod.image.includes('macbook_category')) {
-      return prod.image;
-    }
+    if (prod.displayImage) return prod.displayImage;
+    if (prod.image && !prod.image.includes('macbook_category')) return prod.image;
     const extracted = extractFirstValidImage(prod);
     if (extracted) return extracted;
 
@@ -446,7 +478,6 @@ export default function Macbook() {
       return firstImg;
     }
 
-    // High-resolution clean PNG fallback matching model title
     const title = (prod.name || prod.title || '').toLowerCase();
     if (title.includes('neo')) return '/mac_nav/macbook_neo.png';
     if (title.includes('air')) return '/mac_nav/macbook_air.png';
@@ -569,16 +600,55 @@ export default function Macbook() {
   };
 
   // Merge database products with fallback mock data
+  // Display strictly products added & managed in Admin Panel
   const dbMacbooks = products.filter(p => {
-    const catName = p.category?.name || p.category?.toString() || '';
-    const catSlug = p.category?.slug || '';
-    return catName.toLowerCase() === 'laptops & pcs' ||
-      catSlug.toLowerCase() === 'laptops-pcs' ||
-      catName.toLowerCase().includes('macbook') ||
-      catName.toLowerCase().includes('mac');
+    const catName = (p.category?.name || p.category?.toString() || '').toLowerCase();
+    const catSlug = (p.category?.slug || '').toLowerCase();
+    const pTitle = (p.title || p.name || '').toLowerCase();
+
+    // Exclude other distinct Apple categories and accessories
+    const nonMacKeywords = ['iphone', 'ipad', 'airpod', 'watch', 'headphone', 'tv & home', 'accessories', 'accessory', 'adapter', 'cable', 'charger', 'magsafe'];
+    if (nonMacKeywords.some(kw => catName.includes(kw) || catSlug.includes(kw))) {
+      return false;
+    }
+
+    if (catName.includes('accessori') || catSlug.includes('accessori')) {
+      return false;
+    }
+
+    // Exclude if title is an accessory (adapter, charger, power adapter, cable, sleeve, case)
+    const isAccessoryTitle = pTitle.includes('adapter') || 
+                             pTitle.includes('charger') || 
+                             pTitle.includes('power adapter') || 
+                             pTitle.includes('cable') || 
+                             pTitle.includes('case') || 
+                             pTitle.includes('sleeve') || 
+                             pTitle.includes('cover') || 
+                             pTitle.includes('mouse') || 
+                             pTitle.includes('trackpad');
+    if (isAccessoryTitle && !catName.includes('laptop') && !catName.includes('macbook')) {
+      return false;
+    }
+
+    const isCategoryMatch = catName.includes('laptop') ||
+      catName.includes('macbook') ||
+      catName.includes('mac') ||
+      catName.includes('pc') ||
+      catName.includes('computer') ||
+      catSlug.includes('laptop') ||
+      catSlug.includes('mac');
+
+    const isTitleMatch = pTitle.includes('macbook') ||
+      pTitle.includes('mac mini') ||
+      pTitle.includes('imac') ||
+      pTitle.includes('mac studio') ||
+      pTitle.includes('mac pro') ||
+      (pTitle.startsWith('mac') && !pTitle.includes('magsafe') && !pTitle.includes('adapter'));
+
+    return isCategoryMatch || (isTitleMatch && !isAccessoryTitle);
   }).map(p => {
     const firstImg = extractFirstValidImage(p);
-    const isValidImg = !!firstImg;
+    const primaryImg = p.displayImage || (firstImg && !firstImg.includes('mock-cloud') ? firstImg : (p.image || '/mac_nav/macbook_air.png'));
     const varPrices = (p.variants && Array.isArray(p.variants)) ? p.variants.map(v => v.price).filter(pr => typeof pr === 'number' && pr > 0) : [];
     const effectivePrice = varPrices.length > 0 ? Math.min(...varPrices) : (p.price || 0);
 
@@ -587,7 +657,11 @@ export default function Macbook() {
       name: p.title || p.name,
       price: effectivePrice,
       priceStr: `₹${effectivePrice.toLocaleString('en-IN')}`,
-      image: isValidImg ? firstImg : '/macbook_category_v3.jpg',
+      discountPercent: p.discountPercent,
+      discountPrice: p.discountPrice,
+      displayImage: primaryImg,
+      colorImages: p.colorImages || {},
+      image: primaryImg,
       images: p.images || [],
       variants: p.variants || [],
       colors: Array.isArray(p.colors) ? p.colors.map(c => {
@@ -682,17 +756,17 @@ export default function Macbook() {
   });
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] py-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none animate-in fade-in duration-300 relative">
+    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-3 pb-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none animate-in fade-in duration-300 relative">
 
       {/* Title & Category Sub-Nav Header */}
-      <div className="w-full bg-[#fcfcfc] pt-2 pb-4 select-none font-sans mb-6">
+      <div className="w-full bg-[#fcfcfc] pt-1 pb-2 select-none font-sans mb-3">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-zinc-950 text-left mb-6">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950 text-left mb-2">
             Mac
           </h1>
 
           {/* Horizontal Apple Model Selector Row */}
-          <div className="flex items-end gap-7 sm:gap-9 md:gap-11 lg:gap-12 overflow-x-auto no-scrollbar py-3 px-1">
+          <div className="flex items-end gap-6 sm:gap-8 md:gap-10 lg:gap-11 overflow-x-auto no-scrollbar py-1 px-1">
             {subItems.map((item, idx) => {
               const currentTab = searchParams.get('tab') || '';
               const currentSearch = searchParams.get('search') || '';
@@ -725,7 +799,7 @@ export default function Macbook() {
                       className="max-h-full max-w-full object-contain filter drop-shadow-sm transition-all duration-300 ease-out group-hover:scale-112 group-hover:-translate-y-1"
                     />
                   </div>
-                  <span className={`text-xs tracking-tight transition-colors duration-200 ${isActive ? 'font-bold text-zinc-950' : 'font-semibold text-zinc-700 group-hover:text-zinc-950'}`}>
+                  <span className={`text-[11px] tracking-tight transition-colors duration-200 ${isActive ? 'font-bold text-zinc-950' : 'font-medium text-zinc-700 group-hover:text-zinc-950'}`}>
                     {item.name}
                   </span>
                 </Link>
@@ -970,14 +1044,20 @@ export default function Macbook() {
           );
         }
 
+        const currentSearchVal = searchParams.get('search') || '';
         return (
           <>
-            {/* Top Filter and View Controller Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 mb-6 text-sm font-sans uppercase font-bold text-zinc-500 tracking-wider">
-        <div className="text-zinc-800 text-xs tracking-widest">
-          SHOWING ALL {filteredProducts.length} RESULTS
-        </div>
-      </div>
+            {currentSearchVal && (
+              <div className="flex items-center justify-between gap-4 pb-1 mb-3 text-sm font-sans uppercase font-bold text-zinc-500 tracking-wider">
+                <button
+                  onClick={() => setSearchParams({})}
+                  className="text-xs font-semibold text-[#0071e3] hover:underline cursor-pointer flex items-center gap-1"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Clear Search Filter ("{currentSearchVal}")
+                </button>
+              </div>
+            )}
 
       {/* Slide-out Filter Drawer */}
       {filterOpen && (
@@ -1034,109 +1114,131 @@ export default function Macbook() {
 
       {/* Grid of MacBook models */}
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredProducts.slice(0, visibleCount).map((prod) => (
-          <div
-            key={prod.id}
-            className="group bg-white rounded-2xl overflow-hidden flex flex-col justify-between p-6 shadow-sm border border-zinc-100/50 hover:shadow-md hover:border-zinc-200/55 transition-all duration-300 relative text-left"
-          >
-            {/* Top Row: Sold Out Badges & Favorite Heart */}
-            <div className="flex items-center justify-between absolute top-4 left-4 right-4 z-10">
-              {prod.isSoldOut ? (
-                <span className="bg-[#f5f5f7] text-[#1d1d1f] font-bold text-[9px] tracking-widest uppercase px-2.5 py-1 rounded">
-                  SOLD OUT
-                </span>
-              ) : (
-                <div />
-              )}
+        {filteredProducts.slice(0, visibleCount).map((prod) => {
+          const pricing = getProductCardPricing(prod);
 
-              <button
-                onClick={() => handleAddToWishlist(prod)}
-                className={`p-2 rounded-full shadow-sm border border-zinc-100/80 bg-white/90 hover:scale-110 transition-all cursor-pointer ${localWishlist[prod.id] ? 'text-red-500' : 'text-zinc-400 hover:text-zinc-600'
-                  }`}
-              >
-                <Heart className={`h-4 w-4 ${localWishlist[prod.id] ? 'fill-current' : ''}`} />
-              </button>
-            </div>
+          return (
+            <div
+              key={prod.id}
+              className="group bg-white rounded-2xl overflow-hidden flex flex-col justify-between p-5 sm:p-6 shadow-sm border border-zinc-100/50 hover:shadow-md hover:border-zinc-200/55 transition-all duration-300 relative text-left"
+            >
+              {/* Top Row: Sold Out Badges, Discount Badge & Favorite Heart */}
+              <div className="flex items-center justify-between absolute top-4 left-4 right-4 z-10">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {prod.isSoldOut && (
+                    <span className="bg-[#f5f5f7] text-[#1d1d1f] font-bold text-[9px] tracking-widest uppercase px-2.5 py-1 rounded shadow-2xs">
+                      SOLD OUT
+                    </span>
+                  )}
+                  {pricing.hasDiscount && (
+                    <span className="bg-[#FF2D55] text-white font-extrabold text-[9.5px] tracking-wide uppercase px-2.5 py-1 rounded shadow-2xs">
+                      {pricing.discountPercent}% OFF
+                    </span>
+                  )}
+                </div>
 
-            {/* Clickable Area: Image and Title */}
-            <Link to={`/product/${prod.id}`} className="block cursor-pointer">
-              {/* Product Visual - Apple Showcase Background (#f5f5f7) */}
-              <CleanProductImage
-                src={getProductImage(prod)}
-                alt={prod.name}
-                className="max-h-[92%] max-w-[92%] object-contain group-hover:scale-110 transition-transform duration-500 select-none transform scale-115 sm:scale-125"
-                containerClassName="w-full h-72 sm:h-80 bg-white rounded-2xl flex items-center justify-center p-2 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f0f0f2]"
-              />
+                <button
+                  onClick={() => handleAddToWishlist(prod)}
+                  className={`p-2 rounded-full shadow-sm border border-zinc-100/80 bg-white/90 hover:scale-110 transition-all cursor-pointer ${localWishlist[prod.id] ? 'text-red-500' : 'text-zinc-400 hover:text-zinc-600'
+                    }`}
+                >
+                  <Heart className={`h-4 w-4 ${localWishlist[prod.id] ? 'fill-current' : ''}`} />
+                </button>
+              </div>
 
-              {/* Title (Clean Product Name) */}
-              <h3 className="font-semibold text-[16px] leading-snug tracking-tight text-zinc-900 group-hover:text-zinc-900 transition-colors min-h-[48px]">
-                {(() => {
-                  const cleanProductTitle = (rawTitle) => {
-                    if (!rawTitle) return '';
-                    return rawTitle.replace(/\s*[A-Z0-9]{5,9}\/[A-Z]$/i, '').trim();
-                  };
-                  return (
-                    <span>{cleanProductTitle(prod.name || prod.title)}</span>
-                  );
-                })()}
-              </h3>
-            </Link>
+              {/* Clickable Area: Image and Title */}
+              <Link to={`/product/${prod.id}`} className="block cursor-pointer">
+                {/* Product Visual - Apple Showcase Background (#f5f5f7) */}
+                <CleanProductImage
+                  src={getProductImage(prod)}
+                  alt={prod.name}
+                  className="max-h-[90%] max-w-[90%] object-contain group-hover:scale-105 transition-transform duration-500 select-none transform scale-100"
+                  containerClassName="w-full h-56 sm:h-64 md:h-72 bg-white rounded-2xl flex items-center justify-center p-2 overflow-hidden relative mb-3 sm:mb-4 transition-colors duration-300 group-hover:bg-[#f0f0f2]"
+                />
 
-            {/* Non-clickable configurations / actions */}
-            <div className="space-y-4 pt-2">
-              {/* Color Dot Options Row */}
-              <div className="flex items-center justify-between gap-2 border-t border-zinc-100/60 pt-3">
-                <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Colors</span>
-                <div className="flex items-center gap-3 shrink-0 py-1">
-                  {prod.colors.map((color) => {
-                    const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
-                    // iMac two-tone split circle: top-left = main color, bottom-right = lighter shade
-                    const isImac = prod.name && prod.name.toLowerCase().includes('imac');
-                    const lighterShade = color.value ? color.value + 'bb' : '#e0e0e2';
-                    const swatchStyle = isImac
-                      ? { background: `linear-gradient(135deg, ${color.value} 50%, ${color.value}88 50%)`, border: 'none' }
-                      : { backgroundColor: color.value };
+                {/* Title (Clean Product Name) */}
+                <h3 className="font-semibold text-[16px] leading-snug tracking-tight text-zinc-900 group-hover:text-zinc-900 transition-colors min-h-[48px]">
+                  {(() => {
+                    const cleanProductTitle = (rawTitle) => {
+                      if (!rawTitle) return '';
+                      return rawTitle.replace(/\s*[A-Z0-9]{5,9}\/[A-Z]$/i, '').trim();
+                    };
                     return (
-                      <button
-                        key={color.name}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleColorChange(prod.id, color.name);
-                        }}
-                        style={swatchStyle}
-                        className={`w-4 h-4 rounded-full cursor-pointer transition-all ${
-                          isSelected
-                            ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10'
-                            : 'border border-zinc-300 hover:scale-105 hover:shadow-xs'
-                        }`}
-                        title={color.name}
-                      />
+                      <span>{cleanProductTitle(prod.name || prod.title)}</span>
                     );
-                  })}
-                </div>
-              </div>
+                  })()}
+                </h3>
+              </Link>
 
-              {/* Price and Cart Row */}
-              <div className="flex items-center justify-between pt-1 border-t border-zinc-100/60">
-                <div className="flex flex-col">
-                  <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Price</span>
-                  <span className="font-semibold text-zinc-900 text-sm">{prod.priceStr}</span>
+              {/* Non-clickable configurations / actions */}
+              <div className="space-y-4 pt-2">
+                {/* Color Dot Options Row */}
+                <div className="flex items-center justify-between gap-2 border-t border-zinc-100/60 pt-3">
+                  <span className="text-[17px] text-zinc-700 uppercase tracking-wider font-extrabold">Colors</span>
+                  <div className="flex items-center gap-3 shrink-0 py-1">
+                    {prod.colors.map((color) => {
+                      const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
+                      // iMac two-tone split circle: top-left = main color, bottom-right = lighter shade
+                      const isImac = prod.name && prod.name.toLowerCase().includes('imac');
+                      const lighterShade = color.value ? color.value + 'bb' : '#e0e0e2';
+                      const swatchStyle = isImac
+                        ? { background: `linear-gradient(135deg, ${color.value} 50%, ${color.value}88 50%)`, border: 'none' }
+                        : { backgroundColor: color.value };
+                      return (
+                        <button
+                          key={color.name}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleColorChange(prod.id, color.name);
+                          }}
+                          style={swatchStyle}
+                          className={`w-4 h-4 rounded-full cursor-pointer transition-all ${
+                            isSelected
+                              ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10'
+                              : 'border border-zinc-300 hover:scale-105 hover:shadow-xs'
+                          }`}
+                          title={color.name}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
 
-                {!prod.isSoldOut && (
-                  <button
-                    onClick={() => handleAddToCart(prod)}
-                    className="flex items-center justify-center p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 hover:text-zinc-900 transition-all cursor-pointer"
-                    title="Add to Cart"
-                  >
-                    <ShoppingBag className="h-4 w-4" />
-                  </button>
-                )}
+                {/* Price and Cart Row */}
+                <div className="flex items-center justify-between pt-1 border-t border-zinc-100/60">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Price</span>
+                    {pricing.hasDiscount ? (
+                      <div className="flex items-baseline gap-1.5 flex-wrap">
+                        <span className="font-extrabold text-zinc-950 text-base">
+                          ₹{pricing.sellingPrice.toLocaleString('en-IN')}
+                        </span>
+                        <span className="text-xs text-zinc-400 line-through font-bold">
+                          ₹{pricing.originalMrp.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="font-semibold text-zinc-900 text-base">
+                        {prod.priceStr || `₹${Number(prod.price || 0).toLocaleString('en-IN')}`}
+                      </span>
+                    )}
+                  </div>
+
+                  {!prod.isSoldOut && (
+                    <button
+                      onClick={() => handleAddToCart(prod)}
+                      className="flex items-center justify-center p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 hover:text-zinc-900 transition-all cursor-pointer"
+                      title="Add to Cart"
+                    >
+                      <ShoppingBag className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Infinite Scroll Indicator */}

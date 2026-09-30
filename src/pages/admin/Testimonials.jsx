@@ -41,10 +41,10 @@ export default function Testimonials() {
         })));
       } else {
         setTestimonials([
-          { stars: 5, text: '"Procured 40 MacBooks for our new office in 3 days, GST invoice sorted same week."', author: '— IT Head, Fintech firm, Bengaluru', isActive: true },
-          { stars: 5, text: '"Our gifting desk orders AirPods every quarter — consolidated billing makes finance happy."', author: '— Procurement Lead, D2C brand, Mumbai', isActive: true },
-          { stars: 5, text: '"Quote turnaround was faster than two other resellers we checked."', author: '— Ops Manager, Consulting firm, Delhi NCR', isActive: true },
-          { stars: 5, text: '"Reliable for repeat bulk orders, delivered to three city offices without issue."', author: '— Admin Head, BPO, Pune', isActive: true }
+          { stars: 5, text: '"Procured 40 MacBooks for our new office in 3 days, GST invoice sorted same week."', author: '— IT Head, Fintech firm', location: 'Bengaluru', sub: 'Bengaluru', isActive: true },
+          { stars: 5, text: '"Our gifting desk orders AirPods every quarter — consolidated billing makes finance happy."', author: '— Procurement Lead, D2C brand', location: 'Mumbai', sub: 'Mumbai', isActive: true },
+          { stars: 5, text: '"Quote turnaround was faster than two other resellers we checked."', author: '— Ops Manager, Consulting firm', location: 'Delhi NCR', sub: 'Delhi NCR', isActive: true },
+          { stars: 5, text: '"Reliable for repeat bulk orders, delivered to three city offices without issue."', author: '— Admin Head, BPO', location: 'Pune', sub: 'Pune', isActive: true }
         ]);
       }
     } catch (err) {
@@ -60,7 +60,9 @@ export default function Testimonials() {
       {
         stars: 5,
         text: '"Enter customer review or quote here..."',
-        author: '— Customer Name, Designation, City',
+        author: '— Customer Name, Designation',
+        location: 'Delhi',
+        sub: 'Delhi',
         isActive: true
       }
     ]);
@@ -338,14 +340,30 @@ export default function Testimonials() {
                   />
                 </div>
 
-                {/* 4. Author Name / Designation & City (Below Text) */}
-                <div>
-                  <label className="block text-[10px] font-extrabold text-zinc-600 uppercase tracking-wider mb-1.5">4. Author Name / Designation & City (Below Text)</label>
+                {/* 4. Author Name / Designation */}
+                <div className="mb-4">
+                  <label className="block text-[10px] font-extrabold text-zinc-600 uppercase tracking-wider mb-1.5">4. Author Name / Designation (e.g. — IT Head, Fintech firm)</label>
                   <input
                     type="text"
                     value={item.author || ''}
                     onChange={(e) => handleTestimonialChange(idx, 'author', e.target.value)}
-                    placeholder="— IT Head, Fintech firm, Bengaluru"
+                    placeholder="— IT Head, Fintech firm"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 text-xs font-medium focus:border-[#0071e3] outline-none bg-white"
+                  />
+                </div>
+
+                {/* 5. Customer Location / City */}
+                <div>
+                  <label className="block text-[10px] font-extrabold text-zinc-600 uppercase tracking-wider mb-1.5">5. Customer Location / City (e.g. Delhi, Mumbai, Pune, Bengaluru)</label>
+                  <input
+                    type="text"
+                    value={item.location !== undefined ? item.location : (item.sub !== undefined ? item.sub : '')}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      handleTestimonialChange(idx, 'location', val);
+                      handleTestimonialChange(idx, 'sub', val);
+                    }}
+                    placeholder="e.g. Delhi, Mumbai, Pune, Haryana, Delhi NCR, Bengaluru"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 text-xs font-medium focus:border-[#0071e3] outline-none bg-white"
                   />
                 </div>

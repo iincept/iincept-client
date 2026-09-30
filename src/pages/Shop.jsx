@@ -7,10 +7,44 @@ import { addToCart } from '../redux/cartSlice';
 import { addToWishlist } from '../redux/wishlistSlice';
 import Loader from '../components/Loader';
 import { matchesProductSearch } from '../utils/searchUtils';
+import { getProductCardPricing } from '../utils/pricingUtils';
+import { prefetchProduct } from '../utils/prefetchUtils';
 
 // Fallback definitions removed in favor of real database records
 
 const BRANDS = ['Apple', 'Aero', 'Sonic', 'Titan', 'Vortex', 'Samsung', 'Sony', 'Zara', 'Loreal', 'Chanel'];
+
+const getDiscountPercent = (prod) => {
+  if (!prod) return 0;
+
+  const getCalcDisc = (p, d) => {
+    const price = Number(p || 0);
+    const disc = Number(d || 0);
+    if (disc <= 0) return 0;
+    if (disc <= 99) return Math.round(disc);
+    if (price > disc) return Math.round(((price - disc) / price) * 100);
+    return 0;
+  };
+
+  let discPercent = 0;
+  if (prod.discountPercent && Number(prod.discountPercent) > 0) {
+    discPercent = Math.round(Number(prod.discountPercent));
+  } else {
+    discPercent = getCalcDisc(prod.price, prod.discountPrice);
+  }
+
+  if (discPercent === 0 && prod.variants && Array.isArray(prod.variants) && prod.variants.length > 0) {
+    const variantDiscounts = prod.variants.map(v => {
+      if (v.discountPercent && Number(v.discountPercent) > 0) return Math.round(Number(v.discountPercent));
+      return getCalcDisc(v.price || prod.price, v.discountPrice || prod.discountPrice);
+    }).filter(d => d > 0);
+    if (variantDiscounts.length > 0) {
+      discPercent = Math.max(...variantDiscounts);
+    }
+  }
+
+  return discPercent;
+};
 
 export default function Shop() {
   const dispatch = useDispatch();
@@ -160,9 +194,9 @@ export default function Shop() {
       {loading && <Loader message="Searching products catalog..." />}
 
       {/* Title Header */}
-      <div className="w-full pb-6 select-none font-sans border-b border-zinc-100 mb-6">
+      <div className="w-full pb-6 select-none font-sans mb-6">
         <div className="max-w-7xl mx-auto pt-2">
-          <h1 className="text-5xl sm:text-6xl font-black tracking-tight text-zinc-950 text-left">Accessories</h1>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950 text-left">Accessories</h1>
         </div>
       </div>
         
@@ -400,17 +434,37 @@ export default function Shop() {
                     className="group rounded-2xl border border-slate-850 bg-slate-900/40 hover:bg-slate-900 hover:border-slate-800 transition-all duration-300 overflow-hidden flex flex-col justify-between"
                   >
                     {/* Thumbnail */}
-                    <div className="relative h-48 bg-slate-955 overflow-hidden flex items-center justify-center">
+                    <div className="relative h-48 bg-white overflow-hidden flex items-center justify-center p-3 border-b border-slate-800">
+                      {/* Top Left Overlay Badges: Sold Out & Discount */}
+                      <div className="flex items-center gap-1.5 flex-wrap absolute top-3 left-3 z-10">
+                        {(prod.isSoldOut || (prod.stock !== undefined && prod.stock <= 0)) && (
+                          <span className="bg-[#f5f5f7] text-[#1d1d1f] font-bold text-[9px] tracking-widest uppercase px-2.5 py-1 rounded shadow-2xs">
+                            SOLD OUT
+                          </span>
+                        )}
+                        {(() => {
+                          const discPercent = getDiscountPercent(prod);
+                          if (discPercent > 0) {
+                            return (
+                              <span className="bg-[#FF2D55] text-white font-extrabold text-[9.5px] tracking-wide uppercase px-2.5 py-1 rounded shadow-2xs">
+                                {discPercent}% OFF
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+
                       <button 
                         onClick={() => handleAddToWishlist(prod)}
-                        className="absolute top-3 right-3 p-2 bg-slate-900/80 backdrop-blur-sm border border-slate-800 text-slate-400 hover:text-rose-505 hover:text-rose-400 rounded-full z-10 transition-colors"
+                        className="absolute top-3 right-3 p-2 bg-slate-900/80 backdrop-blur-sm border border-slate-800 text-slate-400 hover:text-rose-400 rounded-full z-10 transition-colors"
                       >
                         <Heart className="h-4 w-4" />
                       </button>
                       <img 
-                        src={prod.image || (prod.images && prod.images[0]) || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&q=80'} 
+                        src={prod.displayImage || prod.image || (prod.images && prod.images[0]) || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&q=80'} 
                         alt={prod.name || prod.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
                       />
                     </div>
 
@@ -419,18 +473,35 @@ export default function Shop() {
                       <div className="space-y-1">
                         <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider capitalize">{prod.category?.name || prod.category}</span>
                         <h3 className="font-bold text-slate-200 line-clamp-1 group-hover:text-white transition-colors">
-                          <Link to={`/product/${prod.id || prod._id}`}>{prod.name || prod.title}</Link>
+                          <Link
+                            to={`/product/${prod.id || prod._id}`}
+                            onMouseEnter={() => prefetchProduct(prod.id || prod._id, dispatch)}
+                          >
+                            {prod.name || prod.title}
+                          </Link>
                         </h3>
-                        <p className="text-[11px] text-slate-550 text-slate-500 line-clamp-2 leading-relaxed">{prod.description}</p>
+                        <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">{prod.description}</p>
                         <div className="flex items-center gap-1.5 pt-1">
                           <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
                           <span className="text-xs font-semibold text-slate-350">{prod.rating}</span>
-                          <span className="text-[9px] text-slate-550 text-slate-500 font-bold uppercase tracking-wide">· {prod.brand}</span>
+                          <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wide">· {prod.brand}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between pt-3 border-t border-slate-850/60">
-                        <span className="font-extrabold text-lg text-slate-100">₹{prod.price?.toLocaleString('en-IN')}</span>
+                        {(() => {
+                          const pricing = getProductCardPricing(prod);
+
+                          if (pricing.hasDiscount) {
+                            return (
+                              <div className="flex items-baseline gap-2">
+                                <span className="font-extrabold text-lg text-slate-100">₹{pricing.sellingPrice.toLocaleString('en-IN')}</span>
+                                <span className="text-xs text-slate-500 line-through font-medium">₹{pricing.originalMrp.toLocaleString('en-IN')}</span>
+                              </div>
+                            );
+                          }
+                          return <span className="font-extrabold text-lg text-slate-100">₹{Number(prod.price || 0).toLocaleString('en-IN')}</span>;
+                        })()}
                         <button 
                           onClick={() => handleAddToCart(prod)}
                           className="px-3.5 py-2 bg-violet-600 text-white hover:bg-violet-500 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"

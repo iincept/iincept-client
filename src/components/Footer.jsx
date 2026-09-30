@@ -219,30 +219,6 @@ export default function Footer() {
 
         </div>
 
-        {/* Bottom Bar Divider & Copyright */}
-        <div className="indiaistore-footer-bottom" style={{
-          borderTop: '1px solid #d2d2d7',
-          marginTop: '36px',
-          paddingTop: '20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '16px'
-        }}>
-          <div style={{ fontSize: '12px', color: '#86868b' }}>
-            {footerData.copyrightText}
-          </div>
-
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-            {footerData.bottomLinks.map((link, idx) => (
-              <Link key={idx} to={link.url} className="indiaistore-footer-bottom-link">
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-
       </div>
     </footer>
   );

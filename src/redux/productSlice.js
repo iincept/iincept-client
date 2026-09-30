@@ -114,13 +114,27 @@ const productSlice = createSlice({
     builder
       // Products fetch
       .addCase(fetchProducts.pending, (state) => {
-        state.loading = true;
+        if (!state.products || state.products.length === 0) {
+          state.loading = true;
+        }
         state.error = null;
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.products = Array.isArray(action.payload) ? action.payload : [];
         state.error = null;
+        // Refresh currentProduct with updated live data from database
+        if (state.currentProduct && state.products.length > 0) {
+          const updated = state.products.find(p => 
+            p._id === state.currentProduct._id || 
+            p.id === state.currentProduct.id || 
+            p.slug === state.currentProduct.slug ||
+            (p.partNumber && p.partNumber === state.currentProduct.partNumber)
+          );
+          if (updated) {
+            state.currentProduct = updated;
+          }
+        }
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;

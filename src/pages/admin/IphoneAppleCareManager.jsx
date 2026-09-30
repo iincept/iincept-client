@@ -161,12 +161,35 @@ export default function IphoneAppleCareManager() {
     setTimeout(() => setMessage(null), 4000);
   };
 
+const parsePriceNumber = (val) => {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'number') return val;
+  const cleaned = String(val).replace(/[^0-9.]/g, '');
+  return parseFloat(cleaned) || 0;
+};
+
+const calculateFinalPriceStr = (mrp, discount) => {
+  const mrpNum = parsePriceNumber(mrp);
+  const discNum = Math.min(100, Math.max(0, parseFloat(discount) || 0));
+  const finalNum = Math.max(0, Math.round(mrpNum - (mrpNum * discNum / 100)));
+  return `₹${finalNum.toLocaleString('en-IN')}`;
+};
+
   const handleUpdateRow = (index, field, value) => {
     setIphoneRows(prev => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
-      if (field === 'salePrice') updated[index].yearly = value;
-      if (field === 'yearly' && !updated[index].salePrice) updated[index].salePrice = value;
+      const current = updated[index];
+      let row = { ...current, [field]: value };
+      if (field === 'discount' || field === 'discount2yr') {
+        const discNum = Math.min(100, Math.max(0, parseFloat(value) || 0));
+        row.discount = value;
+        row.discount2yr = value;
+        const computedFinal = calculateFinalPriceStr(row.mrp || row.mrp2yr, discNum);
+        row.salePrice = computedFinal;
+        row.salePrice2yr = computedFinal;
+        row.yearly = computedFinal;
+      }
+      updated[index] = row;
       return updated;
     });
   };
@@ -662,70 +685,61 @@ export default function IphoneAppleCareManager() {
                   />
                 </div>
 
-                {/* 4. MRP */}
+                {/* 4. MRP (ORIGINAL MRP - READ ONLY) */}
                 <div>
-                  <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
-                    <DollarSign className="w-3.5 h-3.5 text-zinc-500" />
-                    MRP Price (2-Yr)
+                  <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <DollarSign className="w-3.5 h-3.5 text-zinc-500" />
+                      MRP Price
+                    </span>
+                    <span className="text-[10px] text-zinc-400 font-semibold uppercase">READ ONLY</span>
                   </label>
                   <input
                     type="text"
-                    value={row.mrp2yr || row.mrp || ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setIphoneRows(prev => {
-                        const updated = [...prev];
-                        updated[idx] = { ...updated[idx], mrp: val, mrp2yr: val };
-                        return updated;
-                      });
-                    }}
+                    value={row.mrp || row.mrp2yr || ''}
+                    readOnly
+                    disabled
                     placeholder="e.g. ₹23,900.00"
-                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
+                    className="w-full px-3 py-2 bg-zinc-100 border border-zinc-200 rounded-xl text-xs font-bold text-zinc-600 cursor-not-allowed select-none focus:outline-none"
                   />
+                  <span className="text-[10px] text-zinc-400 mt-0.5 block font-medium">ORIGINAL MRP — READ ONLY</span>
                 </div>
 
-                {/* 5. Discount */}
+                {/* 5. Discount (%) */}
                 <div>
                   <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
                     <Percent className="w-3.5 h-3.5 text-emerald-600" />
-                    Discount (2-Yr)
+                    Discount (%)
                   </label>
                   <input
-                    type="text"
-                    value={row.discount2yr || row.discount || ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setIphoneRows(prev => {
-                        const updated = [...prev];
-                        updated[idx] = { ...updated[idx], discount: val, discount2yr: val };
-                        return updated;
-                      });
-                    }}
-                    placeholder="e.g. 9% OFF"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={(row.discount !== undefined && row.discount !== null) ? String(row.discount).replace(/[^0-9.]/g, '') : (row.discount2yr ? String(row.discount2yr).replace(/[^0-9.]/g, '') : '')}
+                    onChange={(e) => handleUpdateRow(idx, 'discount', e.target.value)}
+                    placeholder="0 to 100"
                     className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
                   />
                 </div>
 
-                {/* 6. Sale Price */}
+                {/* 6. Final Price (AUTOMATICALLY CALCULATED) */}
                 <div>
-                  <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
-                    <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
-                    Final Sale Price (2-Yr)
+                  <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <DollarSign className="w-3.5 h-3.5 text-[#0071e3]" />
+                      Final Price (₹)
+                    </span>
+                    <span className="text-[10px] text-emerald-600 font-bold uppercase">AUTO</span>
                   </label>
                   <input
                     type="text"
-                    value={row.salePrice2yr || row.salePrice || row.yearly || ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setIphoneRows(prev => {
-                        const updated = [...prev];
-                        updated[idx] = { ...updated[idx], salePrice: val, salePrice2yr: val, yearly: val };
-                        return updated;
-                      });
-                    }}
-                    placeholder="e.g. ₹21,900.00"
-                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-bold text-emerald-700 focus:outline-none focus:border-[#0071e3]"
+                    value={calculateFinalPriceStr(row.mrp || row.mrp2yr, row.discount || row.discount2yr)}
+                    readOnly
+                    disabled
+                    placeholder="e.g. ₹21,900"
+                    className="w-full px-3 py-2 bg-emerald-50/60 border border-emerald-200/80 rounded-xl text-xs font-extrabold text-emerald-800 cursor-not-allowed select-none focus:outline-none"
                   />
+                  <span className="text-[10px] text-emerald-600 mt-0.5 block font-medium">AUTOMATICALLY CALCULATED</span>
                 </div>
 
                 {/* 7. Image URL */}

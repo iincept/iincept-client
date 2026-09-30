@@ -1,4 +1,33 @@
 /**
+ * Safely normalizes target paths and URLs configured from the Admin Panel.
+ * Handles spaces and query parameters correctly (e.g. /airpods?search=AirPods 5 -> /airpods?search=AirPods%205)
+ */
+export const normalizeTargetPath = (pathStr) => {
+  if (!pathStr || typeof pathStr !== 'string' || !pathStr.trim()) return '';
+  let clean = pathStr.trim();
+  
+  if (!clean.startsWith('/') && !clean.startsWith('http://') && !clean.startsWith('https://')) {
+    clean = '/' + clean;
+  }
+  
+  const qIndex = clean.indexOf('?');
+  if (qIndex !== -1) {
+    const basePath = clean.substring(0, qIndex);
+    const queryString = clean.substring(qIndex + 1);
+    
+    try {
+      const searchParams = new URLSearchParams(queryString);
+      const normalizedQuery = searchParams.toString().replace(/\+/g, '%20');
+      return normalizedQuery ? `${basePath}?${normalizedQuery}` : basePath;
+    } catch (e) {
+      return clean.replace(/\s+/g, '%20');
+    }
+  }
+  
+  return clean;
+};
+
+/**
  * Utility function to test whether a product matches a given search query string.
  * Matches against:
  * - Product title / name
@@ -87,4 +116,124 @@ export const getMatchingSku = (prod, query) => {
   }
 
   return prod.sku || prod.partNumber || prod.modelNumber || prod.variants?.[0]?.partNumber || prod.variants?.[0]?.sku || null;
+};
+
+/**
+ * Finds the specific variant matching the search query (by SKU, partNumber, modelNumber, or attributes)
+ */
+export const findMatchingVariant = (prod, query) => {
+  if (!prod) return null;
+  const q = (query || '').trim().toLowerCase();
+  if (!q) return null;
+
+  if (Array.isArray(prod.variants) && prod.variants.length > 0) {
+    // 1. Exact match by SKU, partNumber, or modelNumber
+    for (const v of prod.variants) {
+      if (!v) continue;
+      const vSku = (v.sku || '').trim().toLowerCase();
+      const vPartNumber = (v.partNumber || '').trim().toLowerCase();
+      const vModelNumber = (v.modelNumber || '').trim().toLowerCase();
+
+      if ((vSku && vSku === q) || (vPartNumber && vPartNumber === q) || (vModelNumber && vModelNumber === q)) {
+        return v;
+      }
+    }
+
+    // 2. Partial match by SKU, partNumber, or modelNumber
+    for (const v of prod.variants) {
+      if (!v) continue;
+      const vSku = (v.sku || '').trim().toLowerCase();
+      const vPartNumber = (v.partNumber || '').trim().toLowerCase();
+      const vModelNumber = (v.modelNumber || '').trim().toLowerCase();
+
+      if ((vSku && vSku.includes(q)) || (vPartNumber && vPartNumber.includes(q)) || (vModelNumber && vModelNumber.includes(q))) {
+        return v;
+      }
+    }
+
+    // 3. Match by variant attributes / titles
+    for (const v of prod.variants) {
+      if (!v) continue;
+      const vTitle = (v.title || v.displayTitle || '').trim().toLowerCase();
+      const vSize = (v.size || '').trim().toLowerCase();
+      const vColor = (v.color || '').trim().toLowerCase();
+      const vStorage = (v.storage || '').trim().toLowerCase();
+      const vRam = (v.ram || '').trim().toLowerCase();
+
+      if (
+        (vTitle && vTitle.includes(q)) ||
+        (vSize && vSize === q) ||
+        (vColor && vColor === q) ||
+        (vStorage && vStorage === q) ||
+        (vRam && vRam === q)
+      ) {
+        return v;
+      }
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Calculates exact MRP, Selling Price, Discount Percent, and Savings for a matched variant or product
+ */
+export const getVariantPricing = (variant, prod) => {
+  let vPrice = variant && Number(variant.price) > 0 ? Number(variant.price) : 0;
+  let vDiscVal = variant && Number(variant.discountPrice || variant.discountPercent || variant.discount) > 0 
+    ? Number(variant.discountPrice || variant.discountPercent || variant.discount) 
+    : 0;
+  let vMrp = variant && Number(variant.mrp || variant.originalPrice) > 0 ? Number(variant.mrp || variant.originalPrice) : 0;
+
+  let pPrice = Number(prod?.price || 0);
+  let pDiscVal = Number(prod?.discountPrice || prod?.discountPercent || prod?.discount || 0);
+  let pMrp = Number(prod?.mrp || prod?.originalPrice || 0);
+
+  let rawBasePrice = vPrice > 0 ? vPrice : pPrice;
+  let rawDiscVal = vDiscVal > 0 ? vDiscVal : pDiscVal;
+  let rawMrp = vMrp > 0 ? vMrp : pMrp;
+
+  if (rawBasePrice <= 0) {
+    return { sellingPrice: 0, originalMrp: 0, discountPercent: 0, youSave: 0, hasDiscount: false };
+  }
+
+  let sellingPrice = rawBasePrice;
+  let originalMrp = rawMrp > rawBasePrice ? rawMrp : 0;
+
+  if (rawDiscVal > 0) {
+    if (rawDiscVal <= 99) {
+      originalMrp = rawBasePrice;
+      sellingPrice = Math.round(rawBasePrice - (rawBasePrice * rawDiscVal / 100));
+    } else if (rawDiscVal < rawBasePrice) {
+      if (rawDiscVal < (rawBasePrice / 2)) {
+        originalMrp = rawBasePrice;
+        sellingPrice = rawBasePrice - rawDiscVal;
+      } else {
+        originalMrp = rawBasePrice;
+        sellingPrice = rawDiscVal;
+      }
+    } else if (rawDiscVal > rawBasePrice) {
+      originalMrp = rawDiscVal;
+      sellingPrice = rawBasePrice;
+    }
+  } else if (originalMrp > rawBasePrice) {
+    sellingPrice = rawBasePrice;
+  }
+
+  if (originalMrp <= sellingPrice) {
+    originalMrp = 0;
+  }
+
+  const youSave = originalMrp > sellingPrice ? originalMrp - sellingPrice : 0;
+  const discountPercent = originalMrp > sellingPrice 
+    ? Math.round((youSave / originalMrp) * 100) 
+    : (rawDiscVal > 0 && rawDiscVal <= 99 ? rawDiscVal : 0);
+
+  return {
+    sellingPrice,
+    originalMrp,
+    discountPercent,
+    youSave,
+    hasDiscount: originalMrp > sellingPrice || discountPercent > 0
+  };
 };

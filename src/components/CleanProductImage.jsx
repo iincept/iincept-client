@@ -7,6 +7,9 @@ import React, { useState, useEffect } from 'react';
  * uploaded via Admin Panel so they float seamlessly inside Apple's #f5f5f7 showcase box,
  * exactly like Apple's official store layout (Image 2).
  */
+// Global in-memory cache for processed canvas images & assets
+const processedImageCache = new Map();
+
 export default function CleanProductImage({
   src,
   alt = '',
@@ -33,22 +36,70 @@ export default function CleanProductImage({
     return trimmed;
   };
 
-  const initialSrc = sanitizeSrc(src);
-  const [processedSrc, setProcessedSrc] = useState(initialSrc);
-  const [isBlackBg, setIsBlackBg] = useState(false);
-  const [hasFailed, setHasFailed] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const currentSanitizedSrc = sanitizeSrc(src);
+  const initialCache = processedImageCache.get(currentSanitizedSrc);
+
+  const [prevSrc, setPrevSrc] = useState(currentSanitizedSrc);
+  const [processedSrc, setProcessedSrc] = useState(initialCache ? initialCache.finalSrc : currentSanitizedSrc);
+  const [isBlackBg, setIsBlackBg] = useState(initialCache ? initialCache.isBlackBg : false);
+  const [hasFailed, setHasFailed] = useState(initialCache ? initialCache.hasFailed : false);
+  const [isLoading, setIsLoading] = useState(initialCache ? false : true);
+
+  if (prevSrc !== currentSanitizedSrc) {
+    setPrevSrc(currentSanitizedSrc);
+    if (initialCache) {
+      setProcessedSrc(initialCache.finalSrc);
+      setIsBlackBg(initialCache.isBlackBg);
+      setHasFailed(initialCache.hasFailed);
+      setIsLoading(false);
+    } else {
+      setProcessedSrc(currentSanitizedSrc);
+      setIsBlackBg(false);
+      setHasFailed(false);
+      setIsLoading(true);
+    }
+  }
 
   useEffect(() => {
     let isMounted = true;
     const currentSrc = sanitizeSrc(src);
 
+    if (!currentSrc) {
+      setIsLoading(false);
+      return;
+    }
+
+    const cached = processedImageCache.get(currentSrc);
+    if (cached) {
+      if (isMounted) {
+        setProcessedSrc(cached.finalSrc);
+        setIsBlackBg(cached.isBlackBg);
+        setHasFailed(cached.hasFailed);
+        setIsLoading(false);
+      }
+      return;
+    }
+
     setProcessedSrc(currentSrc);
     setIsBlackBg(false);
     setHasFailed(false);
-    setIsLoading(true);
 
-    if (!currentSrc) return;
+    // Fast-path clean transparent assets, local nav PNGs, SVGs, and base64 images
+    const isCleanAsset = 
+      currentSrc.endsWith('.svg') ||
+      currentSrc.includes('/iphone_nav/') ||
+      currentSrc.includes('/mac_nav/') ||
+      currentSrc.includes('/ipad_nav/') ||
+      currentSrc.includes('/applecare_') ||
+      currentSrc.startsWith('data:');
+
+    if (isCleanAsset) {
+      processedImageCache.set(currentSrc, { finalSrc: currentSrc, isBlackBg: false, hasFailed: false });
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
 
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -56,6 +107,8 @@ export default function CleanProductImage({
 
     img.onload = () => {
       let finalSrc = currentSrc;
+      let isDark = false;
+
       try {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -108,7 +161,7 @@ export default function CleanProductImage({
               }
             });
 
-            const isDark = bgR < 40 && bgG < 40 && bgB < 40;
+            isDark = bgR < 40 && bgG < 40 && bgB < 40;
             if (isDark && isMounted) {
               setIsBlackBg(true);
             }
@@ -148,6 +201,7 @@ export default function CleanProductImage({
       }
 
       if (isMounted) {
+        processedImageCache.set(currentSrc, { finalSrc, isBlackBg: isDark, hasFailed: false });
         setProcessedSrc(finalSrc);
         setIsLoading(false);
       }
@@ -156,6 +210,7 @@ export default function CleanProductImage({
     img.onerror = () => {
       if (isMounted) {
         const fb = getSmartFallback(alt, currentSrc);
+        processedImageCache.set(currentSrc, { finalSrc: fb, isBlackBg: false, hasFailed: true });
         if (processedSrc !== fb) {
           setProcessedSrc(fb);
           setHasFailed(true);

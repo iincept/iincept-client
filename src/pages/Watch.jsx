@@ -5,7 +5,9 @@ import { Heart, SlidersHorizontal, ArrowUpDown, X, ShoppingBag, ChevronLeft, Che
 import { addToCart } from '../redux/cartSlice';
 import { addToWishlist } from '../redux/wishlistSlice';
 import { fetchProducts } from '../redux/productSlice';
-import { matchesProductSearch } from '../utils/searchUtils';
+import { matchesProductSearch, normalizeTargetPath } from '../utils/searchUtils';
+import { getProductCardPricing } from '../utils/pricingUtils';
+import { prefetchProduct } from '../utils/prefetchUtils';
 import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
@@ -14,42 +16,95 @@ import CleanProductImage from '../components/CleanProductImage';
 // Default Watch AppleCare rows fallback
 const DEFAULT_WATCH_APPLECARE_ROWS = [
   { 
-    model: 'Apple Watch Series 10 / Series 9', 
-    title: 'AppleCare+ for Apple Watch Series 10 / 9', 
-    description: '2 Years Apple-certified coverage for Apple Watch Series with accidental damage protection.', 
-    sku: 'AC-WATCH-SERIES', 
-    mrp: '₹8,900.00', 
-    discount: '10% OFF', 
-    salePrice: '₹7,900.00', 
-    monthly: '₹399.00', 
-    yearly: '₹7,900.00', 
-    image: '/watch_nav/watch_series_10.png', 
-    isActive: true 
-  },
-  { 
-    model: 'Apple Watch Ultra 2 / Ultra', 
-    title: 'AppleCare+ for Apple Watch Ultra 2 / Ultra', 
-    description: '2 Years Apple-certified coverage for Apple Watch Ultra with accidental damage protection.', 
-    sku: 'AC-WATCH-ULTRA', 
-    mrp: '₹11,900.00', 
-    discount: '9% OFF', 
-    salePrice: '₹10,900.00', 
-    monthly: '₹549.00', 
-    yearly: '₹10,900.00', 
-    image: '/watch_nav/watch_ultra_2.png', 
-    isActive: true 
-  },
-  { 
     model: 'Apple Watch SE', 
     title: 'AppleCare+ for Apple Watch SE', 
-    description: '2 Years Apple-certified coverage for Apple Watch SE with accidental damage protection.', 
+    description: 'Apple-certified coverage for Apple Watch SE with accidental damage protection.', 
+    description1yr: '1 Year Apple-certified coverage for Apple Watch SE with accidental damage protection.',
+    description2yr: '2 Years Apple-certified coverage for Apple Watch SE with accidental damage protection.',
     sku: 'AC-WATCH-SE', 
+    sku1yr: 'AC-WATCH-SE-1YR',
+    sku2yr: 'AC-WATCH-SE-2YR',
     mrp: '₹5,900.00', 
-    discount: '10% OFF', 
-    salePrice: '₹5,300.00', 
-    monthly: '₹269.00', 
-    yearly: '₹5,300.00', 
-    image: '/watch_nav/watch_se.png', 
+    mrp1yr: '₹3,900.00',
+    mrp2yr: '₹5,900.00',
+    discount: '16% OFF', 
+    discount1yr: '10% OFF',
+    discount2yr: '16% OFF',
+    salePrice: '₹4,900.00', 
+    salePrice1yr: '₹3,510.00',
+    salePrice2yr: '₹4,900.00',
+    monthly: '₹249.00', 
+    yearly: '₹4,900.00', 
+    image: '/watch_nav/apple_watch_se.png', 
+    isActive: true 
+  },
+  { 
+    model: 'Apple Watch SE 3', 
+    title: 'AppleCare+ for Apple Watch SE 3 (40mm & 44mm)', 
+    description: 'Apple-certified coverage for Apple Watch SE 3 with accidental damage protection.', 
+    description1yr: '1 Year Apple-certified coverage for Apple Watch SE 3 with accidental damage protection.',
+    description2yr: '2 Years Apple-certified coverage for Apple Watch SE 3 with accidental damage protection.',
+    sku: 'AC-WATCH-SE3', 
+    sku1yr: 'AC-WATCH-SE3-1YR',
+    sku2yr: 'AC-WATCH-SE3-2YR',
+    mrp: '₹5,900.00', 
+    mrp1yr: '₹3,900.00',
+    mrp2yr: '₹5,900.00',
+    discount: '16% OFF', 
+    discount1yr: '10% OFF',
+    discount2yr: '16% OFF',
+    salePrice: '₹4,900.00', 
+    salePrice1yr: '₹3,510.00',
+    salePrice2yr: '₹4,900.00',
+    monthly: '₹249.00', 
+    yearly: '₹4,900.00', 
+    image: '/watch_nav/apple_watch_se.png', 
+    isActive: true 
+  },
+  { 
+    model: 'Apple Watch Series 10', 
+    title: 'AppleCare+ for Apple Watch Series 10', 
+    description: 'Apple-certified coverage for Apple Watch Series 10 with accidental damage protection.', 
+    description1yr: '1 Year Apple-certified coverage for Apple Watch Series 10 with accidental damage protection.',
+    description2yr: '2 Years Apple-certified coverage for Apple Watch Series 10 with accidental damage protection.',
+    sku: 'AC-WATCH-S10', 
+    sku1yr: 'AC-WATCH-S10-1YR',
+    sku2yr: 'AC-WATCH-S10-2YR',
+    mrp: '₹8,900.00', 
+    mrp1yr: '₹5,900.00',
+    mrp2yr: '₹8,900.00',
+    discount: '12% OFF', 
+    discount1yr: '10% OFF',
+    discount2yr: '12% OFF',
+    salePrice: '₹7,900.00', 
+    salePrice1yr: '₹5,310.00',
+    salePrice2yr: '₹7,900.00',
+    monthly: '₹399.00', 
+    yearly: '₹7,900.00', 
+    image: '/watch_nav/apple_watch_s10.png', 
+    isActive: true 
+  },
+  { 
+    model: 'Apple Watch Ultra 2', 
+    title: 'AppleCare+ for Apple Watch Ultra 2', 
+    description: 'Apple-certified coverage for Apple Watch Ultra 2 with accidental damage protection.', 
+    description1yr: '1 Year Apple-certified coverage for Apple Watch Ultra 2 with accidental damage protection.',
+    description2yr: '2 Years Apple-certified coverage for Apple Watch Ultra 2 with accidental damage protection.',
+    sku: 'AC-WATCH-ULTRA', 
+    sku1yr: 'AC-WATCH-ULTRA-1YR',
+    sku2yr: 'AC-WATCH-ULTRA-2YR',
+    mrp: '₹11,900.00', 
+    mrp1yr: '₹7,900.00',
+    mrp2yr: '₹11,900.00',
+    discount: '16% OFF', 
+    discount1yr: '10% OFF',
+    discount2yr: '16% OFF',
+    salePrice: '₹9,900.00', 
+    salePrice1yr: '₹7,110.00',
+    salePrice2yr: '₹9,900.00',
+    monthly: '₹499.00', 
+    yearly: '₹9,900.00', 
+    image: '/watch_nav/apple_watch_ultra.png', 
     isActive: true 
   }
 ];
@@ -63,13 +118,23 @@ const WATCH_SUB_NAV_ITEMS = [
 ];
 
 const resolveSubItemPath = (item) => {
-  const lowerName = (item.name || item.label || '').toLowerCase();
-  if (lowerName.includes('care')) {
+  const nameLower = (item?.name || item?.label || '').toLowerCase();
+  const queryLower = (item?.query || '').toLowerCase();
+  const pathLower = (item?.path || '').toLowerCase();
+
+  if (nameLower.includes('care') || queryLower.includes('care') || pathLower.includes('care')) {
     return '/watch?tab=applecare';
   }
-  if (item.path && item.path !== '/watch') return item.path;
-  if (item.query) {
-    return `/watch?search=${encodeURIComponent(item.query)}`;
+  if (nameLower.includes('compare') || queryLower.includes('compare') || pathLower.includes('compare')) {
+    return '/compare?category=watch';
+  }
+  if (item?.path && item.path.trim()) {
+    const normalized = normalizeTargetPath(item.path.trim());
+    if (normalized && normalized !== '/watch') return normalized;
+  }
+  const queryVal = item?.query || item?.label || item?.name || '';
+  if (queryVal && queryVal.trim()) {
+    return `/watch?search=${encodeURIComponent(queryVal.trim())}`;
   }
   return '/watch';
 };
@@ -134,6 +199,148 @@ const getModelImageByName = (modelName = '') => {
   return '/watch_nav/watch_series_10.png';
 };
 
+const parsePriceNumber = (val) => {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'number') return val;
+  const cleaned = String(val).replace(/[^0-9.]/g, '');
+  return parseFloat(cleaned) || 0;
+};
+
+const calculateFinalPriceStr = (mrp, discount) => {
+  const mrpNum = parsePriceNumber(mrp);
+  const discNum = Math.min(100, Math.max(0, parseFloat(discount) || 0));
+  const finalNum = Math.max(0, Math.round(mrpNum - (mrpNum * discNum / 100)));
+  return `₹${finalNum.toLocaleString('en-IN')}`;
+};
+
+const resolve1YrDetails = (row) => {
+  const defaultRow = DEFAULT_WATCH_APPLECARE_ROWS.find(d => 
+    (d.model && row.model && d.model.toLowerCase().trim() === row.model.toLowerCase().trim()) ||
+    (d.title && row.title && d.title.toLowerCase().trim() === row.title.toLowerCase().trim())
+  ) || {};
+
+  const mrp = row.mrp1yr || defaultRow.mrp1yr || '₹3,900.00';
+  const discount = (row.discount1yr !== undefined && row.discount1yr !== null && row.discount1yr !== '') ? String(row.discount1yr) : (defaultRow.discount1yr || '10% OFF');
+  const salePrice = row.salePrice1yr || defaultRow.salePrice1yr || calculateFinalPriceStr(mrp, discount);
+  const sku = row.sku1yr || defaultRow.sku1yr || (row.sku ? `${row.sku.replace(/-2YR$/i, '')}-1YR` : 'AC-WATCH-1YR');
+  const description = row.description1yr || defaultRow.description1yr || `1 Year Apple-certified coverage for ${row.model || 'Apple Watch'}.`;
+
+  return { mrp, discount, salePrice, sku, description };
+};
+
+const resolve2YrDetails = (row) => {
+  const defaultRow = DEFAULT_WATCH_APPLECARE_ROWS.find(d => 
+    (d.model && row.model && d.model.toLowerCase().trim() === row.model.toLowerCase().trim()) ||
+    (d.title && row.title && d.title.toLowerCase().trim() === row.title.toLowerCase().trim())
+  ) || {};
+
+  const mrp = row.mrp2yr || row.mrp || defaultRow.mrp2yr || defaultRow.mrp || '₹5,900.00';
+  const discount = (row.discount2yr !== undefined && row.discount2yr !== null && row.discount2yr !== '') ? String(row.discount2yr) : ((row.discount !== undefined && row.discount !== null && row.discount !== '') ? String(row.discount) : (defaultRow.discount2yr || defaultRow.discount || '16% OFF'));
+  const salePrice = row.salePrice2yr || row.salePrice || row.yearly || defaultRow.salePrice2yr || defaultRow.salePrice || calculateFinalPriceStr(mrp, discount);
+  const sku = row.sku2yr || row.sku || defaultRow.sku2yr || defaultRow.sku || 'AC-WATCH-2YR';
+  const description = row.description2yr || row.description || defaultRow.description2yr || defaultRow.description || `2 Years Apple-certified coverage for ${row.model || 'Apple Watch'}.`;
+
+  return { mrp, discount, salePrice, sku, description };
+};
+
+const getInitialAppleCareData = () => {
+  try {
+    const cached = localStorage.getItem('iincept_watch_applecare_cache_v2');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed && Array.isArray(parsed.rows) && parsed.rows.length > 0) {
+        return {
+          headerTitle: parsed.headerTitle || 'AppleCare+',
+          durationLabel: parsed.durationLabel || '2 Years',
+          rows: parsed.rows,
+          isCached: true
+        };
+      }
+    }
+  } catch (e) {}
+  return {
+    headerTitle: 'AppleCare+',
+    durationLabel: '2 Years',
+    rows: [],
+    isCached: false
+  };
+};
+
+const WatchAppleCareSkeleton = () => {
+  return (
+    <div className="max-w-7xl mx-auto my-6 animate-pulse">
+      <div className="bg-white rounded-[24px] sm:rounded-[28px] border border-zinc-200/60 overflow-hidden shadow-xs p-6 sm:p-10 text-left">
+        <div className="border-b border-zinc-100 pb-4 mb-4 text-center flex justify-center">
+          <div className="h-10 w-48 sm:w-64 bg-zinc-200/70 rounded-xl mb-1"></div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6 items-stretch">
+          {[1, 2, 3, 4].map((n) => (
+            <div
+              key={n}
+              className="bg-white rounded-[24px] sm:rounded-[28px] border border-zinc-200/80 p-5 sm:p-6 shadow-xs flex flex-col justify-between h-full min-h-[480px]"
+            >
+              <div className="flex-1 flex flex-col justify-between">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+                  <div className="md:col-span-5 bg-zinc-50 rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-between min-h-[260px] sm:min-h-[280px] h-full border border-zinc-100">
+                    <div className="w-20 h-5 bg-zinc-200/70 rounded-full self-start mb-1"></div>
+                    <div className="w-24 h-28 bg-zinc-200/60 rounded-lg my-1"></div>
+                    <div className="flex items-center justify-center gap-1.5 my-1">
+                      <div className="w-2 h-2 rounded-full bg-zinc-300"></div>
+                      <div className="w-1.5 h-1.5 rounded-full bg-zinc-200"></div>
+                      <div className="w-1.5 h-1.5 rounded-full bg-zinc-200"></div>
+                      <div className="w-1.5 h-1.5 rounded-full bg-zinc-200"></div>
+                    </div>
+                    <div className="w-32 h-4 bg-zinc-200/70 rounded-md"></div>
+                  </div>
+
+                  <div className="md:col-span-7 space-y-3 flex flex-col justify-between h-full">
+                    <div>
+                      <div className="w-24 h-3 bg-zinc-200/60 rounded mb-1"></div>
+                      <div className="w-48 h-6 bg-zinc-200/70 rounded-md mb-2"></div>
+                      <div className="w-full h-4 bg-zinc-200/50 rounded-md mb-1"></div>
+                      <div className="w-3/4 h-4 bg-zinc-200/50 rounded-md"></div>
+                    </div>
+
+                    <div className="space-y-2 pt-2.5 border-t border-zinc-100">
+                      <div className="flex items-center justify-between">
+                        <div className="w-10 h-3 bg-zinc-200/60 rounded"></div>
+                        <div className="w-20 h-4 bg-zinc-200/60 rounded"></div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="w-14 h-3 bg-zinc-200/60 rounded"></div>
+                        <div className="w-12 h-3 bg-zinc-200/60 rounded"></div>
+                      </div>
+                      <div className="flex items-baseline justify-between pt-1">
+                        <div className="w-20 h-5 bg-zinc-200/70 rounded"></div>
+                        <div className="w-28 h-7 bg-zinc-200/80 rounded-lg"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 py-4 my-4 border-y border-zinc-100">
+                  {[1, 2, 3, 4].map((f) => (
+                    <div key={f} className="flex flex-col items-center gap-2 p-2">
+                      <div className="w-10 h-10 rounded-full bg-zinc-100"></div>
+                      <div className="w-16 h-3 bg-zinc-100 rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 mt-auto">
+                <div className="w-full h-11 bg-zinc-200/70 rounded-xl"></div>
+                <div className="w-full h-11 bg-zinc-200/70 rounded-xl"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function Watch() {
   const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
@@ -151,11 +358,15 @@ export default function Watch() {
   const isLoadingMore = useRef(false);
 
   // Watch AppleCare Dynamic Data
-  const [dbAppleCareRows, setDbAppleCareRows] = useState(DEFAULT_WATCH_APPLECARE_ROWS);
-  const [selectedAppleCareModel, setSelectedAppleCareModel] = useState(DEFAULT_WATCH_APPLECARE_ROWS[0]);
+  const initialCareData = getInitialAppleCareData();
+  const [dbAppleCareRows, setDbAppleCareRows] = useState(initialCareData.rows.length > 0 ? initialCareData.rows : DEFAULT_WATCH_APPLECARE_ROWS);
+  const [selectedAppleCareModel, setSelectedAppleCareModel] = useState(initialCareData.rows.length > 0 ? initialCareData.rows[0] : DEFAULT_WATCH_APPLECARE_ROWS[0]);
   const [selectedAppleCareMap, setSelectedAppleCareMap] = useState({});
-  const [dbHeaderTitle, setDbHeaderTitle] = useState('AppleCare+');
-  const [dbDurationLabel, setDbDurationLabel] = useState('2 Years');
+  const [selectedGlobalDuration, setSelectedGlobalDuration] = useState('2yr');
+  const [selectedDurationMap, setSelectedDurationMap] = useState({});
+  const [dbHeaderTitle, setDbHeaderTitle] = useState(initialCareData.headerTitle);
+  const [dbDurationLabel, setDbDurationLabel] = useState(initialCareData.durationLabel);
+  const [isSettingsLoading, setIsSettingsLoading] = useState(!initialCareData.isCached);
 
   useEffect(() => {
     dispatch(fetchProducts());
@@ -203,26 +414,47 @@ export default function Watch() {
         if (response.data.appleCarePricingTables && response.data.appleCarePricingTables.length > 0) {
           const watchTable = response.data.appleCarePricingTables.find(t => t.categoryKey === 'watch');
           if (watchTable) {
-            setDbHeaderTitle(watchTable.headerTitle || 'AppleCare+');
-            setDbDurationLabel(watchTable.durationLabel || '2 Years');
+            const hTitle = watchTable.headerTitle || 'AppleCare+';
+            const dLabel = watchTable.durationLabel || '1 Year & 2 Years';
+            setDbHeaderTitle(prev => (prev !== hTitle ? hTitle : prev));
+            setDbDurationLabel(prev => (prev !== dLabel ? dLabel : prev));
             if (watchTable.rows && watchTable.rows.length > 0) {
               const activeRows = watchTable.rows.filter(r => r.isActive !== false);
               if (activeRows.length > 0) {
                 const mappedRows = activeRows.map(r => ({
                   model: r.model || '',
                   title: r.title || `AppleCare+ for ${r.model}`,
-                  description: r.description || `2 Years Apple-certified coverage for ${r.model}`,
-                  sku: r.sku || '',
-                  mrp: r.mrp || '',
-                  discount: r.discount || '',
-                  salePrice: r.salePrice || r.yearly || '',
+                  description: r.description || r.description2yr || `Apple-certified coverage for ${r.model}`,
+                  description1yr: r.description1yr || `1 Year Apple-certified coverage for ${r.model}`,
+                  description2yr: r.description2yr || r.description || `2 Years Apple-certified coverage for ${r.model}`,
+                  sku: r.sku || r.sku2yr || '',
+                  sku1yr: r.sku1yr || (r.sku ? `${r.sku}-1YR` : ''),
+                  sku2yr: r.sku2yr || r.sku || '',
+                  mrp: r.mrp || r.mrp2yr || '',
+                  mrp1yr: r.mrp1yr || '',
+                  mrp2yr: r.mrp2yr || r.mrp || '',
+                  discount: r.discount || r.discount2yr || '',
+                  discount1yr: r.discount1yr || '',
+                  discount2yr: r.discount2yr || r.discount || '',
+                  salePrice: r.salePrice || r.salePrice2yr || r.yearly || '',
+                  salePrice1yr: r.salePrice1yr || '',
+                  salePrice2yr: r.salePrice2yr || r.salePrice || r.yearly || '',
                   monthly: r.monthly || '',
-                  yearly: r.yearly || r.salePrice || '',
+                  yearly: r.yearly || r.salePrice || r.salePrice2yr || '',
                   image: r.image || getModelImageByName(r.model),
                   isActive: r.isActive !== false
                 }));
+
+                try {
+                  localStorage.setItem('iincept_watch_applecare_cache_v2', JSON.stringify({
+                    headerTitle: hTitle,
+                    durationLabel: dLabel,
+                    rows: mappedRows
+                  }));
+                } catch (e) {}
+
                 setDbAppleCareRows(prev => (JSON.stringify(prev) !== JSON.stringify(mappedRows) ? mappedRows : prev));
-                setSelectedAppleCareModel(activeRows[0]);
+                setSelectedAppleCareModel(mappedRows[0]);
               }
             }
           }
@@ -279,6 +511,8 @@ export default function Watch() {
       }
     } catch (err) {
       console.error('Failed to load watch sub nav settings:', err);
+    } finally {
+      setIsSettingsLoading(false);
     }
   };
 
@@ -395,9 +629,21 @@ export default function Watch() {
   };
 
   const getProductImage = (prod) => {
+    const hasUserSelectedColor = Boolean(selectedColors[prod.id]);
+    if (!hasUserSelectedColor && prod.displayImage) {
+      return prod.displayImage;
+    }
+
     const selectedColorName = selectedColors[prod.id] || (prod.colors && prod.colors[0] ? (prod.colors[0].name || (typeof prod.colors[0] === 'string' ? prod.colors[0] : '')) : null);
     if (selectedColorName) {
-      const foundColor = prod.colors.find((c) => c.name === selectedColorName);
+      if (prod.colorImages && typeof prod.colorImages === 'object') {
+        const targetNorm = selectedColorName.replace(/\s+/g, ' ').trim().toLowerCase();
+        const matchedKey = Object.keys(prod.colorImages).find(k => k.replace(/\s+/g, ' ').trim().toLowerCase() === targetNorm);
+        if (matchedKey && prod.colorImages[matchedKey]) {
+          return prod.colorImages[matchedKey];
+        }
+      }
+      const foundColor = prod.colors.find((c) => (c.name || c) === selectedColorName);
       if (foundColor && foundColor.image) {
         return foundColor.image;
       }
@@ -406,7 +652,7 @@ export default function Watch() {
         return prod.images[colorIdx];
       }
     }
-    return prod.image;
+    return prod.displayImage || prod.image;
   };
 
   const handleAddToCart = (prod) => {
@@ -520,8 +766,13 @@ export default function Watch() {
       name: p.title || p.name,
       price: p.price,
       priceStr: `₹${p.price.toLocaleString('en-IN')}`,
-      image: isValidImg ? firstImg : '/watch_category.jpg',
+      discountPercent: p.discountPercent,
+      discountPrice: p.discountPrice,
+      displayImage: p.displayImage || '',
+      colorImages: p.colorImages || {},
+      image: p.displayImage || (isValidImg ? firstImg : '/watch_category.jpg'),
       images: p.images || [],
+      variants: p.variants || [],
       colors: Array.isArray(p.colors) ? p.colors.map(c => {
         const name = typeof c === 'string' ? c : (c.name || '');
         const val = typeof c === 'string' ? c : (c.value || c.name || '');
@@ -614,19 +865,52 @@ export default function Watch() {
         const isAppleCareActive = currentTab.toLowerCase() === 'applecare' || currentSearch.toLowerCase().includes('care');
 
         if (isAppleCareActive) {
+          if (isSettingsLoading) {
+            return <WatchAppleCareSkeleton />;
+          }
+
           return (
             <div className="max-w-7xl mx-auto my-6 animate-in fade-in duration-300">
               <div className="bg-white rounded-[24px] sm:rounded-[28px] border border-zinc-200/60 overflow-hidden shadow-xs p-6 sm:p-10 text-left">
-                {/* Header section */}
+                {/* Header section with Global Duration Selector */}
                 <div className="border-b border-zinc-100 pb-4 mb-4 text-center">
-                  <div className="text-2xl sm:text-4xl md:text-5xl font-black text-[#FF2D55] tracking-tight py-1">
-                    {dbHeaderTitle || 'AppleCare+'}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-1">
+                    <div className="text-2xl sm:text-4xl md:text-5xl font-black text-[#FF2D55] tracking-tight">
+                      {dbHeaderTitle || 'AppleCare+'}
+                    </div>
+
+                    {/* Global Duration Selector Pills */}
+                    <div className="flex items-center gap-2 bg-zinc-100/90 p-1.5 rounded-2xl border border-zinc-200/80 shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedGlobalDuration('1yr')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          selectedGlobalDuration === '1yr'
+                            ? 'bg-[#0071e3] text-white shadow-sm'
+                            : 'text-zinc-600 hover:text-zinc-900'
+                        }`}
+                      >
+                        1 Year Plans
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedGlobalDuration('2yr')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          selectedGlobalDuration === '2yr'
+                            ? 'bg-[#FF2D55] text-white shadow-sm'
+                            : 'text-zinc-600 hover:text-zinc-900'
+                        }`}
+                      >
+                        2 Year Plans
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Product Box Grid matching reference design */}
                 {(() => {
                   const rows = dbAppleCareRows.length > 0 ? dbAppleCareRows : DEFAULT_WATCH_APPLECARE_ROWS;
+
                   return (
                     <>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6 items-stretch">
@@ -634,11 +918,22 @@ export default function Watch() {
                           const itemKey = row.model || row.title;
                           const isSelected = !!selectedAppleCareMap[itemKey];
 
+                          const chosenDuration = selectedDurationMap[itemKey] || selectedGlobalDuration || '2yr';
+                          const is1Yr = chosenDuration === '1yr';
+                          const planDetails = is1Yr ? resolve1YrDetails(row) : resolve2YrDetails(row);
+
+                          const activeMrp = planDetails.mrp;
+                          const activeSalePrice = planDetails.salePrice;
+                          const activeDiscount = planDetails.discount;
+                          const activeSku = planDetails.sku;
+                          const activeDescription = planDetails.description;
+                          const durationLabelText = is1Yr ? '1 Year' : '2 Years';
+
                           return (
                             <div 
                               key={i} 
                               onClick={() => {
-                                toggleAppleCareSelection(row);
+                                toggleAppleCareSelection({ ...row, salePrice: activeSalePrice, mrp: activeMrp, sku: activeSku, duration: durationLabelText, title: `${row.title || row.model} (${durationLabelText})` });
                               }}
                               className={`group bg-white rounded-[24px] sm:rounded-[28px] border transition-all duration-300 relative text-left cursor-pointer p-5 sm:p-6 shadow-xs hover:shadow-md flex flex-col justify-between h-full ${
                                 isSelected 
@@ -656,15 +951,21 @@ export default function Watch() {
                                     
                                     {/* Top Left Badge */}
                                     <div className="w-full flex items-center justify-start z-10 mb-1">
-                                      <span className="bg-[#FF2D55] text-white text-[11px] font-bold px-3 py-1 rounded-full tracking-wide">
-                                        Apple Care+
+                                      <span className={`text-white text-[11px] font-bold px-3 py-1 rounded-full tracking-wide transition-colors ${
+                                        is1Yr ? 'bg-[#0071e3]' : 'bg-[#FF2D55]'
+                                      }`}>
+                                        Apple Care+ ({durationLabelText})
                                       </span>
                                     </div>
                                     {/* Main Product Image */}
-                                    <div className="w-full h-28 sm:h-32 flex items-center justify-center my-1 overflow-hidden">
+                                    <div className="w-full h-28 sm:h-32 flex items-center justify-center my-1 overflow-hidden shrink-0 relative">
                                       <img
                                         src={row.image || getModelImageByName(row.model)}
                                         alt={row.title || row.model}
+                                        loading="eager"
+                                        onError={(e) => {
+                                          e.currentTarget.src = getModelImageByName(row.model);
+                                        }}
                                         className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
                                       />
                                     </div>
@@ -683,9 +984,9 @@ export default function Watch() {
                                         <span></span>
                                         <span>{row.model || row.title}</span>
                                       </div>
-                                      {row.sku ? (
+                                      {activeSku ? (
                                         <p className="text-[11px] text-zinc-500 font-mono font-semibold mt-0.5">
-                                          SKU: {row.sku}
+                                          SKU: {activeSku}
                                         </p>
                                       ) : (
                                         <p className="text-[11px] text-transparent font-mono font-semibold mt-0.5 select-none">
@@ -698,14 +999,42 @@ export default function Watch() {
                                   {/* RIGHT COLUMN: Info & Pricing Block */}
                                   <div className="md:col-span-7 space-y-3 flex flex-col justify-between h-full">
                                     <div>
-                                      <div className="text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-[#FF2D55] mb-1">
-                                        APPLE CARE+
+                                      {/* Per-card Duration Selector Pills */}
+                                      <div className="flex items-center gap-1.5 mb-2.5 bg-zinc-100/80 p-1 rounded-xl w-fit">
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedDurationMap(prev => ({ ...prev, [itemKey]: '1yr' }));
+                                          }}
+                                          className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                            is1Yr ? 'bg-white text-[#0071e3] shadow-xs ring-1 ring-black/5' : 'text-zinc-600 hover:text-zinc-900'
+                                          }`}
+                                        >
+                                          1 Year Plan
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedDurationMap(prev => ({ ...prev, [itemKey]: '2yr' }));
+                                          }}
+                                          className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                            !is1Yr ? 'bg-white text-[#FF2D55] shadow-xs ring-1 ring-black/5' : 'text-zinc-600 hover:text-zinc-900'
+                                          }`}
+                                        >
+                                          2 Year Plan
+                                        </button>
                                       </div>
-                                      <h3 className="font-extrabold text-[#1D1D1F] text-lg sm:text-xl leading-snug tracking-tight min-h-[52px] flex items-center">
-                                        {row.title || `Apple Care+ ${row.model}`}
+
+                                      <div className="text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-[#FF2D55] mb-1">
+                                        APPLE CARE+ • {is1Yr ? '1 YEAR PLAN' : '2 YEAR PLAN'}
+                                      </div>
+                                      <h3 className="font-extrabold text-[#1D1D1F] text-lg sm:text-xl leading-snug tracking-tight min-h-[44px] flex items-center">
+                                        {row.title || `Apple Care+ ${row.model}`} ({durationLabelText})
                                       </h3>
                                       <p className="text-xs text-zinc-500 font-medium mt-1 leading-relaxed min-h-[36px] flex items-center">
-                                        {row.description || `Extended coverage for your ${row.model}. Peace of mind for what's next.`}
+                                        {activeDescription || `${durationLabelText} Apple-certified coverage for your ${row.model}. Peace of mind for what's next.`}
                                       </p>
                                     </div>
 
@@ -715,20 +1044,20 @@ export default function Watch() {
                                       <div className="flex items-center justify-between text-xs text-zinc-500">
                                         <span className="font-semibold text-zinc-500">MRP</span>
                                         <div className="flex items-center gap-2">
-                                          {row.mrp && <span className="line-through text-zinc-400 font-medium">{row.mrp}</span>}
-                                          {row.discount && (
+                                          {activeMrp && <span className="line-through text-zinc-400 font-medium">{activeMrp}</span>}
+                                          {activeDiscount && (
                                             <span className="bg-[#FF2D55] text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md shadow-2xs">
-                                              {row.discount.includes('%') ? row.discount : `${row.discount} OFF`}
+                                              {activeDiscount.includes('%') ? activeDiscount : `${activeDiscount} OFF`}
                                             </span>
                                           )}
                                         </div>
                                       </div>
 
                                       {/* Discount Row */}
-                                      {row.discount ? (
+                                      {activeDiscount ? (
                                         <div className="flex items-center justify-between text-xs">
                                           <span className="font-semibold text-zinc-500">Discount</span>
-                                          <span className="font-bold text-[#FF2D55]">-{row.discount.replace(/OFF/i, '').trim()}</span>
+                                          <span className="font-bold text-[#FF2D55]">-{activeDiscount.replace(/OFF/i, '').trim()}</span>
                                         </div>
                                       ) : (
                                         <div className="h-4"></div>
@@ -740,7 +1069,7 @@ export default function Watch() {
                                       <div className="flex items-baseline justify-between">
                                         <span className="font-extrabold text-[#1D1D1F] text-sm sm:text-base">Final Price</span>
                                         <div className="text-xl sm:text-2xl font-extrabold text-[#00875A] tabular-nums tracking-tight">
-                                          {row.salePrice || row.yearly}
+                                          {activeSalePrice}
                                         </div>
                                       </div>
 
@@ -752,8 +1081,8 @@ export default function Watch() {
                                   </div>
                                 </div>
 
-                                {/* MIDDLE SECTION: 4 Feature Highlights Grid */}
-                                <AppleCareFeaturesGrid years="2" />
+                                {/* MIDDLE SECTION: Feature Highlights Grid */}
+                                <AppleCareFeaturesGrid years={is1Yr ? "1" : "2"} />
                               </div>
 
                               {/* BOTTOM ACTION BUTTONS */}
@@ -762,23 +1091,23 @@ export default function Watch() {
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleAddAppleCareToWishlist(row, i);
+                                    handleAddAppleCareToWishlist({ ...row, salePrice: activeSalePrice, mrp: activeMrp, sku: activeSku, duration: durationLabelText, title: `${row.title || row.model} (${durationLabelText})` }, i);
                                   }}
                                   className={`w-full border font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer ${
-                                    localWishlist[`ac-watch-${row.sku || i}`]
+                                    localWishlist[`ac-watch-${activeSku || i}`]
                                       ? 'bg-rose-50 border-rose-200 text-rose-600'
                                       : 'bg-[#1D1D1F] text-white border-zinc-900 hover:bg-zinc-800'
                                   }`}
                                 >
-                                  <Heart className={`w-4 h-4 ${localWishlist[`ac-watch-${row.sku || i}`] ? 'fill-current text-rose-500' : 'text-white'}`} />
-                                  <span>{localWishlist[`ac-watch-${row.sku || i}`] ? 'Wishlisted' : 'Add to Wishlist'}</span>
+                                  <Heart className={`w-4 h-4 ${localWishlist[`ac-watch-${activeSku || i}`] ? 'fill-current text-rose-500' : 'text-white'}`} />
+                                  <span>{localWishlist[`ac-watch-${activeSku || i}`] ? 'Wishlisted' : 'Add to Wishlist'}</span>
                                 </button>
 
                                 <button
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleAddAppleCareToCart(row, i);
+                                    handleAddAppleCareToCart({ ...row, salePrice: activeSalePrice, mrp: activeMrp, sku: activeSku, duration: durationLabelText, title: `${row.title || row.model} (${durationLabelText})` }, i);
                                   }}
                                   className="w-full bg-black hover:bg-zinc-900 active:scale-[0.98] text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
                                 >
@@ -840,12 +1169,6 @@ export default function Watch() {
 
         return (
           <>
-            {/* Controller Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-zinc-150 pb-6 mb-8 text-sm font-sans uppercase font-bold text-zinc-500 tracking-wider">
-              <div className="text-zinc-800 text-xs tracking-widest">
-                SHOWING ALL {filteredProducts.length} RESULTS
-              </div>
-            </div>
 
             {/* Filter Drawer */}
             {filterOpen && (
@@ -901,96 +1224,122 @@ export default function Watch() {
 
             {/* Grid */}
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.slice(0, visibleCount).map((prod) => (
-                <div
-                  key={prod.id}
-                  className="group bg-white rounded-2xl overflow-hidden flex flex-col justify-between p-6 shadow-sm border border-zinc-100/50 hover:shadow-md hover:border-zinc-200/55 transition-all duration-300 relative text-left"
-                >
-                  <div className="flex items-center justify-between absolute top-4 left-4 right-4 z-10">
-                    {prod.isSoldOut ? (
-                      <span className="bg-[#f5f5f7] text-[#1d1d1f] font-bold text-[9px] tracking-widest uppercase px-2.5 py-1 rounded">
-                        SOLD OUT
-                      </span>
-                    ) : (
-                      <div />
-                    )}
+              {filteredProducts.slice(0, visibleCount).map((prod) => {
+                const pricing = getProductCardPricing(prod);
 
-                    <button
-                      onClick={() => handleAddToWishlist(prod)}
-                      className={`p-2 rounded-full shadow-sm border border-zinc-100/80 bg-white/90 hover:scale-110 transition-all cursor-pointer ${
-                        localWishlist[prod.id] ? 'text-red-500' : 'text-zinc-400 hover:text-zinc-600'
-                      }`}
+                return (
+                  <div
+                    key={prod.id}
+                    className="group bg-white rounded-2xl overflow-hidden flex flex-col justify-between p-6 shadow-sm border border-zinc-100/50 hover:shadow-md hover:border-zinc-200/55 transition-all duration-300 relative text-left"
+                  >
+                    <div className="flex items-center justify-between absolute top-4 left-4 right-4 z-10">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {prod.isSoldOut && (
+                          <span className="bg-[#f5f5f7] text-[#1d1d1f] font-bold text-[9px] tracking-widest uppercase px-2.5 py-1 rounded shadow-2xs">
+                            SOLD OUT
+                          </span>
+                        )}
+                        {pricing.hasDiscount && (
+                          <span className="bg-[#FF2D55] text-white font-extrabold text-[9.5px] tracking-wide uppercase px-2.5 py-1 rounded shadow-2xs">
+                            {pricing.discountPercent}% OFF
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => handleAddToWishlist(prod)}
+                        className={`p-2 rounded-full shadow-sm border border-zinc-100/80 bg-white/90 hover:scale-110 transition-all cursor-pointer ${
+                          localWishlist[prod.id] ? 'text-red-500' : 'text-zinc-400 hover:text-zinc-600'
+                        }`}
+                      >
+                        <Heart className={`h-4 w-4 ${localWishlist[prod.id] ? 'fill-current' : ''}`} />
+                      </button>
+                    </div>
+
+                    {/* Clickable Area: Image and Title */}
+                    <Link
+                      to={`/product/${prod.id}`}
+                      onMouseEnter={() => prefetchProduct(prod.id, dispatch)}
+                      className="block cursor-pointer"
                     >
-                      <Heart className={`h-4 w-4 ${localWishlist[prod.id] ? 'fill-current' : ''}`} />
-                    </button>
-                  </div>
+                      {/* Product Visual - Apple Showcase Background (#f5f5f7) */}
+                      <CleanProductImage
+                        src={getProductImage(prod)}
+                        alt={prod.name}
+                        className="max-h-[92%] max-w-[92%] object-contain group-hover:scale-110 transition-transform duration-500 select-none transform scale-115 sm:scale-125"
+                        containerClassName="w-full h-72 sm:h-80 bg-white rounded-2xl flex items-center justify-center p-2 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f0f0f2]"
+                      />
 
-                  {/* Clickable Area: Image and Title */}
-                  <Link to={`/product/${prod.id}`} className="block cursor-pointer">
-                    {/* Product Visual - Apple Showcase Background (#f5f5f7) */}
-                    <CleanProductImage
-                      src={getProductImage(prod)}
-                      alt={prod.name}
-                      className="max-h-[92%] max-w-[92%] object-contain group-hover:scale-110 transition-transform duration-500 select-none transform scale-115 sm:scale-125"
-                      containerClassName="w-full h-72 sm:h-80 bg-white rounded-2xl flex items-center justify-center p-2 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f0f0f2]"
-                    />
-
-                    {/* Title */}
-                    <h3 className="font-semibold text-[16px] leading-snug tracking-tight text-zinc-900 group-hover:text-zinc-900 transition-colors min-h-[48px]">
-                      {(() => {
-                        const cleanProductTitle = (rawTitle) => {
-                          if (!rawTitle) return '';
-                          return rawTitle.replace(/\s*[A-Z0-9]{5,9}\/[A-Z]$/i, '').trim();
-                        };
-                        return (
-                          <span>{cleanProductTitle(prod.name || prod.title)}</span>
-                        );
-                      })()}
-                    </h3>
-                  </Link>
-
-                  {/* Non-clickable configurations / actions */}
-                  <div className="space-y-4 pt-2">
-                    {/* Color Dot Options Row */}
-                    <div className="flex items-center justify-between gap-2 border-t border-zinc-100/60 pt-3">
-                      <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Colors</span>
-                      <div className="flex items-center gap-3 shrink-0 py-1">
-                        {prod.colors.map((color) => {
-                          const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
+                      {/* Title */}
+                      <h3 className="font-semibold text-[16px] leading-snug tracking-tight text-zinc-900 group-hover:text-zinc-900 transition-colors min-h-[48px]">
+                        {(() => {
+                          const cleanProductTitle = (rawTitle) => {
+                            if (!rawTitle) return '';
+                            return rawTitle.replace(/\s*[A-Z0-9]{5,9}\/[A-Z]$/i, '').trim();
+                          };
                           return (
-                            <button
-                              key={color.name}
-                              onClick={() => handleColorChange(prod.id, color.name)}
-                              style={{ backgroundColor: color.value }}
-                              className={`w-4 h-4 rounded-full cursor-pointer transition-all ${
-                                isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10' : 'border border-zinc-300 hover:scale-105'
-                              }`}
-                              title={color.name}
-                            />
+                            <span>{cleanProductTitle(prod.name || prod.title)}</span>
                           );
-                        })}
-                      </div>
-                    </div>
+                        })()}
+                      </h3>
+                    </Link>
 
-                    <div className="flex items-center justify-between pt-1 border-t border-zinc-100/60">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Price</span>
-                        <span className="font-semibold text-zinc-900 text-sm">{prod.priceStr}</span>
+                    {/* Non-clickable configurations / actions */}
+                    <div className="space-y-4 pt-2">
+                      {/* Color Dot Options Row */}
+                      <div className="flex items-center justify-between gap-2 border-t border-zinc-100/60 pt-3">
+                        <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Colors</span>
+                        <div className="flex items-center gap-3 shrink-0 py-1">
+                          {prod.colors.map((color) => {
+                            const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
+                            return (
+                              <button
+                                key={color.name}
+                                onClick={() => handleColorChange(prod.id, color.name)}
+                                style={{ backgroundColor: color.value }}
+                                className={`w-4 h-4 rounded-full cursor-pointer transition-all ${
+                                  isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10' : 'border border-zinc-300 hover:scale-105'
+                                }`}
+                                title={color.name}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
 
-                      {!prod.isSoldOut && (
-                        <button
-                          onClick={() => handleAddToCart(prod)}
-                          className="flex items-center justify-center p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 hover:text-zinc-900 transition-all cursor-pointer"
-                          title="Add to Cart"
-                        >
-                          <ShoppingBag className="h-4 w-4" />
-                        </button>
-                      )}
+                      <div className="flex items-center justify-between pt-1 border-t border-zinc-100/60">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Price</span>
+                          {pricing.hasDiscount ? (
+                            <div className="flex items-baseline gap-1.5 flex-wrap">
+                              <span className="font-extrabold text-zinc-950 text-base">
+                                ₹{pricing.sellingPrice.toLocaleString('en-IN')}
+                              </span>
+                              <span className="text-xs text-zinc-400 line-through font-bold">
+                                ₹{pricing.originalMrp.toLocaleString('en-IN')}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="font-semibold text-zinc-900 text-base">
+                              {prod.priceStr || `₹${Number(prod.price || 0).toLocaleString('en-IN')}`}
+                            </span>
+                          )}
+                        </div>
+
+                        {!prod.isSoldOut && (
+                          <button
+                            onClick={() => handleAddToCart(prod)}
+                            className="flex items-center justify-center p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 hover:text-zinc-900 transition-all cursor-pointer"
+                            title="Add to Cart"
+                          >
+                            <ShoppingBag className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Infinite Scroll Indicator */}

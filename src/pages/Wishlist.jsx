@@ -3,6 +3,39 @@ import { Link } from 'react-router-dom';
 import { Star, ShoppingBag, Trash2, Heart, ArrowRight } from 'lucide-react';
 import { removeFromWishlist } from '../redux/wishlistSlice';
 import { addToCart } from '../redux/cartSlice';
+import { getProductCardPricing } from '../utils/pricingUtils';
+
+const getDiscountPercent = (prod) => {
+  if (!prod) return 0;
+
+  const getCalcDisc = (p, d) => {
+    const price = Number(p || 0);
+    const disc = Number(d || 0);
+    if (disc <= 0) return 0;
+    if (disc <= 99) return Math.round(disc);
+    if (price > disc) return Math.round(((price - disc) / price) * 100);
+    return 0;
+  };
+
+  let discPercent = 0;
+  if (prod.discountPercent && Number(prod.discountPercent) > 0) {
+    discPercent = Math.round(Number(prod.discountPercent));
+  } else {
+    discPercent = getCalcDisc(prod.price, prod.discountPrice);
+  }
+
+  if (discPercent === 0 && prod.variants && Array.isArray(prod.variants) && prod.variants.length > 0) {
+    const variantDiscounts = prod.variants.map(v => {
+      if (v.discountPercent && Number(v.discountPercent) > 0) return Math.round(Number(v.discountPercent));
+      return getCalcDisc(v.price || prod.price, v.discountPrice || prod.discountPrice);
+    }).filter(d => d > 0);
+    if (variantDiscounts.length > 0) {
+      discPercent = Math.max(...variantDiscounts);
+    }
+  }
+
+  return discPercent;
+};
 
 export default function Wishlist() {
   const dispatch = useDispatch();
@@ -37,8 +70,8 @@ export default function Wishlist() {
           <h2 className="text-2xl font-bold text-white">Your Wishlist is Empty</h2>
           <p className="text-sm text-slate-500 max-w-xs mx-auto">Save items you are interested in here to review or purchase them later.</p>
         </div>
-        <Link 
-          to="/shop" 
+        <Link
+          to="/shop"
           className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold px-6 py-3 rounded-xl transition-all cursor-pointer text-xs"
         >
           Explore Products
@@ -50,28 +83,48 @@ export default function Wishlist() {
 
   return (
     <div className="space-y-6 py-2 text-left animate-in fade-in duration-300">
-      
+
       <h1 className="text-3xl font-extrabold tracking-tight text-white">Saved Wishlist</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {wishlistItems.map((item) => (
-          <div 
+          <div
             key={item.id}
             className="group rounded-2xl border border-slate-850 bg-slate-900/40 hover:bg-slate-900 hover:border-slate-800 transition-all duration-300 overflow-hidden flex flex-col justify-between"
           >
             {/* Thumbnail */}
-            <div className="relative h-48 bg-slate-955 overflow-hidden flex items-center justify-center">
-              <button 
+            <div className="relative h-48 bg-white overflow-hidden flex items-center justify-center p-3 border-b border-slate-800">
+              {/* Top Left Overlay Badges: Sold Out & Discount */}
+              <div className="flex items-center gap-1.5 flex-wrap absolute top-3 left-3 z-10">
+                {(item.isSoldOut || (item.stock !== undefined && item.stock <= 0)) && (
+                  <span className="bg-[#f5f5f7] text-[#1d1d1f] font-bold text-[9px] tracking-widest uppercase px-2.5 py-1 rounded shadow-2xs">
+                    SOLD OUT
+                  </span>
+                )}
+                {(() => {
+                  const discPercent = getDiscountPercent(item);
+                  if (discPercent > 0) {
+                    return (
+                      <span className="bg-[#FF2D55] text-white font-extrabold text-[9.5px] tracking-wide uppercase px-2.5 py-1 rounded shadow-2xs">
+                        {discPercent}% OFF
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+
+              <button
                 onClick={() => handleRemove(item.id, item.name)}
-                className="absolute top-3 right-3 p-2 bg-slate-900/80 backdrop-blur-sm border border-slate-800 text-slate-500 hover:text-rose-400 rounded-full z-10 transition-colors cursor-pointer"
+                className="absolute top-3 right-3 p-2 bg-slate-900/80 backdrop-blur-sm border border-slate-800 text-slate-400 hover:text-rose-400 rounded-full z-10 transition-colors cursor-pointer"
                 aria-label="Remove from wishlist"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
-              <img 
-                src={item.image} 
+              <img
+                src={item.image}
                 alt={item.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
               />
             </div>
 
@@ -91,8 +144,20 @@ export default function Wishlist() {
               </div>
 
               <div className="flex items-center justify-between pt-3 border-t border-slate-850/60">
-                <span className="font-extrabold text-base text-slate-100">${item.price}</span>
-                <button 
+                {(() => {
+                  const pricing = getProductCardPricing(item);
+
+                  if (pricing.hasDiscount) {
+                    return (
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="font-extrabold text-base text-slate-100">₹{pricing.sellingPrice.toLocaleString('en-IN')}</span>
+                        <span className="text-xs text-slate-500 line-through font-medium">₹{pricing.originalMrp.toLocaleString('en-IN')}</span>
+                      </div>
+                    );
+                  }
+                  return <span className="font-extrabold text-base text-slate-100">₹{Number(item.price || 0).toLocaleString('en-IN')}</span>;
+                })()}
+                <button
                   onClick={() => handleMoveToCart(item)}
                   className="px-3 py-2 bg-violet-650 bg-violet-600 hover:bg-violet-500 hover:text-white text-[10px] font-bold text-white rounded-xl flex items-center gap-1 transition-colors cursor-pointer"
                 >

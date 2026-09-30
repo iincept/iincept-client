@@ -15,7 +15,8 @@ import {
   LayoutGrid,
   Layers,
   Star,
-  ShieldCheck
+  ShieldCheck,
+  Sparkles
 } from 'lucide-react';
 
 export default function AdminSidebar() {
@@ -23,6 +24,7 @@ export default function AdminSidebar() {
     { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
     { label: 'Products', path: '/admin/products', icon: Package },
     { label: 'Hero Banners', path: '/admin/hero-banners', icon: Home },
+    { label: 'Latest From Apple', path: '/admin/latest-apple', icon: Sparkles },
     { label: 'Shop Category', path: '/admin/apple-categories', icon: Grid },
     { label: 'Navbar Menu', path: '/admin/navbar-menu', icon: Navigation },
     { label: 'Category Icons', path: '/admin/category-icons', icon: Layers },

@@ -223,15 +223,49 @@ export default function IpadAppleCareManager() {
     setTimeout(() => setMessage(null), 4000);
   };
 
+const parsePriceNumber = (val) => {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'number') return val;
+  const cleaned = String(val).replace(/[^0-9.]/g, '');
+  return parseFloat(cleaned) || 0;
+};
+
+const calculateFinalPriceStr = (mrp, discount) => {
+  const mrpNum = parsePriceNumber(mrp);
+  const discNum = Math.min(100, Math.max(0, parseFloat(discount) || 0));
+  const finalNum = Math.max(0, Math.round(mrpNum - (mrpNum * discNum / 100)));
+  return `₹${finalNum.toLocaleString('en-IN')}`;
+};
+
   const handleUpdateRow = (index, fieldOrObject, value) => {
     setIpadRows(prev => {
       const updated = [...prev];
+      const current = updated[index];
       if (typeof fieldOrObject === 'object' && fieldOrObject !== null) {
-        updated[index] = { ...updated[index], ...fieldOrObject };
+        let row = { ...current, ...fieldOrObject };
+        if (fieldOrObject.discount !== undefined || fieldOrObject.discount2yr !== undefined) {
+          const discVal = fieldOrObject.discount !== undefined ? fieldOrObject.discount : fieldOrObject.discount2yr;
+          const discNum = Math.min(100, Math.max(0, parseFloat(discVal) || 0));
+          row.discount = discVal;
+          row.discount2yr = discVal;
+          const computedFinal = calculateFinalPriceStr(row.mrp || row.mrp2yr, discNum);
+          row.salePrice = computedFinal;
+          row.salePrice2yr = computedFinal;
+          row.yearly = computedFinal;
+        }
+        updated[index] = row;
       } else {
-        updated[index] = { ...updated[index], [fieldOrObject]: value };
-        if (fieldOrObject === 'salePrice') updated[index].yearly = value;
-        if (fieldOrObject === 'yearly' && !updated[index].salePrice) updated[index].salePrice = value;
+        let row = { ...current, [fieldOrObject]: value };
+        if (fieldOrObject === 'discount' || fieldOrObject === 'discount2yr') {
+          const discNum = Math.min(100, Math.max(0, parseFloat(value) || 0));
+          row.discount = value;
+          row.discount2yr = value;
+          const computedFinal = calculateFinalPriceStr(row.mrp || row.mrp2yr, discNum);
+          row.salePrice = computedFinal;
+          row.salePrice2yr = computedFinal;
+          row.yearly = computedFinal;
+        }
+        updated[index] = row;
       }
       return updated;
     });
@@ -752,37 +786,52 @@ export default function IpadAppleCareManager() {
                     />
                   </div>
 
+                  {/* MRP Price (READ ONLY) */}
                   <div>
-                    <label className="block text-[11px] font-bold text-zinc-700 mb-1">Final Sale Price</label>
+                    <label className="block text-[11px] font-bold text-zinc-700 mb-1 flex items-center justify-between">
+                      <span>MRP Price</span>
+                      <span className="text-[9px] text-zinc-400 font-semibold uppercase">READ ONLY</span>
+                    </label>
                     <input
                       type="text"
-                      value={row.salePrice2yr || row.salePrice || row.yearly || ''}
-                      onChange={(e) => handleUpdateRow(idx, { salePrice2yr: e.target.value, salePrice: e.target.value, yearly: e.target.value })}
-                      placeholder="e.g. ₹7,900.00"
-                      className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-bold text-emerald-700 focus:outline-none focus:border-[#FF2D55]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-zinc-700 mb-1">MRP Price</label>
-                    <input
-                      type="text"
-                      value={row.mrp2yr || row.mrp || ''}
-                      onChange={(e) => handleUpdateRow(idx, { mrp2yr: e.target.value, mrp: e.target.value })}
+                      value={row.mrp || row.mrp2yr || ''}
+                      readOnly
+                      disabled
                       placeholder="e.g. ₹9,900.00"
+                      className="w-full px-3 py-2 bg-zinc-100 border border-zinc-200 rounded-xl text-xs font-bold text-zinc-600 cursor-not-allowed select-none focus:outline-none"
+                    />
+                    <span className="text-[9px] text-zinc-400 mt-0.5 block font-medium">ORIGINAL MRP — READ ONLY</span>
+                  </div>
+
+                  {/* Discount (%) */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-700 mb-1">Discount (%)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={(row.discount !== undefined && row.discount !== null) ? String(row.discount).replace(/[^0-9.]/g, '') : (row.discount2yr ? String(row.discount2yr).replace(/[^0-9.]/g, '') : '')}
+                      onChange={(e) => handleUpdateRow(idx, 'discount', e.target.value)}
+                      placeholder="0 to 100"
                       className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#FF2D55]"
                     />
                   </div>
 
+                  {/* Final Price (AUTOMATICALLY CALCULATED) */}
                   <div>
-                    <label className="block text-[11px] font-bold text-zinc-700 mb-1">Discount</label>
+                    <label className="block text-[11px] font-bold text-zinc-700 mb-1 flex items-center justify-between">
+                      <span>Final Price (₹)</span>
+                      <span className="text-[9px] text-emerald-600 font-bold uppercase">AUTO</span>
+                    </label>
                     <input
                       type="text"
-                      value={row.discount2yr || row.discount || ''}
-                      onChange={(e) => handleUpdateRow(idx, { discount2yr: e.target.value, discount: e.target.value })}
-                      placeholder="e.g. 18% OFF"
-                      className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#FF2D55]"
+                      value={calculateFinalPriceStr(row.mrp || row.mrp2yr, row.discount || row.discount2yr)}
+                      readOnly
+                      disabled
+                      placeholder="e.g. ₹7,900"
+                      className="w-full px-3 py-2 bg-emerald-50/60 border border-emerald-200/80 rounded-xl text-xs font-extrabold text-emerald-800 cursor-not-allowed select-none focus:outline-none"
                     />
+                    <span className="text-[9px] text-emerald-600 mt-0.5 block font-medium">AUTOMATICALLY CALCULATED</span>
                   </div>
                 </div>
               </div>

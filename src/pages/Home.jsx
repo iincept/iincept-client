@@ -7,15 +7,44 @@ import { subscribeToLiveSync } from '../services/liveSyncService';
 
 // Default Category Icons for the store strip
 const DEFAULT_CATEGORY_STRIP = [
-  { name: 'Mac', label: 'Mac', icon: '💻', image: '/category_strip/mac.png', path: '/macbook', isActive: true },
-  { name: 'iPhone', label: 'iPhone', icon: '📱', image: '/category_strip/iphone.png', path: '/iphone', isActive: true },
-  { name: 'iPad', label: 'iPad', icon: '📱', image: '/category_strip/ipad.png', path: '/ipad', isActive: true },
-  { name: 'Watch', label: 'Watch', icon: '⌚', image: '/category_strip/watch.png', path: '/watch', isActive: true },
-  { name: 'AirPods', label: 'AirPods', icon: '🎧', image: '/category_strip/airpods.png', path: '/airpods', isActive: true },
-  { name: 'AirTag', label: 'AirTag', icon: '📍', image: '/category_strip/airtag.png', path: '/airtag', isActive: true },
-  { name: 'Apple TV 4K', label: 'Apple TV 4K', icon: '📺', image: '/category_strip/appletv.png', path: '/tv-home', isActive: true },
-  { name: 'HomePod', label: 'HomePod', icon: '🔊', image: '/category_strip/homepod.png', path: '/tv-home?search=HomePod', isActive: true },
-  { name: 'Accessories', label: 'Accessories', icon: '🔌', image: '/category_strip/accessories.png', path: '/accessories', isActive: true },
+  { name: 'Mac', label: 'Mac', icon: '💻', image: '/mac_category_uploaded.png', path: '/macbook', isActive: true },
+  { name: 'iPhone', label: 'iPhone', icon: '📱', image: '/iphone_category_uploaded.png', path: '/iphone', isActive: true },
+  { name: 'iPad', label: 'iPad', icon: '📱', image: '/ipad_category_uploaded.png', path: '/ipad', isActive: true },
+  { name: 'Watch', label: 'Watch', icon: '⌚', image: '/watch_category_uploaded.png', path: '/watch', isActive: true },
+  { name: 'AirPods', label: 'AirPods', icon: '🎧', image: '/airpods_category_uploaded.png', path: '/airpods', isActive: true },
+  { name: 'AirTag', label: 'AirTag', icon: '📍', image: '/airtag_category_uploaded.png', path: '/airtag', isActive: true },
+  { name: 'Apple TV 4K', label: 'Apple TV 4K', icon: '📺', image: '/appletv_category_uploaded.png', path: '/tv-home', isActive: true },
+  { name: 'HomePod', label: 'HomePod', icon: '🔊', image: '/homepod_category_uploaded.png', path: '/tv-home?search=HomePod', isActive: true },
+  { name: 'Accessories', label: 'Accessories', icon: '🔌', image: '/accessories_category_uploaded.png', path: '/accessories', isActive: true },
+];
+
+const DEFAULT_HERO_IMAGE = 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-18-pro-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80';
+
+const formatRupee = (val) => {
+  if (val === undefined || val === null || val === '') return '';
+  const str = String(val).trim();
+  if (str.startsWith('₹')) return str;
+  const num = parseFloat(str.replace(/[^0-9.]/g, ''));
+  if (isNaN(num)) return str;
+  return `₹${num.toLocaleString('en-IN')}`;
+};
+
+const DEFAULT_DEAL_BANNERS = [
+  {
+    id: 'default-deal-1',
+    name: 'MacBook Neo – Stock Clearance',
+    smallLabel: 'DEAL OF THE WEEK',
+    title: 'MacBook Neo – Stock Clearance',
+    description: 'Amazing Mac at a surprising price. Limited stock this week. Exclusive bank offers + free AppleCare+ for first 50 buyers.',
+    productImage: '/mac_deal_fan.png',
+    originalMrp: 79900,
+    discount: 8.76,
+    finalPrice: 72900,
+    buttonText: 'Grab the Deal',
+    buttonLink: '/macbook',
+    isActive: true,
+    displayOrder: 1
+  }
 ];
 
 export default function Home() {
@@ -26,6 +55,14 @@ export default function Home() {
   const testimonialSliderRef = useRef(null);
   const newArrivalsSliderRef = useRef(null);
   const trendingSliderRef = useRef(null);
+  const categoryStripRef = useRef(null);
+
+  const scrollCategoryStrip = (direction) => {
+    if (categoryStripRef.current) {
+      const scrollAmount = direction === 'left' ? -260 : 260;
+      categoryStripRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   const scrollNewArrivals = (direction) => {
     if (newArrivalsSliderRef.current) {
@@ -64,7 +101,23 @@ export default function Home() {
   const [heroData, setHeroData] = useState(() => {
     try {
       const cached = localStorage.getItem('iincept_home_hero_v2');
-      if (cached) return JSON.parse(cached);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed === 'object') {
+          return {
+            homeHeroBadge: parsed.homeHeroBadge || 'Apple Authorised Resellers across India',
+            homeHeroTitle: parsed.homeHeroTitle || 'The latest.\nThe best. Authorised.',
+            homeHeroSubtitle: parsed.homeHeroSubtitle || 'Genuine Apple products from India’s trusted mono-brand premium resellers. Exclusive offers, EMI & expert support.',
+            homeHeroPrimaryBtnText: parsed.homeHeroPrimaryBtnText || 'Shop Now',
+            homeHeroPrimaryBtnLink: parsed.homeHeroPrimaryBtnLink || '/iphone',
+            homeHeroSecondaryBtnText: parsed.homeHeroSecondaryBtnText || 'Find Nearest Store',
+            homeHeroSecondaryBtnLink: parsed.homeHeroSecondaryBtnLink || '#b2b-section',
+            homeHeroImage: (parsed.homeHeroImage && typeof parsed.homeHeroImage === 'string' && parsed.homeHeroImage.trim())
+              ? parsed.homeHeroImage.trim()
+              : DEFAULT_HERO_IMAGE
+          };
+        }
+      }
     } catch (e) { }
     return {
       homeHeroBadge: 'Apple Authorised Resellers across India',
@@ -74,49 +127,53 @@ export default function Home() {
       homeHeroPrimaryBtnLink: '/iphone',
       homeHeroSecondaryBtnText: 'Find Nearest Store',
       homeHeroSecondaryBtnLink: '#b2b-section',
-      homeHeroImage: ''
+      homeHeroImage: DEFAULT_HERO_IMAGE
     };
   });
 
-  // Deal of the Week State
-  const [dealData, setDealData] = useState({
-    dealEyebrow: 'Deal of the Week',
-    dealTitle: 'MacBook Neo – Stock Clearance',
-    dealDesc: 'Amazing Mac at a surprising price. Limited stock this week. Exclusive bank offers + free AppleCare+ for first 50 buyers.',
-    dealPrice: '₹72,900',
-    dealOldPrice: '₹79,900',
-    dealButtonText: 'Grab the Deal',
-    dealButtonLink: '/macbook',
-    dealImage: '/mac_deal_fan.png'
+  // Deal of the Week State (with LocalStorage Cache)
+  const [dealBanners, setDealBanners] = useState(() => {
+    try {
+      const cached = localStorage.getItem('iincept_home_deal_banners_v2');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const active = parsed.filter(b => b.isActive !== false);
+          if (active.length > 0) return active;
+        }
+      }
+    } catch (e) { }
+    return DEFAULT_DEAL_BANNERS;
   });
 
   // Category Strip Default Images Lookup
   const DEFAULT_CATEGORY_IMAGES = {
-    'Mac': '/category_strip/mac.png',
-    'iPhone': '/category_strip/iphone.png',
-    'iPad': '/category_strip/ipad.png',
-    'Watch': '/category_strip/watch.png',
-    'AirPods': '/category_strip/airpods.png',
-    'AirTag': '/category_strip/airtag.png',
-    'Apple TV 4K': '/category_strip/appletv.png',
-    'HomePod': '/category_strip/homepod.png',
-    'Accessories': '/category_strip/accessories.png',
+    'Mac': '/mac_category_uploaded.png',
+    'iPhone': '/iphone_category_uploaded.png',
+    'iPad': '/ipad_category_uploaded.png',
+    'Watch': '/watch_category_uploaded.png',
+    'AirPods': '/airpods_category_uploaded.png',
+    'AirTag': '/airtag_category_uploaded.png',
+    'Apple TV 4K': '/appletv_category_uploaded.png',
+    'HomePod': '/homepod_category_uploaded.png',
+    'Accessories': '/accessories_category_uploaded.png',
   };
 
   const sanitizeCategoryItem = (item) => {
     if (!item) return null;
-    const key = item.name || item.label;
+    const key = (item.name || item.label || '').trim();
     if (key === 'Gift Card') return null;
-    let img = (item.image || '').trim();
-    if (img.startsWith('*')) img = img.replace(/^\*\s*/, '');
 
     const matchKey = Object.keys(DEFAULT_CATEGORY_IMAGES).find(
-      k => k.toLowerCase() === (key || '').toLowerCase()
+      k => k.toLowerCase() === key.toLowerCase()
     ) || key;
 
     const fallbackImg = DEFAULT_CATEGORY_IMAGES[matchKey] || DEFAULT_CATEGORY_IMAGES['Mac'];
 
-    if (!img || key.toLowerCase() === 'ipad' || key.toLowerCase() === 'watch' || key.toLowerCase() === 'airpods' || key.toLowerCase() === 'iphone' || key.toLowerCase().includes('apple tv') || key.toLowerCase() === 'appletv' || key.toLowerCase() === 'homepod' || key.toLowerCase() === 'airtag' || img.includes('…') || img.includes('traceId') || img.includes('store-card-13-iphone') || img.includes('store-card-13-watch') || img.includes('store-card-13-appletv') || img.includes('store-card-13-accessories')) {
+    let img = (item.image || '').trim();
+    if (img.startsWith('*')) img = img.replace(/^\*\s*/, '');
+
+    if (!img || img.includes('…') || (img.includes('traceId') && !img.includes('storeimages.cdn-apple.com')) || img.includes('/category_strip/')) {
       img = fallbackImg;
     }
 
@@ -149,14 +206,14 @@ export default function Home() {
       }
     } catch (e) { }
     return [
-      { name: 'Mac', actionText: 'Shop all models →', link: '/macbook', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/mac/home-img-1776683069_8064.png', icon: '💻' },
-      { name: 'iPhone', actionText: 'Shop all models →', link: '/iphone', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/iphone/home-img-1776683084_2967.png', icon: '📱' },
-      { name: 'iPad', actionText: 'Shop all models →', link: '/ipad', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/ipad/home-img-1776683096_1014.png', icon: '📱' },
-      { name: 'Watch', actionText: 'Shop all models →', link: '/watch', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/watch/home-img-1757682221_3904.jpg', icon: '⌚' },
-      { name: 'AirPods', actionText: 'Shop all models →', link: '/airpods', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/music/home-img-1757682200_3577.jpg', icon: '🎧' },
-      { name: 'TV & Home', actionText: 'Shop all models →', link: '/tv-home', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/tv/home-img-1694070636_757.png', icon: '📺' },
-      { name: 'Accessories', actionText: 'Shop all models →', link: '/accessories', image: '/accessories_category.png', icon: '🔌' },
-      { name: 'AppleCare+', actionText: 'Explore coverage →', link: '/applecare', image: '/applecare_official_hero.png', icon: '🛡️' },
+      { name: 'Mac', startingPrice: '₹89,900', actionText: 'Shop all models →', link: '/macbook', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/mac/home-img-1776683069_8064.png', icon: '💻' },
+      { name: 'iPhone', startingPrice: '₹59,900', actionText: 'Shop all models →', link: '/iphone', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/iphone/home-img-1776683084_2967.png', icon: '📱' },
+      { name: 'iPad', startingPrice: '₹34,900', actionText: 'Shop all models →', link: '/ipad', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/ipad/home-img-1776683096_1014.png', icon: '📱' },
+      { name: 'Watch', startingPrice: '₹29,900', actionText: 'Shop all models →', link: '/watch', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/watch/home-img-1757682221_3904.jpg', icon: '⌚' },
+      { name: 'AirPods', startingPrice: '₹12,900', actionText: 'Shop all models →', link: '/airpods', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/music/home-img-1757682200_3577.jpg', icon: '🎧' },
+      { name: 'TV & Home', startingPrice: '₹14,900', actionText: 'Shop all models →', link: '/tv-home', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/tv/home-img-1694070636_757.png', icon: '📺' },
+      { name: 'Accessories', startingPrice: '₹1,900', actionText: 'Shop all models →', link: '/accessories', image: '/accessories_category.png', icon: '🔌' },
+      { name: 'AppleCare+', startingPrice: '₹2,900', actionText: 'Explore coverage →', link: '/applecare', image: '/applecare_official_hero.png', icon: '🛡️' },
     ];
   });
 
@@ -166,8 +223,7 @@ export default function Home() {
       const cached = localStorage.getItem('iincept_home_new_arrivals_v2');
       if (cached) {
         const parsed = JSON.parse(cached);
-        const hasOldNames = Array.isArray(parsed) && parsed.some(i => i.name === 'iPhone 17 Pro' || i.name === 'MacBook Neo' || i.name === 'Apple Watch Series 11');
-        if (Array.isArray(parsed) && parsed.length === 5 && !hasOldNames) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch (e) { }
     return [];
@@ -178,20 +234,23 @@ export default function Home() {
     {
       stars: 5,
       text: '“Purchased MacBook Air M4 from the authorised store. Staff was extremely knowledgeable and helped with EMI options. Delivery was next day. Highly recommended.”',
-      author: 'Anjali Sharma',
-      sub: 'MacBook Air · Bengaluru'
+      author: '— IT Head, Fintech firm',
+      location: 'Bengaluru',
+      sub: 'Bengaluru'
     },
     {
       stars: 5,
       text: '“Best experience buying iPhone 17 Pro. Got bank offer + trade-in value explained clearly. Genuine product with full warranty. Will buy again.”',
-      author: 'Rahul Kapoor',
-      sub: 'iPhone 17 Pro · Mumbai'
+      author: '— Procurement Lead, D2C brand',
+      location: 'Mumbai',
+      sub: 'Mumbai'
     },
     {
       stars: 5,
       text: '“Corporate order for 25 iPads was handled smoothly. Dedicated manager, proper invoicing and on-time delivery. Excellent B2B support.”',
-      author: 'Priya Singh',
-      sub: 'B2B Order · Delhi NCR'
+      author: '— Ops Manager, Consulting firm',
+      location: 'Delhi NCR',
+      sub: 'Delhi NCR'
     }
   ]);
 
@@ -230,7 +289,9 @@ export default function Home() {
           homeHeroPrimaryBtnLink: response.data.homeHeroPrimaryBtnLink || '/iphone',
           homeHeroSecondaryBtnText: response.data.homeHeroSecondaryBtnText || 'Find Nearest Store',
           homeHeroSecondaryBtnLink: response.data.homeHeroSecondaryBtnLink || '#b2b-section',
-          homeHeroImage: response.data.homeHeroImage || ''
+          homeHeroImage: (response.data.homeHeroImage && typeof response.data.homeHeroImage === 'string' && response.data.homeHeroImage.trim())
+            ? response.data.homeHeroImage.trim()
+            : DEFAULT_HERO_IMAGE
         };
 
         setHeroData(prev => {
@@ -238,22 +299,54 @@ export default function Home() {
             try {
               localStorage.setItem('iincept_home_hero_v2', JSON.stringify(updatedHero));
             } catch (e) { }
+
+            if (prev.homeHeroImage && updatedHero.homeHeroImage && prev.homeHeroImage !== updatedHero.homeHeroImage) {
+              const imgPreloader = new Image();
+              imgPreloader.src = updatedHero.homeHeroImage;
+              imgPreloader.onload = () => {
+                setHeroData(updatedHero);
+              };
+              imgPreloader.onerror = () => {
+                setHeroData(updatedHero);
+              };
+              return prev;
+            }
+
             return updatedHero;
           }
           return prev;
         });
 
-        if (response.data.dealTitle || response.data.dealPrice) {
-          setDealData({
-            dealEyebrow: response.data.dealEyebrow || 'Deal of the Week',
-            dealTitle: response.data.dealTitle || 'MacBook Neo – Stock Clearance',
-            dealDesc: response.data.dealDesc || 'Amazing Mac at a surprising price. Limited stock this week. Exclusive bank offers + free AppleCare+ for first 50 buyers.',
-            dealPrice: response.data.dealPrice || '₹72,900',
-            dealOldPrice: response.data.dealOldPrice || '₹79,900',
-            dealButtonText: response.data.dealButtonText || 'Grab the Deal',
-            dealButtonLink: response.data.dealButtonLink || '/macbook',
-            dealImage: (response.data.dealImage && response.data.dealImage !== '/mac_nav/macbook_neo.png') ? response.data.dealImage : '/mac_deal_fan.png'
-          });
+        if (response.data.homeDealBanners && Array.isArray(response.data.homeDealBanners) && response.data.homeDealBanners.length > 0) {
+          const activeBanners = response.data.homeDealBanners
+            .filter(b => b.isActive !== false)
+            .sort((a, b) => (Number(a.displayOrder) || 0) - (Number(b.displayOrder) || 0));
+
+          if (activeBanners.length > 0) {
+            setDealBanners(prev => {
+              if (JSON.stringify(prev) !== JSON.stringify(activeBanners)) {
+                try {
+                  localStorage.setItem('iincept_home_deal_banners_v2', JSON.stringify(response.data.homeDealBanners));
+                } catch (e) { }
+                return activeBanners;
+              }
+              return prev;
+            });
+          }
+        } else if (response.data.dealTitle || response.data.dealPrice) {
+          const legacyBanner = [{
+            id: 'legacy-deal',
+            smallLabel: response.data.dealEyebrow || 'DEAL OF THE WEEK',
+            title: response.data.dealTitle || 'MacBook Neo – Stock Clearance',
+            description: response.data.dealDesc || 'Amazing Mac at a surprising price. Limited stock this week. Exclusive bank offers + free AppleCare+ for first 50 buyers.',
+            finalPrice: response.data.dealPrice || '₹72,900',
+            originalMrp: response.data.dealOldPrice || '₹79,900',
+            buttonText: response.data.dealButtonText || 'Grab the Deal',
+            buttonLink: response.data.dealButtonLink || '/macbook',
+            productImage: (response.data.dealImage && response.data.dealImage !== '/mac_nav/macbook_neo.png') ? response.data.dealImage : '/mac_deal_fan.png',
+            isActive: true
+          }];
+          setDealBanners(legacyBanner);
         }
 
         if (response.data.homeCategoryIcons && response.data.homeCategoryIcons.length > 0) {
@@ -274,10 +367,9 @@ export default function Home() {
           }
         }
 
-        if (response.data.homeNewArrivals && response.data.homeNewArrivals.length > 0) {
+        if (response.data.homeNewArrivals && Array.isArray(response.data.homeNewArrivals)) {
           const activeArrivals = response.data.homeNewArrivals.filter(i => i.isActive !== false);
-          const hasOldNames = activeArrivals.some(i => i.name === 'iPhone 17 Pro' || i.name === 'MacBook Neo' || i.name === 'Apple Watch Series 11');
-          if (activeArrivals.length > 0 && !hasOldNames) {
+          if (activeArrivals.length > 0) {
             setHomeNewArrivals(activeArrivals);
             try {
               localStorage.setItem('iincept_home_new_arrivals_v2', JSON.stringify(activeArrivals));
@@ -303,12 +395,22 @@ export default function Home() {
         }
 
         if (response.data.testimonials && response.data.testimonials.length > 0) {
-          setTestimonials(response.data.testimonials.map(t => ({
-            stars: t.stars || 5,
-            text: t.text || '',
-            author: t.author || 'Verified Customer',
-            sub: t.sub || t.company || 'Apple Authorised Reseller'
-          })));
+          const activeTestimonials = response.data.testimonials
+            .filter(t => t.isActive !== false)
+            .map(t => {
+              const loc = t.location !== undefined ? t.location : (t.sub || t.company || '');
+              return {
+                stars: t.stars || 5,
+                text: t.text || '',
+                author: t.author || 'Verified Customer',
+                location: String(loc || '').trim(),
+                sub: String(loc || '').trim(),
+                avatar: t.image || t.avatar || t.avatarUrl || null
+              };
+            });
+          if (activeTestimonials.length > 0) {
+            setTestimonials(activeTestimonials);
+          }
         }
       }
     } catch (err) {
@@ -414,11 +516,50 @@ export default function Home() {
     { id: '7', name: 'Mac Studio', tagline: 'Now with M5 Max and M5 Ultra.', price: 'From ₹279900.00', image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-mac-studio-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80&.v=MjhMcWJ2MGZwbXEwdnBkcUN6ZnhyeU9aVHlIUTN0TDFoV3YrODdyNm1Ucm45S05qekNUdVUwMVFyK1pKaERUd3ZGdXpoZGFjcnJiZGtXTlNNRSszQWpLV0ZtaSt4V1ZKUFd0a1JsdUUwbENacXFoWC9uNWRBVmx4VTBHaHVxM3Y&traceId=1', imageWebp: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-mac-studio-202609?wid=800&hei=1000&fmt=webp&qlt=90&.v=MjhMcWJ2MGZwbXEwdnBkcUN6ZnhyeU9aVHlIUTN0TDFoV3YrODdyNm1Ucm45S05qekNUdVUwMVFyK1pKaERUd3lPWjFvdU5EZVdwUnRCZ2RHSDBFS3R0bEJITXZrbjRjcGpoK0NsSlhQUCtWZWZKZEpnTUg2bTJtOU9qU1hvcWw&traceId=1', altText: 'Mac Studio, front exterior, two USB‑C ports, SDXC card slot, status indicator light, tapered base at bottom, flat top, rounded sides, straight edges, silver colour enclosure', path: '/macbook', isDark: false }
   ];
 
-  const newArrivalsList = (homeNewArrivals && homeNewArrivals.length >= 7)
-    ? homeNewArrivals
-    : (homeNewArrivals && homeNewArrivals.length > 0)
-      ? [...homeNewArrivals, ...defaultNewArrivals.filter(d => !homeNewArrivals.some(h => (h.name || '').toLowerCase() === (d.name || '').toLowerCase()))]
-      : defaultNewArrivals;
+  const resolveArrivalProductPath = (item) => {
+    if (!item) return '/shop';
+
+    // 1. Explicit productId stored on card
+    if (item.productId) {
+      const matched = products.find(p => String(p._id || p.id) === String(item.productId));
+      if (matched) {
+        return `/product/${matched._id || matched.id}`;
+      }
+      return `/product/${item.productId}`;
+    }
+
+    // 2. Match by title / name in store products
+    if (item.name || item.title) {
+      const searchName = (item.name || item.title || '').trim().toLowerCase();
+      const matched = products.find(p => {
+        const pTitle = (p.title || p.name || '').trim().toLowerCase();
+        return pTitle === searchName || pTitle.includes(searchName) || searchName.includes(pTitle);
+      });
+      if (matched) {
+        return `/product/${matched._id || matched.id}`;
+      }
+    }
+
+    // 3. Check path if it's already a product route
+    if (item.path && item.path.startsWith('/product/')) {
+      return item.path;
+    }
+
+    // 4. Default path or fallback to /shop
+    return item.path || '/shop';
+  };
+
+  const activeHomeArrivals = (homeNewArrivals && Array.isArray(homeNewArrivals))
+    ? homeNewArrivals.filter(i => i.isActive !== false)
+    : [];
+
+  const newArrivalsList = activeHomeArrivals.length > 0
+    ? activeHomeArrivals
+    : defaultNewArrivals;
+
+  const displayCategoryStrip = (categoryStrip && Array.isArray(categoryStrip) && categoryStrip.length > 0)
+    ? categoryStrip
+    : DEFAULT_CATEGORY_STRIP;
 
   const trendingList = products.length > 3
     ? products.slice(3, 7).map(p => ({
@@ -464,7 +605,9 @@ export default function Home() {
         .indiaistore-theme .hero-banner {
           position: relative;
           width: 100%;
-          height: 580px;
+          height: auto;
+          min-height: auto;
+          padding: 36px 16px 36px;
           background: linear-gradient(180deg, #000000 0%, #1a1a1a 100%);
           overflow: hidden;
           display: flex;
@@ -486,36 +629,36 @@ export default function Home() {
           position: relative;
           z-index: 2;
           max-width: 800px;
-          padding: 0 24px;
+          padding: 0 16px;
         }
 
         .indiaistore-theme .hero-eyebrow {
-          font-size: 17px;
+          font-size: 13.5px;
           font-weight: 600;
           color: #2997ff;
-          margin-bottom: 12px;
+          margin-bottom: 6px;
           letter-spacing: -0.2px;
         }
 
         .indiaistore-theme .hero-banner h1 {
-          font-size: clamp(42px, 7vw, 72px);
+          font-size: clamp(26px, 3.8vw, 42px);
           font-weight: 700;
-          letter-spacing: -2px;
-          line-height: 1.05;
-          margin-bottom: 16px;
+          letter-spacing: -1px;
+          line-height: 1.08;
+          margin-bottom: 8px;
         }
 
         .indiaistore-theme .hero-sub {
-          font-size: 21px;
+          font-size: 14.5px;
           color: rgba(255,255,255,0.85);
-          max-width: 560px;
-          margin: 0 auto 32px;
+          max-width: 480px;
+          margin: 0 auto 14px;
           font-weight: 400;
         }
 
         .indiaistore-theme .hero-ctas {
           display: flex;
-          gap: 16px;
+          gap: 12px;
           justify-content: center;
           flex-wrap: wrap;
         }
@@ -524,9 +667,9 @@ export default function Home() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          padding: 12px 28px;
+          padding: 7px 20px;
           border-radius: 980px;
-          font-size: 17px;
+          font-size: 14px;
           font-weight: 500;
           transition: all 0.25s ease;
           cursor: pointer;
@@ -563,24 +706,52 @@ export default function Home() {
         }
 
         .indiaistore-theme .hero-image-wrap {
-          margin-top: 36px;
+          margin-top: 22px;
+          margin-bottom: 0px;
           width: 100%;
-          max-width: 820px;
+          max-width: 710px;
+          min-height: 210px;
+          aspect-ratio: 16 / 6.5;
           margin-left: auto;
           margin-right: auto;
-          border-radius: 24px;
+          border-radius: 20px;
           overflow: hidden;
-          box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+          box-shadow: 0 16px 40px rgba(0,0,0,0.5);
           border: 1px solid rgba(255,255,255,0.12);
+          background: #0a0a0a;
+          contain: layout paint;
         }
 
-        /* ========== CATEGORY STRIP (Apple Store style) ========== */
+        /* ========== CATEGORY STRIP (Apple Store style with side arrows) ========== */
+        .indiaistore-theme .category-strip-wrapper {
+          position: relative;
+          width: 100%;
+          min-height: 90px;
+          background: #ffffff;
+          display: flex;
+          align-items: center;
+          border-bottom: none;
+          padding: 14px 0 16px;
+          contain: layout style;
+        }
+
         .indiaistore-theme .category-strip {
-          background: var(--white);
-          border-bottom: 1px solid var(--border);
-          padding: 28px 0 24px;
+          background: #ffffff;
+          border-bottom: none;
+          padding: 4px 0 6px;
           overflow-x: auto;
+          overflow-y: visible;
+          scroll-behavior: smooth;
           -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          width: 100%;
+        }
+
+        .indiaistore-theme .category-strip::-webkit-scrollbar {
+          display: none;
+          width: 0;
+          height: 0;
         }
 
         .indiaistore-theme .category-strip-inner {
@@ -588,22 +759,86 @@ export default function Home() {
           margin: 0 auto;
           display: flex;
           justify-content: center;
+          align-items: flex-end;
           gap: 8px;
-          padding: 0 22px;
+          padding: 0 22px 4px;
           min-width: max-content;
+        }
+
+        .indiaistore-theme .category-strip-arrow {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 10;
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.94);
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          display: none; /* Hidden on desktop */
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          outline: none;
+          color: #1d1d1f;
+        }
+
+        .indiaistore-theme .category-strip-arrow:hover {
+          background: #ffffff;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+          transform: translateY(-50%) scale(1.08);
+        }
+
+        .indiaistore-theme .category-strip-arrow-left,
+        .indiaistore-theme .slider-side-arrow-left {
+          left: 6px;
+        }
+
+        .indiaistore-theme .category-strip-arrow-right,
+        .indiaistore-theme .slider-side-arrow-right {
+          right: 6px;
+        }
+
+        .indiaistore-theme .slider-side-arrow {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 10;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.94);
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          display: none; /* Hidden on desktop */
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          outline: none;
+          color: #1d1d1f;
+        }
+
+        .indiaistore-theme .slider-side-arrow:hover {
+          background: #ffffff;
+          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+          transform: translateY(-50%) scale(1.08);
         }
 
         .indiaistore-theme .strip-item {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 12px;
-          padding: 10px 16px;
+          gap: 8px;
+          padding: 8px 14px 10px;
           min-width: 96px;
           cursor: pointer;
           transition: all 0.25s ease;
           border-radius: 14px;
           text-decoration: none;
+          box-sizing: border-box;
         }
 
         .indiaistore-theme .strip-item:hover {
@@ -612,7 +847,7 @@ export default function Home() {
 
         .indiaistore-theme .strip-icon {
           width: 96px;
-          height: 68px;
+          height: 64px;
           background: transparent;
           border-radius: 12px;
           display: flex;
@@ -630,7 +865,6 @@ export default function Home() {
           object-fit: contain;
           mix-blend-mode: multiply;
           transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-          filter: drop-shadow(0 2px 8px rgba(0,0,0,0.06));
         }
 
         .indiaistore-theme .strip-icon img.strip-img-appletv {
@@ -638,15 +872,18 @@ export default function Home() {
         }
 
         .indiaistore-theme .strip-item:hover .strip-icon {
-          transform: scale(1.12);
+          transform: scale(1.10);
         }
 
         .indiaistore-theme .strip-name {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 500;
+          line-height: 1.35;
           color: var(--apple-black);
           text-align: center;
           white-space: nowrap;
+          display: block;
+          padding-bottom: 2px;
         }
 
         /* ========== SECTION COMMON ========== */
@@ -666,10 +903,15 @@ export default function Home() {
           margin-bottom: 36px;
         }
 
-        .indiaistore-theme .section-title {
-          font-size: 36px;
+        .indiaistore-theme .section-title,
+        .indiaistore-theme .wby-title,
+        .indiaistore-theme .testimonials-section .section-title,
+        .indiaistore-theme .new-arrivals-header .section-title,
+        .indiaistore-theme .trending-header .section-title {
+          font-size: 32px;
           font-weight: 700;
-          letter-spacing: -0.02em;
+          letter-spacing: -0.015em;
+          text-transform: uppercase;
           text-align: center;
           margin: 0;
           color: var(--apple-black);
@@ -688,10 +930,6 @@ export default function Home() {
         .indiaistore-theme .section-link:hover { text-decoration: underline; }
 
         @media (max-width: 640px) {
-          .indiaistore-theme .section-header {
-            flex-direction: column;
-            gap: 8px;
-          }
           .indiaistore-theme .section-link {
             position: static;
             transform: none;
@@ -707,7 +945,6 @@ export default function Home() {
           margin-bottom: 28px;
         }
         .indiaistore-theme .testimonials-section .section-title {
-          font-size: 32px;
           margin: 0 auto;
           text-align: center;
         }
@@ -805,6 +1042,12 @@ export default function Home() {
           flex-direction: column;
           box-sizing: border-box;
           text-align: left;
+          isolation: isolate;
+          -webkit-mask-image: -webkit-radial-gradient(white, black);
+          mask-image: -webkit-radial-gradient(white, black);
+          transform: translateZ(0);
+          -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
         }
 
         .indiaistore-theme .rf-ccard-40:hover {
@@ -819,6 +1062,10 @@ export default function Home() {
           display: flex;
           flex-direction: column;
           position: relative;
+          border-radius: inherit;
+          overflow: hidden;
+          -webkit-mask-image: -webkit-radial-gradient(white, black);
+          mask-image: -webkit-radial-gradient(white, black);
         }
 
         .indiaistore-theme .rf-ccard-img-full-wrapper {
@@ -829,9 +1076,12 @@ export default function Home() {
           z-index: 1;
           background: #f5f5f7;
           overflow: hidden;
+          border-radius: inherit;
           display: flex;
           align-items: center;
           justify-content: center;
+          -webkit-mask-image: -webkit-radial-gradient(white, black);
+          mask-image: -webkit-radial-gradient(white, black);
         }
 
         .indiaistore-theme .rf-ccard-img-full {
@@ -839,6 +1089,7 @@ export default function Home() {
           height: 100%;
           object-fit: cover;
           object-position: center;
+          border-radius: inherit;
           transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -1062,53 +1313,88 @@ export default function Home() {
         /* ========== SHOP BY CATEGORY ========== */
         .indiaistore-theme .categories {
           background: #ffffff;
-          padding: 64px 22px;
+          padding: 0px 22px 52px;
+          margin-top: -24px;
         }
 
-        .indiaistore-theme .categories-inner { max-width: 1400px; margin: 0 auto; }
+        .indiaistore-theme .section-trending {
+          padding-top: 20px;
+        }
+
+        .indiaistore-theme .categories-inner { max-width: 1440px; margin: 0 auto; }
 
         .indiaistore-theme .category-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 28px;
+          gap: 18px;
         }
 
         .indiaistore-theme .category-card {
           background: #ffffff;
-          border-radius: 24px;
+          border-radius: 28px;
           overflow: hidden;
-          text-align: center;
-          transition: box-shadow 0.5s cubic-bezier(0.2, 1, 0.3, 1);
+          text-align: left;
+          transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
           cursor: pointer;
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
           text-decoration: none;
-          border: 1px solid rgba(0, 0, 0, 0.05);
+          border: 1px solid rgba(0, 0, 0, 0.08);
           display: flex;
           flex-direction: column;
+          justify-content: space-between;
         }
 
         .indiaistore-theme .category-card:hover {
-          box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+          transform: translateY(-6px);
+          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .indiaistore-theme .category-card-body {
+          padding: 26px 28px 20px;
+          background: #ffffff;
+          text-align: center;
+        }
+
+        .indiaistore-theme .category-card-eyebrow {
+          font-size: 22px;
+          font-weight: 700;
+          color: #1d1d1f;
+          letter-spacing: -0.015em;
+          margin-bottom: 0;
+          text-align: center;
+        }
+
+        .indiaistore-theme .category-card-title {
+          font-size: 24px;
+          font-weight: 700;
+          color: #1d1d1f;
+          line-height: 1.25;
+          letter-spacing: -0.015em;
+        }
+
+        .indiaistore-theme .category-card-title .text-primary {
+          color: #0066cc;
+          font-weight: 700;
         }
 
         .indiaistore-theme .category-icon {
           width: 100%;
-          height: 240px;
+          height: 290px;
           margin: 0;
-          background: #ffffff;
+          background: #f5f5f7;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 44px;
+          font-size: 52px;
           overflow: hidden;
-          padding: 24px 20px;
-          border-top-left-radius: 24px;
-          border-top-right-radius: 24px;
-          transition: background-color 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+          padding: 28px 24px;
+          border-bottom-left-radius: 28px;
+          border-bottom-right-radius: 28px;
+          transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .indiaistore-theme .category-card:hover .category-icon {
-          background: #e5e5ea;
+          background: #ebebeb;
         }
 
         .indiaistore-theme .category-icon img {
@@ -1118,7 +1404,7 @@ export default function Home() {
           height: auto;
           object-fit: contain;
           mix-blend-mode: multiply;
-          transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), filter 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+          transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
           backface-visibility: hidden;
           -webkit-backface-visibility: hidden;
           transform-style: preserve-3d;
@@ -1140,19 +1426,6 @@ export default function Home() {
           filter: brightness(1.02);
         }
 
-        .indiaistore-theme .category-name-strip {
-          background: #f8f8fa;
-          padding: 16px 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-bottom-left-radius: 24px;
-          border-bottom-right-radius: 24px;
-          border-top: 1px solid rgba(0, 0, 0, 0.03);
-        }
-
-        .indiaistore-theme .category-name {
-          font-size: 20px;
           font-weight: 700;
           letter-spacing: -0.3px;
           color: #1d1d1f;
@@ -1196,7 +1469,7 @@ export default function Home() {
 
         .indiaistore-theme .trending-grid {
           display: flex;
-          gap: 28px;
+          gap: 16px;
           overflow-x: auto;
           scroll-behavior: smooth;
           -webkit-overflow-scrolling: touch;
@@ -1216,8 +1489,8 @@ export default function Home() {
           display: flex;
           flex-direction: column;
           box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
-          flex: 0 0 calc((100% - 84px) / 4);
-          min-width: 315px;
+          flex: 0 0 calc((100% - 48px) / 4);
+          min-width: 280px;
           box-sizing: border-box;
         }
 
@@ -1408,8 +1681,8 @@ export default function Home() {
         /* ========== WHY BUY FROM AUTHORISED RESELLER ========== */
         .indiaistore-theme .wby-section {
           max-width: 1400px;
-          margin: 0 auto 64px;
-          padding: 0 22px;
+          margin: -24px auto 0;
+          padding: 0px 22px 52px;
         }
 
         .indiaistore-theme .wby-title {
@@ -1417,7 +1690,7 @@ export default function Home() {
           font-size: 36px;
           font-weight: 700;
           letter-spacing: -0.02em;
-          margin: 0 0 14px;
+          margin: 0 0 20px;
           color: var(--apple-black);
         }
 
@@ -1569,6 +1842,9 @@ export default function Home() {
           font-weight: 700;
           letter-spacing: -0.6px;
           margin-bottom: 14px;
+          text-align: left;
+          color: var(--apple-black);
+          text-transform: uppercase;
         }
 
         .indiaistore-theme .b2b-text p {
@@ -1580,21 +1856,25 @@ export default function Home() {
 
         .indiaistore-theme .b2b-features {
           list-style: none;
-          margin-bottom: 24px;
+          margin-bottom: 28px;
         }
 
         .indiaistore-theme .b2b-features li {
-          font-size: 15px;
-          margin-bottom: 9px;
+          font-size: 16.5px;
+          font-weight: 600;
+          color: #1d1d1f;
+          margin-bottom: 12px;
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 12px;
+          letter-spacing: -0.01em;
         }
 
         .indiaistore-theme .b2b-features li::before {
           content: "✓";
-          color: var(--apple-blue);
-          font-weight: 700;
+          color: #0071e3;
+          font-weight: 800;
+          font-size: 18px;
         }
 
         .indiaistore-theme .b2b-form {
@@ -1676,17 +1956,83 @@ export default function Home() {
           background: white;
           border: 1px solid var(--border);
           border-radius: 18px;
-          padding: 24px;
+          padding: 22px 24px;
           transition: all 0.25s ease;
           box-sizing: border-box;
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
+          justify-content: flex-start;
+          gap: 16px;
         }
 
         .indiaistore-theme .testimonial-card:hover {
           box-shadow: var(--shadow);
           transform: translateY(-2px);
+        }
+
+        .indiaistore-theme .testimonial-card-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
+          width: 100%;
+        }
+
+        .indiaistore-theme .testimonial-author {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          flex: 1;
+          min-width: 0;
+        }
+
+        .indiaistore-theme .author-avatar,
+        .indiaistore-theme .author-avatar-img {
+          width: 44px;
+          height: 44px;
+          min-width: 44px;
+          min-height: 44px;
+          border-radius: 50%;
+          object-fit: cover;
+          flex-shrink: 0;
+        }
+
+        .indiaistore-theme .author-avatar {
+          background: var(--apple-light, #f5f5f7);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+          font-size: 15px;
+          color: var(--apple-blue, #0071e3);
+          border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .indiaistore-theme .author-info {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          min-width: 0;
+        }
+
+        .indiaistore-theme .author-info .author-name {
+          display: block;
+          font-size: 14px;
+          font-weight: 600;
+          color: #1d1d1f;
+          line-height: 1.3;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .indiaistore-theme .author-info .author-location,
+        .indiaistore-theme .author-info .author-sub {
+          display: block;
+          font-size: 12px;
+          font-weight: 500;
+          color: #6e6e73;
+          line-height: 1.35;
         }
 
         .indiaistore-theme .slider-btn {
@@ -1713,66 +2059,256 @@ export default function Home() {
 
         .indiaistore-theme .stars {
           color: #f5a623;
-          font-size: 13px;
-          margin-bottom: 12px;
-          letter-spacing: 1.5px;
+          font-size: 14px;
+          letter-spacing: 1px;
+          white-space: nowrap;
+          flex-shrink: 0;
+          line-height: 1;
+          padding-top: 3px;
+        }
+
+        .indiaistore-theme .testimonial-card-body {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
         }
 
         .indiaistore-theme .testimonial-text {
           font-size: 14px;
-          line-height: 1.55;
-          margin-bottom: 18px;
-          color: #333;
+          line-height: 1.6;
+          color: #333336;
+          margin: 0;
+          word-break: break-word;
         }
 
-        .indiaistore-theme .testimonial-author {
-          display: flex;
-          align-items: center;
-          gap: 11px;
-        }
-
-        .indiaistore-theme .author-avatar {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          background: var(--apple-light);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          font-size: 14px;
-          color: var(--apple-blue);
-        }
-
-        .indiaistore-theme .author-info strong {
-          display: block;
-          font-size: 13px;
-          font-weight: 600;
-        }
-
-        .indiaistore-theme .author-info span {
-          font-size: 12px;
-          color: var(--apple-gray);
-        }
-
-        /* ========== RESPONSIVE ========== */
         @media (max-width: 1100px) {
           .indiaistore-theme .category-grid { grid-template-columns: repeat(4, 1fr); }
-          .indiaistore-theme .deal-banner { flex-direction: column; text-align: center; padding: 36px 24px; }
-          .indiaistore-theme .deal-visual { width: 100%; max-width: 360px; height: 260px; }
+          .indiaistore-theme .deal-banner {
+            flex-direction: row !important;
+            text-align: left !important;
+            padding: 22px 18px !important;
+            margin: 0 16px 44px !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
+            overflow: hidden !important;
+            position: relative !important;
+            border-radius: 24px !important;
+          }
+          .indiaistore-theme .deal-content {
+            flex: 1 !important;
+            max-width: 58% !important;
+            text-align: left !important;
+            z-index: 2 !important;
+          }
+          .indiaistore-theme .deal-eyebrow {
+            font-size: 10px !important;
+            letter-spacing: 0.5px !important;
+            margin-bottom: 4px !important;
+            color: #f59e0b !important;
+          }
+          .indiaistore-theme .deal-title {
+            font-size: 16px !important;
+            line-height: 1.2 !important;
+            margin-bottom: 6px !important;
+          }
+          .indiaistore-theme .deal-desc {
+            font-size: 10px !important;
+            line-height: 1.35 !important;
+            margin-bottom: 10px !important;
+            display: -webkit-box !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+            overflow: hidden !important;
+          }
+          .indiaistore-theme .deal-price {
+            font-size: 18px !important;
+            margin-bottom: 10px !important;
+          }
+          .indiaistore-theme .deal-price span {
+            font-size: 11px !important;
+            margin-left: 6px !important;
+          }
+          .indiaistore-theme .deal-banner .btn {
+            font-size: 11px !important;
+            padding: 7px 16px !important;
+            border-radius: 20px !important;
+            margin-top: 0 !important;
+            display: inline-flex !important;
+          }
+          .indiaistore-theme .deal-visual {
+            width: 46% !important;
+            max-width: 205px !important;
+            height: 145px !important;
+            shrink: 0 !important;
+            margin-left: auto !important;
+            position: relative !important;
+            overflow: visible !important;
+          }
+          .indiaistore-theme .deal-visual img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain !important;
+            transform: translateY(8px) scale(1.32) !important;
+          }
           .indiaistore-theme .b2b-inner { grid-template-columns: 1fr; }
         }
 
+        @media (max-width: 900px) {
+          .indiaistore-theme .category-strip-arrow,
+          .indiaistore-theme .slider-side-arrow,
+          .indiaistore-theme .slider-nav-btns,
+          .indiaistore-theme .slider-circle-btn {
+            display: none !important;
+          }
+        }
+
         @media (max-width: 768px) {
-          .indiaistore-theme .hero-banner { height: 480px; }
-          .indiaistore-theme .hero-banner h1 { font-size: 36px; }
-          .indiaistore-theme .section { padding: 48px 16px; }
+          .indiaistore-theme .hero-banner { height: auto; min-height: auto; padding: 32px 16px 16px; }
+          .indiaistore-theme .hero-banner h1 { font-size: 32px; }
+          .indiaistore-theme .section { padding: 36px 16px; }
+          .indiaistore-theme .categories { padding: 0px 16px 36px; margin-top: -16px; }
+          .indiaistore-theme .section-trending { padding-top: 16px; }
+          .indiaistore-theme .wby-section { padding: 0px 16px 36px; margin-top: -16px; }
+          .indiaistore-theme .section-title,
+          .indiaistore-theme .wby-title,
+          .indiaistore-theme .new-arrivals-header .section-title,
+          .indiaistore-theme .trending-header .section-title,
+          .indiaistore-theme .testimonials-section .section-title {
+            font-size: 24px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            text-align: center !important;
+            margin: 0 auto !important;
+          }
+          .indiaistore-theme .wby-title {
+            margin-bottom: 24px !important;
+          }
+
+          .indiaistore-theme .new-arrivals-header .slider-nav-btns,
+          .indiaistore-theme .trending-header .slider-nav-btns,
+          .indiaistore-theme .testimonials-section .slider-nav-btns {
+            display: none !important;
+          }
+
+          .indiaistore-theme .slider-circle-btn {
+            width: 34px;
+            height: 34px;
+          }
+
+          .indiaistore-theme .rf-ccard-40 {
+            width: 270px;
+            flex: 0 0 270px;
+            height: 360px;
+            min-width: 260px;
+            border-radius: 20px;
+          }
+          .indiaistore-theme .rf-ccard-content-info {
+            padding: 18px 16px;
+          }
+          .indiaistore-theme .rf-ccard-content-headerlink {
+            font-size: 20px;
+            line-height: 1.2;
+          }
+          .indiaistore-theme .rf-ccard-content-desccontent {
+            font-size: 13px;
+          }
+          .indiaistore-theme .rf-ccard-content-descprice {
+            font-size: 12px;
+          }
+          .indiaistore-theme .new-arrivals-slider {
+            gap: 14px;
+            padding: 6px 2px 16px;
+          }
+
           .indiaistore-theme .category-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+          .indiaistore-theme .category-card-body { padding: 18px 18px 14px; text-align: center; }
+          .indiaistore-theme .category-card-eyebrow { font-size: 16px; font-weight: 700; color: #1d1d1f; text-align: center; }
+          .indiaistore-theme .category-card-title { font-size: 18px; }
+          .indiaistore-theme .category-icon { height: 210px; padding: 18px 14px; }
           .indiaistore-theme .testimonials-grid { grid-template-columns: 1fr; }
           .indiaistore-theme .form-row { grid-template-columns: 1fr; }
-          .indiaistore-theme .category-strip-inner { justify-content: flex-start; }
-          .indiaistore-theme .product-card { flex: 0 0 260px; min-width: 240px; }
-          .indiaistore-theme .trending-card { flex: 0 0 200px; min-width: 180px; }
+          .indiaistore-theme .category-strip-wrapper { padding: 8px 10px 12px; background: #ffffff; }
+          .indiaistore-theme .category-strip { padding: 0; overflow-x: visible; overflow-y: visible; }
+          .indiaistore-theme .category-strip-inner {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 16px 10px !important;
+            min-width: 100% !important;
+            width: 100% !important;
+            padding: 0 0 6px !important;
+            justify-content: center !important;
+          }
+          .indiaistore-theme .strip-item {
+            min-width: 0 !important;
+            width: 100% !important;
+            padding: 6px 2px 8px !important;
+            gap: 6px !important;
+            align-items: center !important;
+            box-sizing: border-box !important;
+          }
+          .indiaistore-theme .strip-icon {
+            width: 100% !important;
+            height: 64px !important;
+          }
+          .indiaistore-theme .strip-icon img {
+            max-height: 58px !important;
+            filter: none !important;
+            mix-blend-mode: multiply !important;
+          }
+          .indiaistore-theme .strip-name {
+            font-size: 12px !important;
+            font-weight: 500 !important;
+            line-height: 1.35 !important;
+            color: #1d1d1f !important;
+            text-align: center !important;
+            padding-bottom: 2px !important;
+          }
+          .indiaistore-theme .product-card { flex: 0 0 240px; min-width: 220px; padding: 14px; }
+          .indiaistore-theme .trending-card { flex: 0 0 280px; min-width: 260px; }
+          .indiaistore-theme .trending-img { height: 220px; }
+        }
+
+        @media (max-width: 480px) {
+          .indiaistore-theme .section { padding: 28px 14px; }
+          .indiaistore-theme .section-title,
+          .indiaistore-theme .wby-title,
+          .indiaistore-theme .new-arrivals-header .section-title,
+          .indiaistore-theme .trending-header .section-title,
+          .indiaistore-theme .testimonials-section .section-title {
+            font-size: 20px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+          }
+
+          .indiaistore-theme .testimonial-card {
+            flex: 0 0 280px;
+            min-width: 260px;
+            max-width: 300px;
+            padding: 16px 18px;
+            gap: 12px;
+          }
+
+          .indiaistore-theme .rf-ccard-40 {
+            width: 250px;
+            flex: 0 0 250px;
+            height: 340px;
+            min-width: 240px;
+            border-radius: 18px;
+          }
+          .indiaistore-theme .rf-ccard-content-info {
+            padding: 14px 14px;
+          }
+          .indiaistore-theme .rf-ccard-content-headerlink {
+            font-size: 18px;
+          }
+          .indiaistore-theme .rf-ccard-content-header-eyebrow {
+            font-size: 10px;
+          }
+          .indiaistore-theme .slider-circle-btn {
+            width: 30px;
+            height: 30px;
+          }
         }
       `}</style>
 
@@ -1787,9 +2323,27 @@ export default function Home() {
             {heroData.homeHeroSubtitle || 'Genuine Apple products from India’s trusted mono-brand premium resellers. Exclusive offers, EMI & expert support.'}
           </p>
           <div className="hero-ctas">
-            <Link to={heroData.homeHeroPrimaryBtnLink || '/iphone'} className="btn btn-primary">
+            <a
+              href="#shop-by-category"
+              onClick={(e) => {
+                e.preventDefault();
+                const section = document.getElementById('shop-by-category');
+                if (section) {
+                  const navbarHeight = 90;
+                  const elementPosition = section.getBoundingClientRect().top + window.pageYOffset;
+                  const offsetPosition = elementPosition - navbarHeight;
+                  window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                  });
+                } else {
+                  window.location.href = '/categories';
+                }
+              }}
+              className="btn btn-primary cursor-pointer"
+            >
               {heroData.homeHeroPrimaryBtnText || 'Shop Now'}
-            </Link>
+            </a>
             {heroData.homeHeroSecondaryBtnLink?.startsWith('#') ? (
               <a
                 href={heroData.homeHeroSecondaryBtnLink}
@@ -1812,56 +2366,88 @@ export default function Home() {
             )}
           </div>
 
-          {heroData.homeHeroImage && (
-            <div className="hero-image-wrap">
-              <img
-                src={heroData.homeHeroImage}
-                alt="Apple Reseller Showcase"
-                className="w-full h-auto max-h-[420px] object-cover"
-              />
-            </div>
-          )}
+          <div className="hero-image-wrap">
+            <img
+              src={heroData.homeHeroImage || DEFAULT_HERO_IMAGE}
+              alt="Apple Reseller Showcase"
+              loading="eager"
+              fetchPriority="high"
+              decoding="sync"
+              className="w-full h-full max-h-[220px] md:max-h-[260px] object-cover"
+              onError={(e) => {
+                if (e.currentTarget.src !== DEFAULT_HERO_IMAGE) {
+                  e.currentTarget.src = DEFAULT_HERO_IMAGE;
+                }
+              }}
+            />
+          </div>
         </div>
       </section>
 
-      {/* 2. CATEGORY STRIP (Apple.com/store Style) */}
-      <div className="category-strip">
-        <div className="category-strip-inner">
-          {categoryStrip.map((rawItem, idx) => {
-            const item = sanitizeCategoryItem(rawItem);
-            if (!item) return null;
-            const hasImg = Boolean(item.image && item.image.trim());
-            return (
-              <Link key={idx} to={item.path || '/shop'} className="strip-item">
-                <div className="strip-icon">
-                  {hasImg ? (
-                    <img
-                      src={item.image.trim().startsWith('/') || item.image.trim().startsWith('http') ? item.image.trim() : '/' + item.image.trim()}
-                      alt={item.label || item.name}
-                      className={`w-full h-full object-contain ${ (item.name || item.label || '').toLowerCase().includes('tv') ? 'strip-img-appletv' : 'p-1' }`}
-                      onError={(e) => {
-                        const key = item.name || item.label;
-                        const fb = DEFAULT_CATEGORY_IMAGES[key] || '/macbook_category_uploaded.png';
-                        if (e.currentTarget.src !== window.location.origin + fb && e.currentTarget.src !== fb) {
-                          e.currentTarget.src = fb;
-                        }
-                      }}
-                    />
-                  ) : (
-                    <span>{item.icon || '📱'}</span>
-                  )}
-                </div>
-                <div className="strip-name">{item.label || item.name}</div>
-              </Link>
-            );
-          })}
+      {/* 2. CATEGORY STRIP (Apple.com/store Style with side navigation arrows) */}
+      <div id="shop-by-category" className="category-strip-wrapper">
+        <button
+          type="button"
+          className="category-strip-arrow category-strip-arrow-left"
+          onClick={() => scrollCategoryStrip('left')}
+          title="Previous Categories"
+          aria-label="Previous Categories"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+
+        <div className="category-strip" ref={categoryStripRef}>
+          <div className="category-strip-inner">
+            {displayCategoryStrip.map((rawItem, idx) => {
+              const item = sanitizeCategoryItem(rawItem);
+              if (!item) return null;
+              const hasImg = Boolean(item.image && item.image.trim());
+              return (
+                <Link key={idx} to={item.path || '/shop'} className="strip-item">
+                  <div className="strip-icon">
+                    {hasImg ? (
+                      <img
+                        src={item.image.trim().startsWith('/') || item.image.trim().startsWith('http') ? item.image.trim() : '/' + item.image.trim()}
+                        alt={item.label || item.name}
+                        className={`w-full h-full object-contain ${(item.name || item.label || '').toLowerCase().includes('tv') ? 'strip-img-appletv' : 'p-1'}`}
+                        onError={(e) => {
+                          const key = item.name || item.label;
+                          const fb = DEFAULT_CATEGORY_IMAGES[key] || '/macbook_category_uploaded.png';
+                          if (e.currentTarget.src !== window.location.origin + fb && e.currentTarget.src !== fb) {
+                            e.currentTarget.src = fb;
+                          }
+                        }}
+                      />
+                    ) : (
+                      <span>{item.icon || '📱'}</span>
+                    )}
+                  </div>
+                  <div className="strip-name">{item.label || item.name}</div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
+
+        <button
+          type="button"
+          className="category-strip-arrow category-strip-arrow-right"
+          onClick={() => scrollCategoryStrip('right')}
+          title="Next Categories"
+          aria-label="Next Categories"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
       </div>
 
       {/* 3. NEW ARRIVALS SLIDER */}
       <section className="section">
         <div className="section-header new-arrivals-header">
-          <h2 className="section-title">New Arrivals</h2>
+          <h2 className="section-title">THE LATEST FROM APPLE</h2>
           <div className="slider-nav-btns">
             <button
               type="button"
@@ -1888,85 +2474,60 @@ export default function Home() {
           </div>
         </div>
         <div className="new-arrivals-slider-wrap">
+          <button
+            type="button"
+            className="slider-side-arrow slider-side-arrow-left"
+            onClick={() => scrollNewArrivals('left')}
+            title="Previous New Arrivals"
+            aria-label="Previous New Arrivals"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+
           <div ref={newArrivalsSliderRef} className="new-arrivals-slider">
             {newArrivalsList.map((item, idx) => {
-              const card1ImgWebp = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-duo-202609_GEO_IN?wid=800&hei=1000&fmt=webp&qlt=90&.v=UzBXQnlhUWdraTNvNU1Kb3pEQlpXTmRieWJxSUI5TWh3VExiQnFCdzRFUVIzWjZtanZvZXBzWDFVU2JjN3Z3cXBxK0ZBNmxGbmUyUFZlUkRMaDBrbFIrM1V0MXQ3L01IeDRJOXlOYjZtNC9JTVpqRTIzSGM4czgvT0dWYlpqZnY&traceId=1";
-              const card1ImgJpg = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-duo-202609_GEO_IN?wid=800&hei=1000&fmt=p-jpg&qlt=80&.v=UzBXQnlhUWdraTNvNU1Kb3pEQlpXTmRieWJxSUI5TWh3VExiQnFCdzRFUVIzWjZtanZvZXBzWDFVU2JjN3Z3cXN2Mmx4a3VvSnUzaFUvSVlVRUJkbEd4TmxtT1p0QkhPako5RlJBUjZ0OU9Hc0wyUy9Qc3BoTzNXSHJVRHo5eGk&traceId=1";
+              const card1ImgJpg = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-duo-202609_GEO_IN?wid=800&hei=1000&fmt=p-jpg&qlt=80";
+              const card2ImgJpg = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-18-pro-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80";
+              const card3ImgJpg = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-watch-series-12-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80";
+              const card4ImgJpg = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-watch-ultra-4-202609_GEO_IN?wid=800&hei=1000&fmt=p-jpg&qlt=80";
+              const card5ImgJpg = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-airpods-5-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80";
+              const card6ImgJpg = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-mac-mini-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80";
+              const card7ImgJpg = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-mac-studio-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80";
 
-              const card2ImgWebp = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-18-pro-202609?wid=800&hei=1000&fmt=webp&qlt=90&.v=UzBXQnlhUWdraTNvNU1Kb3pEQlpXSWQybG1sZ1oxVnEyWjA5KzltU01ZTFNab1lJcUZwSFVRK1htYlNmZUtPTFJ2R3NEUGt3Q2tTUTNWU09neHFkdWRUL1Azd1lsYk5RbEsxZXhvbThSV3VXS3B5dFRDdHdOWGF6ZzVmZHdiRWc&traceId=1";
-              const card2ImgJpg = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-18-pro-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80&.v=UzBXQnlhUWdraTNvNU1Kb3pEQlpXSWQybG1sZ1oxVnEyWjA5KzltU01ZTFNab1lJcUZwSFVRK1htYlNmZUtPTFN5aWNYUFpIbkFhdm03T3BzSjdVSTVTUzBFNlNoQ3JiRWpkVzhGb1Q5YkVkMVhIT21KNHhMTmc3TkpqWGZITDg&traceId=1";
-
-              const card3ImgWebp = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-watch-series-12-202609?wid=800&hei=1000&fmt=webp&qlt=90&.v=QWhYaUFuRS9hTUliZ3N5RWVCV09vaG9ZUW1EeWY5MUtXMHdLVXUrS2thUHJ5SDBWM0EzY1NDZnVpYTkvandVRGdpcjhyQnJrZTk3NDVpVGh0RDBPL1dlb1hSRFZ1bHlsVUx3SFRzY0JhYVpmcTUrTlhNMWhLS2RHRXhjZnVURVQ&traceId=1";
-              const card3ImgJpg = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-watch-series-12-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80&.v=QWhYaUFuRS9hTUliZ3N5RWVCV09vaG9ZUW1EeWY5MUtXMHdLVXUrS2thUHJ5SDBWM0EzY1NDZnVpYTkvandVRHFmS3YvQ0doSFZENndQR0J4TTRqbndQU2JvQ0JiRmZoU0hNWVplaGs5aHNPYUtSMVh2bmhjSFBDSFo4T3FRS0E&traceId=1";
-
-              const card4ImgWebp = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-watch-ultra-4-202609_GEO_IN?wid=800&hei=1000&fmt=webp&qlt=90&.v=QWhYaUFuRS9hTUliZ3N5RWVCV09vdmMxTi9MK0F4TUMvaEkrKzQrSzRpbmJRMGtnQk93bkNnOFNhZmw1MVVDSWVKTWtXODFGZ1ZIUk9hUHM3RHc0QTYyL0ZSTzZrMWlpUU5CQlpuNHNUZzhtZXFyaVZWaHlPbUpXd09SVC9rbDc&traceId=1";
-              const card4ImgJpg = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-watch-ultra-4-202609_GEO_IN?wid=800&hei=1000&fmt=p-jpg&qlt=80&.v=QWhYaUFuRS9hTUliZ3N5RWVCV09vdmMxTi9MK0F4TUMvaEkrKzQrSzRpbmJRMGtnQk93bkNnOFNhZmw1MVVDSWVEb1lRcjg2U0o3bTMvMkR2S2VvTnZXdlJRYjdSZWJHVUh4aFVDb0hhVVdPc2ZIZ0tBZThMV3hSNUJIL00xdlQ&traceId=1";
-
-              const card5ImgWebp = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-airpods-5-202609?wid=800&hei=1000&fmt=webp&qlt=90&.v=WlczMnlkejNQakk5eW14MEJjQmdLL1htQlViQlcvWm01TkRFbWQ1bFdVbjkvamYzRzRvcFlnajNacmhEOC9BeEZXZzlzM2cwVmJseGdsS3RYT09za2g5YnJpZi9mWTcyN0pxRVpBcDU2UnArYWpGdS9XeFgvbS9ITnNYOEhYaG4&traceId=1";
-              const card5ImgJpg = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-airpods-5-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80&.v=WlczMnlkejNQakk5eW14MEJjQmdLL1htQlViQlcvWm01TkRFbWQ1bFdVbjkvamYzRzRvcFlnajNacmhEOC9BeGJLRkx3RDVvZWFBZ2pOaXMvUXhHQ2FFWGwxTDd3djQwdSt4b3ZkbTdjbXVKTExiOEFsRmxtQ2Nua0tRSC83MkI&traceId=1";
-
-              const card6ImgWebp = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-mac-mini-202609?wid=800&hei=1000&fmt=webp&qlt=90&.v=MjhMcWJ2MGZwbXEwdnBkcUN6ZnhyejZjVlVyTm9aMTIzM2ZlTDJiaTlnRDZXYXJlRUd1cTBYTnRnbTNlazIvMzl4VGJTa0Z6K25XajlIZ3dxUWxxaFVyemZ6RkRPaG5jU2paRVdtZHhabXc&traceId=1";
-              const card6ImgJpg = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-mac-mini-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80&.v=MjhMcWJ2MGZwbXEwdnBkcUN6ZnhyejZjVlVyTm9aMTIzM2ZlTDJiaTlnRDZXYXJlRUd1cTBYTnRnbTNlazIvM01BZktNRDRIeDREMEYwa1NOSWNvMENpK0pSNjVsZ2N0cUJVQnVDU1lqdHQrYWpGdS9XeFgvbS9ITnNYOEhYaG4&traceId=1";
-
-              const card7ImgWebp = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-mac-studio-202609?wid=800&hei=1000&fmt=webp&qlt=90&.v=MjhMcWJ2MGZwbXEwdnBkcUN6ZnhyeU9aVHlIUTN0TDFoV3YrODdyNm1Ucm45S05qekNUdVUwMVFyK1pKaERUd3lPWjFvdU5EZVdwUnRCZ2RHSDBFS3R0bEJITXZrbjRjcGpoK0NsSlhQUCtWZWZKZEpnTUg2bTJtOU9qU1hvcWw&traceId=1";
-              const card7ImgJpg = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-mac-studio-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80&.v=MjhMcWJ2MGZwbXEwdnBkcUN6ZnhyeU9aVHlIUTN0TDFoV3YrODdyNm1Ucm45S05qekNUdVUwMVFyK1pKaERUd3ZGdXpoZGFjcnJiZGtXTlNNRSszQWpLV0ZtaSt4V1ZKUFd0a1JsdUUwbENacXFoWC9uNWRBVmx4VTBHaHVxM3Y&traceId=1";
-
-              let imgWebp = item.imageWebp || item.image || card1ImgWebp;
-              let imgJpg = item.image || card1ImgJpg;
-              let altText = item.altText || item.alt || item.name || "Apple Product";
-
-              if (idx === 0) {
-                imgWebp = item.imageWebp || card1ImgWebp;
-                imgJpg = item.image || card1ImgJpg;
-                altText = item.altText || item.alt || "iPhone Duo";
-              } else if (idx === 1) {
-                imgWebp = item.imageWebp || card2ImgWebp;
-                imgJpg = item.image || card2ImgJpg;
-                altText = item.altText || item.alt || "iPhone 18 Pro Max, burgundy colour";
-              } else if (idx === 2) {
-                imgWebp = item.imageWebp || card3ImgWebp;
-                imgJpg = item.image || card3ImgJpg;
-                altText = item.altText || item.alt || "Apple Watch Series 12";
-              } else if (idx === 3 || item.name?.toLowerCase().includes('ultra')) {
-                imgWebp = item.imageWebp || card4ImgWebp;
-                imgJpg = item.image || card4ImgJpg;
-                altText = item.altText || item.alt || "Apple Watch Ultra 4, titanium case, natural colour, right side exterior, raised side button, microphone, Digital Crown dial, Ocean Band, translucent grey colour";
-              } else if (idx === 4 || item.name?.toLowerCase().includes('airpods 5')) {
-                imgWebp = item.imageWebp || card5ImgWebp;
-                imgJpg = item.image || card5ImgJpg;
-                altText = item.altText || item.alt || "AirPods 5: wireless earbuds, white color, oval-shaped, ear tip with interior acoustic speaker mesh, short stem with silver charging connector, left and right letter indicators";
-              } else if (idx === 5 || item.name?.toLowerCase().includes('mac mini')) {
-                imgWebp = item.imageWebp || card6ImgWebp;
-                imgJpg = item.image || card6ImgJpg;
-                altText = item.altText || item.alt || "Mac mini, front exterior, two Thunderbolt ports, status indicator light and 3.5‑millimetre headphone jack, tapered black base at bottom, flat top, rounded sides, straight edges, silver colour enclosure";
-              } else if (idx === 6 || item.name?.toLowerCase().includes('mac studio')) {
-                imgWebp = item.imageWebp || card7ImgWebp;
-                imgJpg = item.image || card7ImgJpg;
-                altText = item.altText || item.alt || "Mac Studio, front exterior, two USB‑C ports, SDXC card slot, status indicator light, tapered base at bottom, flat top, rounded sides, straight edges, silver colour enclosure";
+              let displayImg = item.image;
+              if (!displayImg || displayImg.includes('traceId')) {
+                if (idx === 0) displayImg = card1ImgJpg;
+                else if (idx === 1) displayImg = card2ImgJpg;
+                else if (idx === 2) displayImg = card3ImgJpg;
+                else if (idx === 3 || item.name?.toLowerCase().includes('ultra')) displayImg = card4ImgJpg;
+                else if (idx === 4 || item.name?.toLowerCase().includes('airpods 5')) displayImg = card5ImgJpg;
+                else if (idx === 5 || item.name?.toLowerCase().includes('mini')) displayImg = card6ImgJpg;
+                else if (idx === 6 || item.name?.toLowerCase().includes('studio')) displayImg = card7ImgJpg;
+                else displayImg = card1ImgJpg;
               }
 
+              const altText = item.altText || item.alt || item.name || "Apple Product";
               const isDarkCard = item.isDark || (idx === 1 || idx === 2 || idx === 3 || item.name?.toLowerCase().includes('ultra') || item.name?.toLowerCase().includes('series 12') || item.name?.toLowerCase().includes('18 pro'));
+              const targetPath = resolveArrivalProductPath(item);
 
               return (
-                <Link key={item.id || idx} to={item.path || '/shop'} className={`rf-ccard rf-ccard-40 ${isDarkCard ? 'rf-ccard-dark' : 'rf-card-msgtag-orange'}`}>
+                <Link key={item.id || idx} to={targetPath} className={`rf-ccard rf-ccard-40 ${isDarkCard ? 'rf-ccard-dark' : 'rf-card-msgtag-orange'}`}>
                   <div className="as-util-relatedlink">
                     <div className="rf-ccard-content rf-ccard-content-withfullimg">
                       <div className="rf-ccard-img-full-wrapper">
-                        <picture>
-                          <source srcSet={imgWebp} type="image/webp" />
-                          <source srcSet={imgJpg} type="image/jpeg" />
-                          <img
-                            width="400"
-                            height="500"
-                            alt={altText}
-                            className="rf-ccard-img-full"
-                            src={imgJpg}
-                            onError={(e) => {
-                              e.currentTarget.onerror = null;
-                              e.currentTarget.src = card1ImgJpg;
-                            }}
-                          />
-                        </picture>
+                        <img
+                          width="400"
+                          height="500"
+                          alt={altText}
+                          className="rf-ccard-img-full"
+                          src={displayImg}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = card1ImgJpg;
+                          }}
+                        />
                       </div>
                       <div className="rf-ccard-content-info">
                         {item.eyebrow ? (
@@ -1996,20 +2557,37 @@ export default function Home() {
               );
             })}
           </div>
+
+          <button
+            type="button"
+            className="slider-side-arrow slider-side-arrow-right"
+            onClick={() => scrollNewArrivals('right')}
+            title="Next New Arrivals"
+            aria-label="Next New Arrivals"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
         </div>
       </section>
 
       {/* 4. SHOP BY CATEGORY */}
       <section className="categories">
         <div className="categories-inner">
-          <div className="section-header" style={{ marginBottom: '28px' }}>
-            <h2 className="section-title">Shop by Category</h2>
+          <div className="section-header" style={{ marginBottom: '18px' }}>
+            <h2 className="section-title">SHOP BY CATEGORY</h2>
           </div>
           <div className="category-grid">
             {appleCategories.map((cat, idx) => {
               const displayImg = (cat.image || '').trim();
+              const displayPrice = cat.startingPrice || cat.price || (cat.name === 'Mac' ? '₹89,900' : cat.name === 'iPhone' ? '₹59,900' : cat.name === 'iPad' ? '₹34,900' : cat.name === 'Watch' ? '₹29,900' : cat.name === 'AirPods' ? '₹12,900' : cat.name === 'TV & Home' ? '₹14,900' : cat.name === 'Accessories' ? '₹1,900' : cat.name === 'AppleCare+' ? '₹2,900' : '');
+
               return (
                 <Link key={idx} to={cat.link || '/shop'} className="category-card">
+                  <div className="category-card-body">
+                    <div className="category-card-eyebrow">{cat.name}</div>
+                  </div>
                   <div className="category-icon">
                     {displayImg ? (
                       <img
@@ -2022,9 +2600,6 @@ export default function Home() {
                       <span>{cat.icon || '📱'}</span>
                     )}
                   </div>
-                  <div className="category-name-strip">
-                    <div className="category-name">{cat.name}</div>
-                  </div>
                 </Link>
               );
             })}
@@ -2033,9 +2608,9 @@ export default function Home() {
       </section>
 
       {/* 5. TRENDING NOW SLIDER */}
-      <section className="section">
+      <section className="section section-trending">
         <div className="section-header trending-header">
-          <h2 className="section-title">Trending Now</h2>
+          <h2 className="section-title">TRENDING NOW</h2>
           <div className="slider-nav-btns">
             <button
               type="button"
@@ -2062,6 +2637,18 @@ export default function Home() {
           </div>
         </div>
         <div className="trending-slider-wrap">
+          <button
+            type="button"
+            className="slider-side-arrow slider-side-arrow-left"
+            onClick={() => scrollTrending('left')}
+            title="Previous Trending"
+            aria-label="Previous Trending"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+
           <div ref={trendingSliderRef} className="trending-grid">
             {trendingList.map((item) => (
               <Link key={item.id} to={item.path} className="trending-card">
@@ -2088,12 +2675,24 @@ export default function Home() {
               </Link>
             ))}
           </div>
+
+          <button
+            type="button"
+            className="slider-side-arrow slider-side-arrow-right"
+            onClick={() => scrollTrending('right')}
+            title="Next Trending"
+            aria-label="Next Trending"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
         </div>
       </section>
 
       {/* 5.5 WHY BUY FROM AUTHORISED RESELLER */}
       <div className="wby-section">
-        <h2 className="wby-title">Why Buy from an Authorised Reseller?</h2>
+        <h2 className="wby-title">WHY CHOOSE iiNCEPT?</h2>
 
         <div className="wby-grid">
           <div className="wby-card">
@@ -2141,36 +2740,50 @@ export default function Home() {
 
 
       {/* 6. DEAL OF THE WEEK */}
-      <div className="deal-banner">
-        <div className="deal-content">
-          <div className="deal-eyebrow">{dealData.dealEyebrow || 'Deal of the Week'}</div>
-          <h2 className="deal-title">{dealData.dealTitle || 'MacBook Neo – Stock Clearance'}</h2>
-          <p className="deal-desc">
-            {dealData.dealDesc || 'Amazing Mac at a surprising price. Limited stock this week. Exclusive bank offers + free AppleCare+ for first 50 buyers.'}
-          </p>
-          <div className="deal-price">
-            {dealData.dealPrice || '₹72,900'} <span>{dealData.dealOldPrice || '₹79,900'}</span>
+      {dealBanners && dealBanners.length > 0 && (() => {
+        const banner = dealBanners[0];
+        if (!banner) return null;
+        const productTarget = banner.productId ? `/product/${banner.productId}` : (banner.buttonLink || '/shop');
+        const formattedFinal = formatRupee(banner.finalPrice !== undefined && banner.finalPrice !== null ? banner.finalPrice : banner.dealPrice);
+        const formattedMrp = formatRupee(banner.originalMrp !== undefined && banner.originalMrp !== null ? banner.originalMrp : banner.dealOldPrice);
+        const displayImg = banner.productImage || banner.dealImage || '/mac_deal_fan.png';
+
+        return (
+          <div key={banner.id || banner._id || 'single-deal'} className="deal-banner">
+            <div className="deal-content">
+              <div className="deal-eyebrow">{banner.smallLabel || banner.dealEyebrow || 'DEAL OF THE WEEK'}</div>
+              <h2 className="deal-title">{banner.title || banner.dealTitle || 'MacBook Neo – Stock Clearance'}</h2>
+              <p className="deal-desc">
+                {banner.description || banner.dealDesc || 'Amazing Mac at a surprising price. Limited stock this week. Exclusive bank offers + free AppleCare+ for first 50 buyers.'}
+              </p>
+              <div className="deal-price">
+                {formattedFinal} {formattedMrp && <span>{formattedMrp}</span>}
+              </div>
+              <Link to={productTarget} className="btn btn-primary" style={{ marginTop: '18px' }}>
+                {banner.buttonText || banner.dealButtonText || 'Grab the Deal'}
+              </Link>
+            </div>
+            <div className="deal-visual">
+              <img
+                src={displayImg}
+                alt={banner.title || 'Deal Product'}
+                className="max-h-full max-w-full object-contain filter drop-shadow-lg"
+              />
+            </div>
           </div>
-          <Link to={dealData.dealButtonLink || '/macbook'} className="btn btn-primary" style={{ marginTop: '18px' }}>
-            {dealData.dealButtonText || 'Grab the Deal'}
-          </Link>
-        </div>
-        <div className="deal-visual">
-          <img src={(dealData.dealImage && dealData.dealImage !== '/mac_nav/macbook_neo.png') ? dealData.dealImage : '/mac_deal_fan.png'} alt="MacBook Deal" className="max-h-full max-w-full object-contain filter drop-shadow-lg" />
-        </div>
-      </div>
+        );
+      })()}
 
       {/* 7. B2B / CORPORATE ORDERS */}
       <section id="b2b-section" className="b2b">
         <div className="b2b-inner">
           <div className="b2b-text">
-            <h2>Corporate & B2B Orders</h2>
+            <h2>BUSINESS SOLUTIONS BY iiNCEPT</h2>
             <p>Looking for volume purchases, education pricing or enterprise solutions? Our dedicated team helps businesses get the right Apple setup with preferential pricing and support.</p>
             <ul className="b2b-features">
               <li>Volume & bulk pricing</li>
               <li>Dedicated account manager</li>
-              <li>AppleCare for Enterprise</li>
-              <li>Education & institutional discounts</li>
+              <li>AppleCare+</li>
               <li>Fast delivery across India</li>
             </ul>
             <a
@@ -2276,7 +2889,7 @@ export default function Home() {
       {/* 8. TESTIMONIALS SLIDER */}
       <section className="section testimonials-section">
         <div className="section-header">
-          <h2 className="section-title">What Our Customers Say</h2>
+          <h2 className="section-title">WHAT OUR CUSTOMERS SAY</h2>
           <div className="slider-nav-btns">
             <button
               type="button"
@@ -2306,20 +2919,32 @@ export default function Home() {
           <div ref={testimonialSliderRef} className="testimonials-slider">
             {testimonials.map((item, idx) => (
               <div key={idx} className="testimonial-card">
-                <div>
-                  <div className="stars">
+                <div className="testimonial-card-header">
+                  <div className="testimonial-author">
+                    {item.avatar || item.avatarUrl || item.image ? (
+                      <img
+                        src={item.avatar || item.avatarUrl || item.image}
+                        alt={item.author}
+                        className="author-avatar-img"
+                      />
+                    ) : (
+                      <div className="author-avatar">
+                        {item.author ? item.author.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'AS'}
+                      </div>
+                    )}
+                    <div className="author-info">
+                      <strong className="author-name">{item.author}</strong>
+                      {(item.location || item.sub) ? (
+                        <span className="author-location">{item.location || item.sub}</span>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="stars" aria-label={`${item.stars || 5} out of 5 stars`}>
                     {'★'.repeat(item.stars || 5)}
                   </div>
-                  <p className="testimonial-text">{item.text}</p>
                 </div>
-                <div className="testimonial-author">
-                  <div className="author-avatar">
-                    {item.author ? item.author.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'AS'}
-                  </div>
-                  <div className="author-info">
-                    <strong>{item.author}</strong>
-                    <span>{item.sub}</span>
-                  </div>
+                <div className="testimonial-card-body">
+                  <p className="testimonial-text">{item.text}</p>
                 </div>
               </div>
             ))}

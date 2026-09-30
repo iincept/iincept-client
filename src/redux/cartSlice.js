@@ -41,6 +41,8 @@ const transformCartItem = (dbItem) => {
     stock: p.stock || 10,
     color: dbItem.color || '',
     size: dbItem.size || '',
+    accessoriesSize: dbItem.accessoriesSize || '',
+    partNumber: dbItem.partNumber || p.partNumber || '',
   };
 };
 
@@ -103,9 +105,37 @@ export const addToCart = createAsyncThunk(
       const serverItems = await cartApi.getCart();
       const transformed = serverItems.map(transformCartItem);
 
-      // Preserve existing custom items
+      // Overlay variant-specific data (price, name, image, color, size, etc.) back onto
+      // the matching item. The server Cart model only stores {user, product, quantity},
+      // so selling price and variant details must be re-applied from the dispatched item.
+      const enriched = transformed.map(t => {
+        const matchesNewItem = t.id === productId || t.id === item.id?.split('-')[0];
+        if (matchesNewItem && item.price != null) {
+          return {
+            ...t,
+            id: item.id,            // use compound variant id for uniqueness
+            name: item.name || t.name,
+            price: item.price,
+            image: item.image || t.image,
+            color: item.color || t.color || '',
+            size: item.size || t.size || '',
+            accessoriesSize: item.accessoriesSize || t.accessoriesSize || '',
+            bandSize: item.bandSize || '',
+            connectivity: item.connectivity || '',
+            storage: item.storage || '',
+            ram: item.ram || '',
+            glass: item.glass || '',
+            processor: item.processor || '',
+            partNumber: item.partNumber || t.partNumber || '',
+            appleCare: item.appleCare || false,
+          };
+        }
+        return t;
+      });
+
+      // Preserve existing custom items (AppleCare, ac-* ids)
       const customItems = state.cartItems.filter(x => x.isAppleCare || (x.id && String(x.id).startsWith('ac-')));
-      const combined = [...transformed];
+      const combined = [...enriched];
       for (const custom of customItems) {
         if (!combined.some(c => c.id === custom.id)) {
           combined.push(custom);
@@ -115,6 +145,23 @@ export const addToCart = createAsyncThunk(
       localStorage.setItem('cartItems', JSON.stringify(combined));
       return { cartItems: combined, openCart: true };
     } catch (err) {
+      const status = err.response?.status;
+      // On auth failure (expired/invalid token): clear stale token and fall back to local cart.
+      if (status === 401 || status === 403) {
+        try { localStorage.removeItem('token'); } catch (_) { /* ignore */ }
+        const updatedItems = [...state.cartItems];
+        const existIndex = updatedItems.findIndex(x => x.id === item.id);
+        if (existIndex > -1) {
+          updatedItems[existIndex] = {
+            ...updatedItems[existIndex],
+            quantity: (updatedItems[existIndex].quantity || 1) + (item.quantity || 1)
+          };
+        } else {
+          updatedItems.push({ ...item, quantity: item.quantity || 1 });
+        }
+        localStorage.setItem('cartItems', JSON.stringify(updatedItems));
+        return { cartItems: updatedItems, openCart: true };
+      }
       return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
     }
   }
@@ -135,19 +182,11 @@ export const removeFromCart = createAsyncThunk(
     try {
       const productId = id.split('-')[0];
       await cartApi.removeFromCart(productId);
-      const serverItems = await cartApi.getCart();
-      const transformed = serverItems.map(transformCartItem);
-
-      const customItems = state.cartItems.filter(x => x.isAppleCare || (x.id && String(x.id).startsWith('ac-')));
-      const combined = [...transformed];
-      for (const custom of customItems) {
-        if (custom.id !== id && !combined.some(c => c.id === custom.id)) {
-          combined.push(custom);
-        }
-      }
-
-      localStorage.setItem('cartItems', JSON.stringify(combined));
-      return combined;
+      // Filter out the removed item from local enriched cart (which has variant data)
+      // rather than replacing everything with server data that lacks variant details.
+      const updatedItems = state.cartItems.filter(x => x.id !== id);
+      localStorage.setItem('cartItems', JSON.stringify(updatedItems));
+      return updatedItems;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
     }
@@ -172,10 +211,13 @@ export const updateQuantity = createAsyncThunk(
     try {
       const productId = id.split('-')[0];
       await cartApi.updateCartQuantity(productId, targetQty);
-      const serverItems = await cartApi.getCart();
-      const transformed = serverItems.map(transformCartItem);
-      localStorage.setItem('cartItems', JSON.stringify(transformed));
-      return transformed;
+      // Update quantity in the existing local cart (which has enriched variant data)
+      // rather than replacing with raw server data that lacks variant details.
+      const updatedItems = state.cartItems.map(x =>
+        x.id === id ? { ...x, quantity: targetQty } : x
+      );
+      localStorage.setItem('cartItems', JSON.stringify(updatedItems));
+      return updatedItems;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
     }

@@ -5,7 +5,7 @@ import { Star, ShoppingBag, Heart, Search as SearchIcon, ArrowRight, Loader2 } f
 import { fetchProducts } from '../redux/productSlice';
 import { addToCart } from '../redux/cartSlice';
 import { addToWishlist } from '../redux/wishlistSlice';
-import { matchesProductSearch, getMatchingSku } from '../utils/searchUtils';
+import { matchesProductSearch, getMatchingSku, findMatchingVariant, getVariantPricing } from '../utils/searchUtils';
 
 export default function Search() {
   const dispatch = useDispatch();
@@ -27,23 +27,50 @@ export default function Search() {
     return matchesProductSearch(prod, query);
   });
 
-  const handleAddToCart = (product) => {
+  const handleAddToCart = (e, prod, matchedVar, pricing, productImg, matchedSku) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const variantId = matchedVar?._id || matchedVar?.id;
+    const finalSku = matchedSku || matchedVar?.sku || matchedVar?.partNumber || prod.sku;
+    
+    // Attribute description
+    const attrString = matchedVar 
+      ? [matchedVar.color, matchedVar.storage, matchedVar.ram, matchedVar.size, matchedVar.connectivity].filter(Boolean).join(' / ')
+      : '';
+
+    const cartName = matchedVar && attrString
+      ? `${prod.title || prod.name} (${attrString})`
+      : (prod.title || prod.name);
+
     dispatch(addToCart({
-      id: product.id || product._id,
-      name: product.name || product.title,
-      price: product.price,
-      image: product.image || (product.images && product.images[0]) || '/avatar.png',
+      id: variantId ? `${prod._id || prod.id}-${variantId}` : (prod._id || prod.id),
+      productId: prod._id || prod.id,
+      variantId: variantId,
+      sku: finalSku,
+      partNumber: matchedVar?.partNumber || prod.partNumber,
+      name: cartName,
+      title: cartName,
+      price: pricing.sellingPrice,
+      originalMrp: pricing.originalMrp,
+      image: productImg,
+      color: matchedVar?.color || (prod.colors?.[0]?.name || prod.colors?.[0] || ''),
+      storage: matchedVar?.storage || '',
+      ram: matchedVar?.ram || '',
+      size: matchedVar?.size || '',
       quantity: 1
     }));
   };
 
-  const handleAddToWishlist = (product) => {
+  const handleAddToWishlist = (e, prod, matchedVar, pricing, productImg) => {
+    e.preventDefault();
+    e.stopPropagation();
     dispatch(addToWishlist({
-      id: product.id || product._id,
-      name: product.name || product.title,
-      price: product.price,
-      image: product.image || (product.images && product.images[0]) || '/avatar.png',
-      rating: product.rating
+      id: prod._id || prod.id,
+      name: prod.title || prod.name,
+      price: pricing.sellingPrice,
+      image: productImg,
+      rating: prod.rating
     }));
   };
 
@@ -91,22 +118,36 @@ export default function Search() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProducts.map((prod) => {
-            const productImg = prod.image || (prod.images && prod.images[0]) || '/avatar.png';
-            const matchedSku = getMatchingSku(prod, query);
+            const matchedVar = findMatchingVariant(prod, query);
+            const pricing = getVariantPricing(matchedVar, prod);
+
+            const matchedSku = matchedVar
+              ? (matchedVar.sku || matchedVar.partNumber || matchedVar.modelNumber)
+              : getMatchingSku(prod, query);
+
+            const matchedImg = matchedVar?.images?.[0] || matchedVar?.image || (prod.colorImages && matchedVar?.color && prod.colorImages[matchedVar.color]?.[0]);
+            const productImg = matchedImg || prod.displayImage || prod.image || (prod.images && prod.images[0]) || '/avatar.png';
+
+            const productId = prod._id || prod.id || prod.partNumber || prod.sku;
+            const productLink = matchedSku 
+              ? `/product/${encodeURIComponent(productId)}?sku=${encodeURIComponent(matchedSku)}`
+              : `/product/${encodeURIComponent(productId)}`;
+
             return (
-              <div 
+              <Link 
                 key={prod._id || prod.id}
-                className="group bg-white border border-zinc-200 rounded-2xl overflow-hidden hover:border-zinc-300 transition-all duration-300 flex flex-col justify-between shadow-sm hover:shadow-md animate-in fade-in duration-300"
+                to={productLink}
+                className="group bg-white border border-zinc-200 rounded-2xl overflow-hidden hover:border-zinc-300 transition-all duration-300 flex flex-col justify-between shadow-sm hover:shadow-md animate-in fade-in duration-300 cursor-pointer block"
               >
                 {/* Image panel */}
-                <div className="relative h-48 bg-zinc-50 overflow-hidden flex items-center justify-center border-b border-zinc-100">
+                <div className="relative h-48 bg-white border-b border-zinc-100 overflow-hidden flex items-center justify-center p-3">
                   <img 
                     src={productImg} 
                     alt={prod.title || prod.name}
-                    className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
+                    className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
                   />
                   <button 
-                    onClick={() => handleAddToWishlist(prod)}
+                    onClick={(e) => handleAddToWishlist(e, prod, matchedVar, pricing, productImg)}
                     className="absolute top-3 right-3 p-2 bg-white/80 hover:bg-white backdrop-blur-sm border border-zinc-150 text-zinc-500 hover:text-rose-500 rounded-full z-10 transition-colors cursor-pointer shadow-sm"
                     aria-label="Add to wishlist"
                   >
@@ -128,7 +169,7 @@ export default function Search() {
                       )}
                     </div>
                     <h3 className="font-bold text-zinc-800 text-sm line-clamp-1 group-hover:text-black transition-colors">
-                      <Link to={`/product/${prod._id || prod.id}`}>{prod.title || prod.name}</Link>
+                      {prod.title || prod.name}
                     </h3>
                     <div className="flex items-center gap-1 pt-0.5">
                       <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
@@ -137,9 +178,18 @@ export default function Search() {
                   </div>
 
                   <div className="flex items-center justify-between pt-3 border-t border-zinc-100">
-                    <span className="font-extrabold text-sm text-zinc-900">₹{prod.price.toLocaleString('en-IN')}</span>
+                    <div className="flex flex-col">
+                      <span className="font-extrabold text-base text-zinc-900">
+                        ₹{pricing.sellingPrice ? pricing.sellingPrice.toLocaleString('en-IN') : '0'}
+                      </span>
+                      {pricing.originalMrp > pricing.sellingPrice && (
+                        <span className="text-[10px] text-zinc-400 line-through font-semibold">
+                          ₹{pricing.originalMrp.toLocaleString('en-IN')}
+                        </span>
+                      )}
+                    </div>
                     <button 
-                      onClick={() => handleAddToCart(prod)}
+                      onClick={(e) => handleAddToCart(e, prod, matchedVar, pricing, productImg, matchedSku)}
                       className="px-3 py-2 bg-black hover:bg-zinc-900 text-[10px] font-bold text-white rounded-xl flex items-center gap-1 transition-colors cursor-pointer shadow-sm"
                     >
                       <ShoppingBag className="h-3 w-3" />
@@ -147,7 +197,7 @@ export default function Search() {
                     </button>
                   </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

@@ -51,6 +51,7 @@ const FooterManager = lazy(() => import('../pages/admin/FooterManager'));
 const AdminReturns = lazy(() => import('../pages/admin/Returns'));
 const AdminEnquiries = lazy(() => import('../pages/admin/Enquiries'));
 const AdminSalesReport = lazy(() => import('../pages/admin/SalesReport'));
+const NewArrivalsManager = lazy(() => import('../pages/admin/NewArrivalsManager'));
 
 // Lazy-loaded secondary user pages
 const Search = lazy(() => import('../pages/Search'));
@@ -149,6 +150,8 @@ const router = createBrowserRouter([
       { path: 'users', element: <SuspenseWrapper><Users /></SuspenseWrapper> },
       { path: 'coupons', element: <SuspenseWrapper><Coupons /></SuspenseWrapper> },
       { path: 'hero-banners', element: <SuspenseWrapper><HeroBanners /></SuspenseWrapper> },
+      { path: 'latest-apple', element: <SuspenseWrapper><NewArrivalsManager /></SuspenseWrapper> },
+      { path: 'new-arrivals', element: <SuspenseWrapper><NewArrivalsManager /></SuspenseWrapper> },
       { path: 'apple-categories', element: <SuspenseWrapper><AppleCategories /></SuspenseWrapper> },
       { path: 'testimonials', element: <SuspenseWrapper><Testimonials /></SuspenseWrapper> },
       { path: 'navbar-menu', element: <SuspenseWrapper><NavbarManager /></SuspenseWrapper> },

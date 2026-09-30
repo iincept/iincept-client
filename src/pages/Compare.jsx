@@ -437,10 +437,20 @@ export default function Compare() {
   };
 
   const getProductImage = (prod, slotIdx) => {
-    if (!prod) return activeCategory === 'ipad' ? '/ipad_category_v2.jpg' : activeCategory === 'iphone' ? '/iphone_category_v2.jpg' : '/macbook_category_v3.jpg';
+    const fallbackCategoryImg = activeCategory === 'ipad' ? '/ipad_nav/ipad.png' : activeCategory === 'iphone' ? '/iphone_nav/iphone_17.png' : '/mac_nav/macbook_air.png';
+    if (!prod) return fallbackCategoryImg;
 
-    const selCol = selectedColors[slotIdx] || (Array.isArray(prod.colors) && prod.colors.length > 0 ? (typeof prod.colors[0] === 'object' ? prod.colors[0].name : prod.colors[0]) : null);
+    const hasUserSelectedColor = Boolean(selectedColors[slotIdx]);
+    
+    // When no color is explicitly selected by user interaction, ALWAYS return the primary product image
+    if (!hasUserSelectedColor) {
+      if (prod.displayImage) return prod.displayImage;
+      if (prod.image) return prod.image;
+      if (Array.isArray(prod.images) && prod.images[0]) return prod.images[0];
+      return fallbackCategoryImg;
+    }
 
+    const selCol = selectedColors[slotIdx];
     if (selCol) {
       const targetNorm = selCol.toString().replace(/\s+/g, ' ').trim().toLowerCase();
 
@@ -485,20 +495,9 @@ export default function Compare() {
           return prod.images[colorIdx];
         }
       }
-
-      // 5. Fallback mappings by color keywords
-      if (targetNorm.includes('pink') || targetNorm.includes('rose')) return '/iphone16_pink_hand.jpg';
-      if (targetNorm.includes('purple') || targetNorm.includes('lavender')) return '/iphone17_purple_fb.jpg';
-      if (targetNorm.includes('green') || targetNorm.includes('teal') || targetNorm.includes('saga')) return '/iphone16_green_profile.jpg';
-      if (targetNorm.includes('ultramarine') || targetNorm.includes('sky blue') || targetNorm.includes('deep blue') || targetNorm.includes('blue')) return '/iphone_nav/iphone_air.png';
-      if (targetNorm.includes('orange') || targetNorm.includes('desert') || targetNorm.includes('gold')) return '/iphone_nav/iphone_17_pro.png';
-      if (targetNorm.includes('starlight')) return '/macbook_category_v3.jpg';
-      if (targetNorm.includes('white') || targetNorm.includes('silver')) return '/ipad_category_uploaded.png';
-      if (targetNorm.includes('midnight') || targetNorm.includes('space black') || targetNorm.includes('black')) return '/macbook_pro_dark.jpg';
-      if (targetNorm.includes('space gray') || targetNorm.includes('space grey')) return '/mac_nav/macbook_neo.png';
     }
 
-    return prod.image || (Array.isArray(prod.images) && prod.images[0]) || (activeCategory === 'ipad' ? '/ipad_category_v2.jpg' : activeCategory === 'iphone' ? '/iphone_category_v2.jpg' : '/macbook_category_v3.jpg');
+    return prod.displayImage || prod.image || (Array.isArray(prod.images) && prod.images[0]) || fallbackCategoryImg;
   };
 
   const handleClear = () => {

@@ -172,6 +172,7 @@ export default function Products() {
     processors: [],
     material: [],
     features: [],
+    specifications: [],
     images: [],
     variants: [],
     partNumber: '',
@@ -462,7 +463,8 @@ export default function Products() {
       storage: finalStorage,
       ram: finalRam,
       processors: finalProcessors,
-      variants: finalVariantsWithPrice
+      variants: finalVariantsWithPrice,
+      specifications: (productForm.specifications || []).filter(s => s && (s.name?.trim() || s.value?.trim()))
     };
 
     // Auto-populate top-level images from all variant images
@@ -537,6 +539,7 @@ export default function Products() {
       processors: Array.isArray(prod.processors) ? prod.processors : (prod.processor ? [prod.processor] : []),
       material: prod.material || [],
       features: prod.features || [],
+      specifications: Array.isArray(prod.specifications) ? prod.specifications : [],
       images: prod.images || [],
       variants: prodVariants,
       partNumber: prod.partNumber || '',
@@ -590,6 +593,7 @@ export default function Products() {
       glasses: [],
       material: [],
       features: [],
+      specifications: [],
       images: [],
       variants: [],
       partNumber: '',
@@ -962,17 +966,15 @@ export default function Products() {
             <div className="lg:col-span-8 space-y-6">
 
               {/* Tabs indicator */}
-              <div className="flex border-b border-zinc-200 gap-6 text-xs font-bold text-zinc-450 pb-2">
-                <span className="text-[#0071e3] border-b-2 border-[#0071e3] pb-2 cursor-pointer">Basic Information</span>
-                <span className="hover:text-zinc-800 cursor-pointer pb-2">Variants</span>
-                <span className="hover:text-zinc-800 cursor-pointer pb-2">Images</span>
-                <span className="hover:text-zinc-800 cursor-pointer pb-2">SEO</span>
-                <span className="hover:text-zinc-800 cursor-pointer pb-2">Shipping</span>
-                <span className="hover:text-zinc-800 cursor-pointer pb-2">More</span>
+              <div className="flex border-b border-zinc-200 gap-6 text-xs font-bold text-zinc-500 pb-2 overflow-x-auto select-none">
+                <span onClick={() => document.getElementById('basic-info-section')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-[#0071e3] cursor-pointer pb-2">Basic Information</span>
+                <span onClick={() => document.getElementById('variants-section')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-[#0071e3] cursor-pointer pb-2">Variants</span>
+                <span onClick={() => document.getElementById('specifications-section')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-[#0071e3] cursor-pointer pb-2">Specifications</span>
+                <span onClick={() => document.getElementById('seo-section')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-[#0071e3] cursor-pointer pb-2">SEO</span>
               </div>
 
               {/* Basic Information Card */}
-              <div className="bg-white rounded-2xl border border-zinc-200 p-6 space-y-5 shadow-sm text-left">
+              <div id="basic-info-section" className="bg-white rounded-2xl border border-zinc-200 p-6 space-y-5 shadow-sm text-left scroll-mt-24">
 
                 {/* Title */}
                 <div>
@@ -1160,35 +1162,81 @@ export default function Products() {
 
                 {/* Base price & stock input if no variants */}
                 {(!productForm.variants || productForm.variants.length === 0) && (
-                  <div className="grid grid-cols-3 gap-4 border-t border-zinc-150 pt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 border-t border-zinc-150 pt-4">
                     <div>
-                      <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-2">
-                        Price (₹) *
+                      <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1">
+                        MRP Price (₹)
                       </label>
+                      <div className="text-[9px] text-[#0071e3] font-semibold mb-1.5">(EDITABLE)</div>
                       <input
                         type="number"
-                        placeholder="119900"
-                        value={productForm.price}
-                        onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
-                        className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 outline-none text-xs"
+                        min="0"
+                        placeholder="0"
+                        value={productForm.price || ''}
+                        onChange={(e) => {
+                          const newMrp = e.target.value;
+                          const mrpNum = Number(newMrp || 0);
+                          const currentDisc = productForm.discountPercent !== undefined
+                            ? productForm.discountPercent
+                            : (productForm.discountPrice && productForm.price ? Math.round(((productForm.price - productForm.discountPrice) / productForm.price) * 100) : 0);
+                          const disc = Math.min(100, Math.max(0, parseFloat(currentDisc) || 0));
+                          const finalP = Math.round(mrpNum - (mrpNum * disc / 100));
+                          setProductForm({
+                            ...productForm,
+                            price: newMrp,
+                            discountPrice: finalP
+                          });
+                        }}
+                        className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 focus:border-[#0071e3] outline-none text-xs font-bold text-zinc-900 bg-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-2">
-                        Discount Price (₹)
+                      <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1">
+                        Discount (%)
                       </label>
+                      <div className="text-[9px] text-blue-600 font-semibold mb-1.5">(EDITABLE)</div>
                       <input
                         type="number"
-                        placeholder="109900"
-                        value={productForm.discountPrice || ''}
-                        onChange={(e) => setProductForm({ ...productForm, discountPrice: e.target.value })}
-                        className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 outline-none text-xs"
+                        min="0"
+                        max="100"
+                        placeholder="0"
+                        value={productForm.discountPercent !== undefined ? productForm.discountPercent : (productForm.discountPrice && productForm.price ? Math.round(((productForm.price - productForm.discountPrice) / productForm.price) * 100) : '')}
+                        onChange={(e) => {
+                          const discVal = e.target.value;
+                          const disc = Math.min(100, Math.max(0, parseFloat(discVal) || 0));
+                          const mrp = Number(productForm.price || 0);
+                          const finalP = Math.round(mrp - (mrp * disc / 100));
+                          setProductForm({
+                            ...productForm,
+                            discountPercent: discVal,
+                            discountPrice: finalP
+                          });
+                        }}
+                        className="w-full px-4 py-2.5 rounded-xl border border-blue-300 focus:border-[#0071e3] outline-none text-xs font-bold text-blue-700 bg-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-2">
+                      <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1">
+                        Final Price (₹)
+                      </label>
+                      <div className="text-[9px] text-emerald-600 font-semibold mb-1.5">(AUTOMATICALLY CALCULATED)</div>
+                      <input
+                        type="number"
+                        readOnly
+                        disabled
+                        value={
+                          productForm.price
+                            ? Math.round(Number(productForm.price) - (Number(productForm.price) * (Number(productForm.discountPercent !== undefined ? productForm.discountPercent : (productForm.discountPrice ? ((productForm.price - productForm.discountPrice)/productForm.price)*100 : 0)) / 100)))
+                            : ''
+                        }
+                        className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 outline-none text-xs font-extrabold text-emerald-700 bg-emerald-50/50 cursor-not-allowed select-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1">
                         Stock *
                       </label>
+                      <div className="text-[9px] text-zinc-400 mb-1.5">&nbsp;</div>
                       <input
                         type="number"
                         placeholder="10"
@@ -1345,7 +1393,7 @@ export default function Products() {
               </div>
 
               {/* Variants Section Card */}
-              <div className="bg-white rounded-2xl border border-zinc-200 p-6 space-y-5 shadow-sm text-left">
+              <div id="variants-section" className="bg-white rounded-2xl border border-zinc-200 p-6 space-y-5 shadow-sm text-left scroll-mt-24">
                 <div className="flex justify-between items-center border-b border-zinc-150 pb-4">
                   <div>
                     <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider">
@@ -1567,35 +1615,72 @@ export default function Products() {
                             </div>
 
                             <div>
-                              <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1.5">Price (₹) *</label>
+                              <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1">MRP Price (₹)</label>
+                              <div className="text-[9px] text-[#0071e3] font-semibold mb-1">(EDITABLE)</div>
                               <input
                                 type="number"
-                                required
                                 min="0"
-                                placeholder="149900"
+                                placeholder="0"
                                 value={v.price || ''}
                                 onChange={(e) => {
+                                  const newMrp = e.target.value;
+                                  const mrpNum = Number(newMrp || 0);
+                                  const currentDisc = v.discountPercent !== undefined
+                                    ? v.discountPercent
+                                    : (v.discountPrice && v.price ? Math.round(((v.price - v.discountPrice) / v.price) * 100) : 0);
+                                  const disc = Math.min(100, Math.max(0, parseFloat(currentDisc) || 0));
+                                  const finalP = Math.round(mrpNum - (mrpNum * disc / 100));
                                   const updated = [...productForm.variants];
-                                  updated[vIdx] = { ...v, price: e.target.value };
+                                  updated[vIdx] = {
+                                    ...v,
+                                    price: newMrp,
+                                    discountPrice: finalP
+                                  };
                                   setProductForm({ ...productForm, variants: updated });
                                 }}
-                                className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 focus:border-[#0071e3] outline-none text-xs font-bold text-zinc-900"
+                                className="w-full px-3 py-2 rounded-xl border border-zinc-200 focus:border-[#0071e3] outline-none text-xs font-bold text-zinc-900 bg-white"
                               />
                             </div>
 
                             <div>
-                              <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1.5">Discount Price (₹)</label>
+                              <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1">Discount (%)</label>
+                              <div className="text-[9px] text-blue-600 font-semibold mb-1">(EDITABLE)</div>
                               <input
                                 type="number"
                                 min="0"
-                                placeholder="139900"
-                                value={v.discountPrice || ''}
+                                max="100"
+                                placeholder="0"
+                                value={v.discountPercent !== undefined ? v.discountPercent : (v.discountPrice && v.price ? Math.round(((v.price - v.discountPrice) / v.price) * 100) : '')}
                                 onChange={(e) => {
+                                  const discVal = e.target.value;
+                                  const disc = Math.min(100, Math.max(0, parseFloat(discVal) || 0));
+                                  const mrp = Number(v.price || 0);
+                                  const finalP = Math.round(mrp - (mrp * disc / 100));
                                   const updated = [...productForm.variants];
-                                  updated[vIdx] = { ...v, discountPrice: e.target.value };
+                                  updated[vIdx] = {
+                                    ...v,
+                                    discountPercent: discVal,
+                                    discountPrice: finalP
+                                  };
                                   setProductForm({ ...productForm, variants: updated });
                                 }}
-                                className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 focus:border-[#0071e3] outline-none text-xs"
+                                className="w-full px-3 py-2 rounded-xl border border-blue-300 focus:border-[#0071e3] outline-none text-xs font-bold text-blue-700 bg-white"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1">Final Price (₹)</label>
+                              <div className="text-[9px] text-emerald-600 font-semibold mb-1">(CALCULATED)</div>
+                              <input
+                                type="number"
+                                readOnly
+                                disabled
+                                value={
+                                  v.price
+                                    ? Math.round(Number(v.price) - (Number(v.price) * (Number(v.discountPercent !== undefined ? v.discountPercent : (v.discountPrice ? ((v.price - v.discountPrice)/v.price)*100 : 0)) / 100)))
+                                    : ''
+                                }
+                                className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs font-extrabold text-emerald-700 bg-emerald-50/50 cursor-not-allowed select-none"
                               />
                             </div>
 
@@ -1690,8 +1775,119 @@ export default function Products() {
                 )}
               </div>
 
+              {/* Specifications Section */}
+              <div id="specifications-section" className="bg-white rounded-2xl border border-zinc-200 p-6 space-y-4 shadow-sm text-left scroll-mt-24">
+                <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+                  <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider">
+                    Specifications
+                  </h3>
+                  <span className="text-xs text-zinc-500 font-medium">
+                    {(productForm.specifications || []).length} items
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {(productForm.specifications || []).map((spec, sIdx) => (
+                    <div key={sIdx} className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-3 transition-all">
+                      <div className="flex-1">
+                        <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1">
+                          Specification Name
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Storage"
+                          value={spec.name || ''}
+                          onChange={(e) => {
+                            const updated = [...(productForm.specifications || [])];
+                            updated[sIdx] = { ...updated[sIdx], name: e.target.value };
+                            setProductForm({ ...productForm, specifications: updated });
+                          }}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 focus:border-[#0071e3] outline-none text-xs bg-white font-medium text-zinc-900"
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1">
+                          Specification Value
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 256 GB storage"
+                          value={spec.value || ''}
+                          onChange={(e) => {
+                            const updated = [...(productForm.specifications || [])];
+                            updated[sIdx] = { ...updated[sIdx], value: e.target.value };
+                            setProductForm({ ...productForm, specifications: updated });
+                          }}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 focus:border-[#0071e3] outline-none text-xs bg-white font-medium text-zinc-900"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-1.5 self-end sm:self-center pt-1 sm:pt-4 shrink-0">
+                        <button
+                          type="button"
+                          disabled={sIdx === 0}
+                          onClick={() => {
+                            const updated = [...(productForm.specifications || [])];
+                            const [item] = updated.splice(sIdx, 1);
+                            updated.splice(sIdx - 1, 0, item);
+                            setProductForm({ ...productForm, specifications: updated });
+                          }}
+                          title="Move Up"
+                          className="p-2 text-zinc-500 hover:text-zinc-900 disabled:opacity-30 disabled:cursor-not-allowed border border-zinc-200 rounded-xl bg-white transition-colors cursor-pointer"
+                        >
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={sIdx === (productForm.specifications || []).length - 1}
+                          onClick={() => {
+                            const updated = [...(productForm.specifications || [])];
+                            const [item] = updated.splice(sIdx, 1);
+                            updated.splice(sIdx + 1, 0, item);
+                            setProductForm({ ...productForm, specifications: updated });
+                          }}
+                          title="Move Down"
+                          className="p-2 text-zinc-500 hover:text-zinc-900 disabled:opacity-30 disabled:cursor-not-allowed border border-zinc-200 rounded-xl bg-white transition-colors cursor-pointer"
+                        >
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = (productForm.specifications || []).filter((_, i) => i !== sIdx);
+                            setProductForm({ ...productForm, specifications: updated });
+                          }}
+                          className="px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-xl transition-colors cursor-pointer bg-white flex items-center gap-1.5 shrink-0"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span>Remove</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProductForm(prev => ({
+                      ...prev,
+                      specifications: [
+                        ...(prev.specifications || []),
+                        { name: '', value: '' }
+                      ]
+                    }));
+                  }}
+                  className="flex items-center gap-1.5 px-4 py-2.5 border border-zinc-200 hover:bg-zinc-50 text-zinc-700 text-xs font-bold rounded-xl transition-all cursor-pointer bg-white"
+                >
+                  <Plus className="h-4 w-4 text-zinc-400" />
+                  <span>Add Specification</span>
+                </button>
+              </div>
+
               {/* SEO Information */}
-              <div className="bg-white rounded-2xl border border-zinc-200 p-6 space-y-4 shadow-sm text-left">
+              <div id="seo-section" className="bg-white rounded-2xl border border-zinc-200 p-6 space-y-4 shadow-sm text-left scroll-mt-24">
                 <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider border-b border-zinc-100 pb-3">
                   SEO Information
                 </h3>

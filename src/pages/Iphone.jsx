@@ -1,11 +1,12 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Heart, SlidersHorizontal, ArrowUpDown, X, ShoppingBag, ShieldCheck, Wrench, Headphones, Check } from 'lucide-react';
 import { addToCart } from '../redux/cartSlice';
 import { addToWishlist } from '../redux/wishlistSlice';
 import { fetchProducts } from '../redux/productSlice';
-import { matchesProductSearch } from '../utils/searchUtils';
+import { matchesProductSearch, normalizeTargetPath } from '../utils/searchUtils';
+import { getProductCardPricing } from '../utils/pricingUtils';
 import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
@@ -175,11 +176,21 @@ const DEFAULT_IPHONE_APPLECARE_ROWS = [
   { 
     model: 'iPhone 15 / iPhone 16', 
     title: 'AppleCare+ for iPhone 15 / 16', 
-    description: '2 Years Apple-certified coverage for iPhone 15 & 16 with accidental damage protection.', 
+    description: 'Apple-certified coverage for iPhone 15 & 16 with accidental damage protection.', 
+    description1yr: '1 Year Apple-certified coverage for iPhone 15 & 16 with accidental damage protection.',
+    description2yr: '2 Years Apple-certified coverage for iPhone 15 & 16 with accidental damage protection.',
     sku: 'AC-IPHONE-15-16', 
+    sku1yr: 'AC-IPHONE-15-16-1YR',
+    sku2yr: 'AC-IPHONE-15-16',
     mrp: '₹16,900.00', 
+    mrp1yr: '₹9,900.00',
+    mrp2yr: '₹16,900.00',
     discount: '12% OFF', 
+    discount1yr: '10% OFF',
+    discount2yr: '12% OFF',
     salePrice: '₹14,900.00', 
+    salePrice1yr: '₹8,900.00',
+    salePrice2yr: '₹14,900.00',
     monthly: '₹749.00', 
     yearly: '₹14,900.00', 
     image: '/iphone_nav/iphone_16.png', 
@@ -188,11 +199,21 @@ const DEFAULT_IPHONE_APPLECARE_ROWS = [
   { 
     model: 'iPhone 16 Plus / 17', 
     title: 'AppleCare+ for iPhone 16 Plus / 17', 
-    description: '2 Years Apple-certified coverage for iPhone 16 Plus & 17 with accidental damage protection.', 
+    description: 'Apple-certified coverage for iPhone 16 Plus & 17 with accidental damage protection.', 
+    description1yr: '1 Year Apple-certified coverage for iPhone 16 Plus & 17 with accidental damage protection.',
+    description2yr: '2 Years Apple-certified coverage for iPhone 16 Plus & 17 with accidental damage protection.',
     sku: 'AC-IPHONE-16P-17', 
+    sku1yr: 'AC-IPHONE-16P-17-1YR',
+    sku2yr: 'AC-IPHONE-16P-17',
     mrp: '₹19,900.00', 
+    mrp1yr: '₹11,900.00',
+    mrp2yr: '₹19,900.00',
     discount: '10% OFF', 
+    discount1yr: '10% OFF',
+    discount2yr: '10% OFF',
     salePrice: '₹17,900.00', 
+    salePrice1yr: '₹10,700.00',
+    salePrice2yr: '₹17,900.00',
     monthly: '₹899.00', 
     yearly: '₹17,900.00', 
     image: '/iphone_nav/iphone_17.png', 
@@ -201,11 +222,21 @@ const DEFAULT_IPHONE_APPLECARE_ROWS = [
   { 
     model: 'iPhone 16 Pro / 16 Pro Max', 
     title: 'AppleCare+ for iPhone 16 Pro / Pro Max', 
-    description: '2 Years Apple-certified coverage for iPhone 16 Pro & Pro Max with accidental damage protection.', 
+    description: 'Apple-certified coverage for iPhone 16 Pro & Pro Max with accidental damage protection.', 
+    description1yr: '1 Year Apple-certified coverage for iPhone 16 Pro & Pro Max with accidental damage protection.',
+    description2yr: '2 Years Apple-certified coverage for iPhone 16 Pro & Pro Max with accidental damage protection.',
     sku: 'AC-IPHONE-16PRO', 
+    sku1yr: 'AC-IPHONE-16PRO-1YR',
+    sku2yr: 'AC-IPHONE-16PRO',
     mrp: '₹22,900.00', 
+    mrp1yr: '₹13,900.00',
+    mrp2yr: '₹22,900.00',
     discount: '10% OFF', 
+    discount1yr: '10% OFF',
+    discount2yr: '10% OFF',
     salePrice: '₹20,900.00', 
+    salePrice1yr: '₹12,500.00',
+    salePrice2yr: '₹20,900.00',
     monthly: '₹1,049.00', 
     yearly: '₹20,900.00', 
     image: '/iphone_nav/iphone_16_pro.png', 
@@ -214,11 +245,21 @@ const DEFAULT_IPHONE_APPLECARE_ROWS = [
   { 
     model: 'iPhone 17 Pro / 17 Pro Max', 
     title: 'AppleCare+ for iPhone 17 Pro / Pro Max', 
-    description: '2 Years Apple-certified coverage for iPhone 17 Pro & Pro Max with accidental damage protection.', 
+    description: 'Apple-certified coverage for iPhone 17 Pro & Pro Max with accidental damage protection.', 
+    description1yr: '1 Year Apple-certified coverage for iPhone 17 Pro & Pro Max with accidental damage protection.',
+    description2yr: '2 Years Apple-certified coverage for iPhone 17 Pro & Pro Max with accidental damage protection.',
     sku: 'AC-IPHONE-17PRO', 
+    sku1yr: 'AC-IPHONE-17PRO-1YR',
+    sku2yr: 'AC-IPHONE-17PRO',
     mrp: '₹23,900.00', 
+    mrp1yr: '₹14,900.00',
+    mrp2yr: '₹23,900.00',
     discount: '9% OFF', 
+    discount1yr: '10% OFF',
+    discount2yr: '9% OFF',
     salePrice: '₹21,900.00', 
+    salePrice1yr: '₹13,400.00',
+    salePrice2yr: '₹21,900.00',
     monthly: '₹1,099.00', 
     yearly: '₹21,900.00', 
     image: '/iphone_nav/iphone_17_pro.png', 
@@ -227,11 +268,21 @@ const DEFAULT_IPHONE_APPLECARE_ROWS = [
   { 
     model: 'iPhone SE', 
     title: 'AppleCare+ for iPhone SE', 
-    description: '2 Years Apple-certified coverage for iPhone SE with accidental damage protection.', 
+    description: 'Apple-certified coverage for iPhone SE with accidental damage protection.', 
+    description1yr: '1 Year Apple-certified coverage for iPhone SE with accidental damage protection.',
+    description2yr: '2 Years Apple-certified coverage for iPhone SE with accidental damage protection.',
     sku: 'AC-IPHONE-SE', 
+    sku1yr: 'AC-IPHONE-SE-1YR',
+    sku2yr: 'AC-IPHONE-SE',
     mrp: '₹9,900.00', 
+    mrp1yr: '₹5,900.00',
+    mrp2yr: '₹9,900.00',
     discount: '10% OFF', 
+    discount1yr: '10% OFF',
+    discount2yr: '10% OFF',
     salePrice: '₹8,900.00', 
+    salePrice1yr: '₹5,300.00',
+    salePrice2yr: '₹8,900.00',
     monthly: '₹449.00', 
     yearly: '₹8,900.00', 
     image: '/iphone_nav/iphone_se.png', 
@@ -240,8 +291,8 @@ const DEFAULT_IPHONE_APPLECARE_ROWS = [
 ];
 
 const IPHONE_SUB_NAV_ITEMS = [
-  { name: 'iPhone Duo', query: 'iPhone Duo', image: '/iphone_nav/iphone_duo.png', scale: 'scale-100' },
-  { name: 'iPhone 18 Pro', query: 'iPhone 18 Pro', image: '/iphone_nav/iphone_18_pro.jpg', scale: 'scale-90' },
+  { name: 'iPhone 18 Pro', query: 'iPhone 18 Pro', image: '/iphone_nav/dropdown_iphone_18_pro.jpg', scale: 'scale-100' },
+  { name: 'iPhone Duo', query: 'iPhone Duo', image: '/iphone_nav/dropdown_iphone_duo.png', scale: 'scale-100' },
   { name: 'iPhone 17 Pro', query: 'iPhone 17 Pro', image: '/iphone_nav/iphone_17_pro.png', scale: 'scale-100' },
   { name: 'iPhone 17', query: 'iPhone 17', image: '/iphone_nav/iphone_17.png', scale: 'scale-100' },
   { name: 'iPhone 17e', query: 'iPhone 17e', image: '/iphone_nav/iphone_17e.png', scale: 'scale-100' },
@@ -252,20 +303,28 @@ const IPHONE_SUB_NAV_ITEMS = [
 ];
 
 const resolveSubItemPath = (item) => {
-  const lowerName = (item.name || item.label || item.query || '').toLowerCase();
+  const nameLower = (item?.name || item?.label || '').toLowerCase();
+  const queryLower = (item?.query || '').toLowerCase();
+  const pathLower = (item?.path || '').toLowerCase();
 
-  if (lowerName.includes('care') || lowerName.includes('applecare')) {
+  if (nameLower.includes('care') || queryLower.includes('care') || pathLower.includes('care')) {
     return '/iphone?tab=applecare';
   }
-  if (lowerName.includes('shop iphone') || lowerName === 'all' || lowerName === 'all iphones') {
+  if (nameLower.includes('shop iphone') || nameLower === 'all' || nameLower === 'all iphones') {
     return '/iphone';
   }
-  if (item.path && (item.path.startsWith('/iphone?search=') || item.path.startsWith('/product/') || item.path.startsWith('/shop?'))) {
-    return item.path;
+  if (nameLower.includes('compare') || queryLower.includes('compare') || pathLower.includes('compare')) {
+    return '/compare?category=iphone';
   }
-
-  const queryVal = item.query || item.label || item.name || '';
-  return `/iphone?search=${encodeURIComponent(queryVal)}`;
+  if (item?.path && item.path.trim()) {
+    const normalized = normalizeTargetPath(item.path.trim());
+    if (normalized && normalized !== '/iphone') return normalized;
+  }
+  const queryVal = item?.query || item?.label || item?.name || '';
+  if (queryVal && queryVal.trim()) {
+    return `/iphone?search=${encodeURIComponent(queryVal.trim())}`;
+  }
+  return '/iphone';
 };
 
 const ensureAppleCareInSubItems = (items = []) => {
@@ -323,11 +382,56 @@ const resolveIconImage = (img, label) => {
 
 const getModelImageByName = (modelName = '') => {
   const m = modelName.toLowerCase();
+  if (m.includes('18 pro') || m.includes('duo')) return '/iphone_nav/dropdown_iphone_18_pro.jpg';
   if (m.includes('17 pro') || m.includes('16 pro') || m.includes('pro')) return '/iphone_nav/iphone_17_pro.png';
   if (m.includes('17')) return '/iphone_nav/iphone_17.png';
   if (m.includes('16')) return '/iphone_nav/iphone_16.png';
   if (m.includes('se')) return '/iphone_nav/iphone_se.png';
   return '/iphone_nav/iphone_16.png';
+};
+
+const parsePriceNumber = (val) => {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'number') return val;
+  const cleaned = String(val).replace(/[^0-9.]/g, '');
+  return parseFloat(cleaned) || 0;
+};
+
+const calculateFinalPriceStr = (mrp, discount) => {
+  const mrpNum = parsePriceNumber(mrp);
+  const discNum = Math.min(100, Math.max(0, parseFloat(discount) || 0));
+  const finalNum = Math.max(0, Math.round(mrpNum - (mrpNum * discNum / 100)));
+  return `₹${finalNum.toLocaleString('en-IN')}`;
+};
+
+const resolve1YrDetails = (row) => {
+  const defaultRow = DEFAULT_IPHONE_APPLECARE_ROWS.find(d => 
+    (d.model && row.model && d.model.toLowerCase().trim() === row.model.toLowerCase().trim()) ||
+    (d.title && row.title && d.title.toLowerCase().trim() === row.title.toLowerCase().trim())
+  ) || {};
+
+  const mrp = row.mrp1yr || defaultRow.mrp1yr || '₹9,900.00';
+  const discount = (row.discount1yr !== undefined && row.discount1yr !== '') ? String(row.discount1yr) : (defaultRow.discount1yr || '10% OFF');
+  const salePrice = row.salePrice1yr || defaultRow.salePrice1yr || calculateFinalPriceStr(mrp, discount);
+  const sku = row.sku1yr || defaultRow.sku1yr || (row.sku ? `${row.sku.replace(/-2YR$/i, '')}-1YR` : 'AC-IPHONE-1YR');
+  const description = row.description1yr || defaultRow.description1yr || `1 Year Apple-certified coverage for ${row.model || 'iPhone'}.`;
+
+  return { mrp, discount, salePrice, sku, description };
+};
+
+const resolve2YrDetails = (row) => {
+  const defaultRow = DEFAULT_IPHONE_APPLECARE_ROWS.find(d => 
+    (d.model && row.model && d.model.toLowerCase().trim() === row.model.toLowerCase().trim()) ||
+    (d.title && row.title && d.title.toLowerCase().trim() === row.title.toLowerCase().trim())
+  ) || {};
+
+  const mrp = row.mrp2yr || row.mrp || defaultRow.mrp2yr || defaultRow.mrp || '₹16,900.00';
+  const discount = (row.discount2yr !== undefined && row.discount2yr !== '') ? String(row.discount2yr) : (row.discount || defaultRow.discount2yr || defaultRow.discount || '12% OFF');
+  const salePrice = row.salePrice2yr || row.salePrice || row.yearly || defaultRow.salePrice2yr || defaultRow.salePrice || calculateFinalPriceStr(mrp, discount);
+  const sku = row.sku2yr || row.sku || defaultRow.sku2yr || defaultRow.sku || 'AC-IPHONE-2YR';
+  const description = row.description2yr || row.description || defaultRow.description2yr || defaultRow.description || `2 Years Apple-certified coverage for ${row.model || 'iPhone'}.`;
+
+  return { mrp, discount, salePrice, sku, description };
 };
 
 export default function Iphone() {
@@ -336,7 +440,7 @@ export default function Iphone() {
   const { products } = useSelector((state) => state.products);
   const [viewCols, setViewCols] = useState(4);
   const [showLimit, setShowLimit] = useState(16);
-  const [sortBy, setSortBy] = useState('latest');
+  const [sortBy, setSortBy] = useState('sequence');
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedColors, setSelectedColors] = useState({});
   const [activeTab, setActiveTab] = useState('all');
@@ -358,6 +462,8 @@ export default function Iphone() {
   });
   const [selectedAppleCareModel, setSelectedAppleCareModel] = useState(() => dbAppleCareRows[0] || DEFAULT_IPHONE_APPLECARE_ROWS[0]);
   const [selectedAppleCareMap, setSelectedAppleCareMap] = useState({});
+  const [selectedDurationMap, setSelectedDurationMap] = useState({});
+  const [selectedGlobalDuration, setSelectedGlobalDuration] = useState('2yr');
   const [dbHeaderTitle, setDbHeaderTitle] = useState(() => {
     try {
       return localStorage.getItem('iincept_iphone_applecare_title_v2') || 'AppleCare+';
@@ -365,8 +471,8 @@ export default function Iphone() {
   });
   const [dbDurationLabel, setDbDurationLabel] = useState(() => {
     try {
-      return localStorage.getItem('iincept_iphone_applecare_duration_v2') || '2 Years';
-    } catch (e) { return '2 Years'; }
+      return localStorage.getItem('iincept_iphone_applecare_duration_v2') || '1 Year & 2 Years';
+    } catch (e) { return '1 Year & 2 Years'; }
   });
 
 
@@ -381,7 +487,7 @@ export default function Iphone() {
   }, [dispatch]);
 
   useEffect(() => {
-    setSelectedColors({});
+    setSelectedColors((prev) => (Object.keys(prev).length > 0 ? {} : prev));
   }, [products]);
 
   useEffect(() => {
@@ -418,8 +524,8 @@ export default function Iphone() {
           if (iphoneTable) {
             const hTitle = iphoneTable.headerTitle || 'AppleCare+';
             const dLabel = iphoneTable.durationLabel || '2 Years';
-            setDbHeaderTitle(hTitle);
-            setDbDurationLabel(dLabel);
+            setDbHeaderTitle(prev => (prev !== hTitle ? hTitle : prev));
+            setDbDurationLabel(prev => (prev !== dLabel ? dLabel : prev));
             try {
               localStorage.setItem('iincept_iphone_applecare_title_v2', hTitle);
               localStorage.setItem('iincept_iphone_applecare_duration_v2', dLabel);
@@ -649,71 +755,88 @@ export default function Iphone() {
   };
 
   const getProductImage = (prod) => {
-    if (!prod) return '/iphone_category_v2.jpg';
+    if (!prod) return '/iphone_nav/iphone_17.png';
 
+    const hasUserSelectedColor = Boolean(selectedColors[prod.id]);
     const lowerName = (prod.name || prod.title || '').toLowerCase();
-    const userSelectedColor = selectedColors[prod.id] || (prod.colors && prod.colors[0] ? (prod.colors[0].name || prod.colors[0].rawName || (typeof prod.colors[0] === 'string' ? prod.colors[0] : '')) : null);
 
-    // Check for color-specific image
-    if (userSelectedColor && prod.colors && Array.isArray(prod.colors)) {
-      const targetNorm = userSelectedColor.replace(/\s+/g, ' ').trim().toLowerCase();
-
-      const foundColor = prod.colors.find((c) => {
-        const cNorm = (c.name || c.rawName || c).replace(/\s+/g, ' ').trim().toLowerCase();
-        return cNorm === targetNorm;
-      });
-
-      if (foundColor && isValidImageString(foundColor.image) && !foundColor.image.includes('iphone17p_orange')) {
-        return foundColor.image;
+    // When no color is explicitly selected by user interaction, ALWAYS return the primary product image
+    if (!hasUserSelectedColor) {
+      if (isValidImageString(prod.displayImage)) return prod.displayImage;
+      if (lowerName.includes('17 pro')) return '/iphone_nav/iphone_17_pro.png';
+      if (isValidImageString(prod.image) && !prod.image.includes('iphone_category_v2') && !prod.image.includes('iphone17p_orange')) return prod.image;
+      if (prod.images && Array.isArray(prod.images)) {
+        const cleanImg = prod.images.find(img => isValidImageString(img) && !img.includes('iphone_category_v2') && !img.includes('iphone17p_orange'));
+        if (cleanImg) return cleanImg;
       }
-      if (foundColor && foundColor.images && isValidImageString(foundColor.images[0]) && !foundColor.images[0].includes('iphone17p_orange')) {
-        return foundColor.images[0];
-      }
+      const extracted = extractFirstValidImage(prod);
+      if (isValidImageString(extracted) && !extracted.includes('iphone17p_orange')) return extracted;
+      if (lowerName.includes('15')) return '/iphone_nav/iphone_15.png';
+      if (lowerName.includes('se') || lowerName.includes('17e')) return '/iphone_nav/iphone_se.png';
+      if (lowerName.includes('16')) return '/iphone_nav/iphone_16.png';
+      if (lowerName.includes('17')) return '/iphone_nav/iphone_17.png';
+      return (isValidImageString(prod.image) ? prod.image : '/iphone_nav/iphone_17.png');
+    }
 
-      if (prod.variants && Array.isArray(prod.variants)) {
-        const foundVariant = prod.variants.find(v => {
-          if (!v.color) return false;
-          return v.color.replace(/\s+/g, ' ').trim().toLowerCase() === targetNorm;
-        });
-        if (foundVariant) {
-          if (isValidImageString(foundVariant.image) && !foundVariant.image.includes('iphone17p_orange')) return foundVariant.image;
-          if (foundVariant.images && isValidImageString(foundVariant.images[0]) && !foundVariant.images[0].includes('iphone17p_orange')) return foundVariant.images[0];
+    const userSelectedColor = selectedColors[prod.id];
+    if (userSelectedColor) {
+      // Check for color-specific image map
+      if (prod.colorImages && typeof prod.colorImages === 'object') {
+        const targetNorm = userSelectedColor.replace(/\s+/g, ' ').trim().toLowerCase();
+        const matchedKey = Object.keys(prod.colorImages).find(k => k.replace(/\s+/g, ' ').trim().toLowerCase() === targetNorm);
+        if (matchedKey && isValidImageString(prod.colorImages[matchedKey])) {
+          return prod.colorImages[matchedKey];
         }
       }
 
-      const colorIdx = prod.colors.findIndex((c) => {
-        const cNorm = (c.name || c.rawName || c).replace(/\s+/g, ' ').trim().toLowerCase();
-        return cNorm === targetNorm;
-      });
-      if (colorIdx !== -1 && prod.images && isValidImageString(prod.images[colorIdx]) && !prod.images[colorIdx].includes('iphone17p_orange')) {
-        return prod.images[colorIdx];
+      // Check for color-specific image
+      if (prod.colors && Array.isArray(prod.colors)) {
+        const targetNorm = userSelectedColor.replace(/\s+/g, ' ').trim().toLowerCase();
+
+        const foundColor = prod.colors.find((c) => {
+          const cNorm = (c.name || c.rawName || c).replace(/\s+/g, ' ').trim().toLowerCase();
+          return cNorm === targetNorm;
+        });
+
+        if (foundColor && isValidImageString(foundColor.image) && !foundColor.image.includes('iphone17p_orange')) {
+          return foundColor.image;
+        }
+        if (foundColor && foundColor.images && isValidImageString(foundColor.images[0]) && !foundColor.images[0].includes('iphone17p_orange')) {
+          return foundColor.images[0];
+        }
+
+        if (prod.variants && Array.isArray(prod.variants)) {
+          const foundVariant = prod.variants.find(v => {
+            if (!v.color) return false;
+            return v.color.replace(/\s+/g, ' ').trim().toLowerCase() === targetNorm;
+          });
+          if (foundVariant) {
+            if (isValidImageString(foundVariant.image) && !foundVariant.image.includes('iphone17p_orange')) return foundVariant.image;
+            if (foundVariant.images && isValidImageString(foundVariant.images[0]) && !foundVariant.images[0].includes('iphone17p_orange')) return foundVariant.images[0];
+          }
+        }
+
+        const colorIdx = prod.colors.findIndex((c) => {
+          const cNorm = (c.name || c.rawName || c).replace(/\s+/g, ' ').trim().toLowerCase();
+          return cNorm === targetNorm;
+        });
+        if (colorIdx !== -1 && prod.images && isValidImageString(prod.images[colorIdx]) && !prod.images[colorIdx].includes('iphone17p_orange')) {
+          return prod.images[colorIdx];
+        }
       }
     }
 
-    // Always match clean inside product details image for 17 Pro / 17 Pro Max
-    if (lowerName.includes('17 pro')) {
-      return '/iphone_nav/iphone_17_pro.png';
-    }
-
-    // Check main image uploaded via Admin Panel if it's clean
-    if (isValidImageString(prod.image) && !prod.image.includes('iphone_category_v2') && !prod.image.includes('iphone17p_orange')) {
-      return prod.image;
-    }
-
-    if (prod.images && Array.isArray(prod.images)) {
-      const cleanImg = prod.images.find(img => isValidImageString(img) && !img.includes('iphone_category_v2') && !img.includes('iphone17p_orange'));
-      if (cleanImg) return cleanImg;
-    }
-
+    if (isValidImageString(prod.displayImage)) return prod.displayImage;
+    if (lowerName.includes('17 pro')) return '/iphone_nav/iphone_17_pro.png';
+    if (isValidImageString(prod.image) && !prod.image.includes('iphone_category_v2') && !prod.image.includes('iphone17p_orange')) return prod.image;
     const extracted = extractFirstValidImage(prod);
     if (isValidImageString(extracted) && !extracted.includes('iphone17p_orange')) return extracted;
-
     if (lowerName.includes('15')) return '/iphone_nav/iphone_15.png';
     if (lowerName.includes('se') || lowerName.includes('17e')) return '/iphone_nav/iphone_se.png';
     if (lowerName.includes('16')) return '/iphone_nav/iphone_16.png';
     if (lowerName.includes('17')) return '/iphone_nav/iphone_17.png';
 
-    return (isValidImageString(prod.image) ? prod.image : '/iphone_category_v2.jpg');
+    return (isValidImageString(prod.image) ? prod.image : '/iphone_nav/iphone_17.png');
   };
 
   const handleAddToCart = (prod) => {
@@ -777,77 +900,83 @@ export default function Iphone() {
   };
 
   // Precise category and title matching to include ONLY iPhone products in MongoDB
-  const dbIphones = products.filter(p => {
-    const catName = (p.category?.name || p.category?.toString() || '').toLowerCase();
-    const catSlug = (p.category?.slug || '').toLowerCase();
-    const pTitle = (p.title || p.name || '').toLowerCase();
+  const dbIphones = useMemo(() => {
+    return products.filter(p => {
+      const catName = (p.category?.name || p.category?.toString() || '').toLowerCase();
+      const catSlug = (p.category?.slug || '').toLowerCase();
+      const pTitle = (p.title || p.name || '').toLowerCase();
 
-    // Explicitly exclude non-iPhone items (Mac, iPad, Watch, Audio, Accessories, Cables, Adapters, etc.)
-    const nonIphoneKeywords = [
-      'macbook', 'imac', 'mac mini', 'mac studio', 'mac pro',
-      'ipad', 'watch', 'apple tv', 'homepod', 'airpod', 'headphone',
-      'adapter', 'cable', 'charger', 'case', 'sleeve', 'cover', 'bag',
-      'keyboard', 'mouse', 'pencil', 'strap', 'band', 'loop', 'magsafe',
-      'display', 'monitor', 'screen protector'
-    ];
+      // Explicitly exclude non-iPhone items (Mac, iPad, Watch, Audio, Accessories, Cables, Adapters, etc.)
+      const nonIphoneKeywords = [
+        'macbook', 'imac', 'mac mini', 'mac studio', 'mac pro',
+        'ipad', 'watch', 'apple tv', 'homepod', 'airpod', 'headphone',
+        'adapter', 'cable', 'charger', 'case', 'sleeve', 'cover', 'bag',
+        'keyboard', 'mouse', 'pencil', 'strap', 'band', 'loop', 'magsafe',
+        'display', 'monitor', 'screen protector'
+      ];
 
-    if (nonIphoneKeywords.some(kw => pTitle.includes(kw))) {
-      return false;
-    }
+      if (nonIphoneKeywords.some(kw => pTitle.includes(kw))) {
+        return false;
+      }
 
-    const isCategoryMatch = catName === 'iphones' || catName === 'iphone' || catSlug === 'iphones' || catSlug === 'iphone' || catSlug === 'smartphones' || catName.includes('iphone');
-    const isTitleMatch = pTitle.includes('iphone') || /^phone\s*(15|16|17|18|se|pro|air|max|duo)/i.test(pTitle.trim());
+      const isCategoryMatch = catName === 'iphones' || catName === 'iphone' || catSlug === 'iphones' || catSlug === 'iphone' || catSlug === 'smartphones' || catName.includes('iphone');
+      const isTitleMatch = pTitle.includes('iphone') || /^phone\s*(15|16|17|18|se|pro|air|max|duo)/i.test(pTitle.trim());
 
-    return isCategoryMatch || isTitleMatch;
-  }).map(p => {
-    const firstImg = extractFirstValidImage(p);
-    const isValidImg = !!firstImg;
-    return {
-      id: p._id || p.id,
-      name: (p.title || p.name || '').replace(/^phone\b/i, 'iPhone'),
-      price: p.price,
-      priceStr: `₹${p.price.toLocaleString('en-IN')}`,
-      image: isValidImg ? firstImg : '/iphone_category_v2.jpg',
-      images: p.images || [],
-      variants: p.variants || [],
-      stock: p.stock,
-      colors: Array.isArray(p.colors) && p.colors.length > 0 ? p.colors.map(c => {
-        const rawName = typeof c === 'string' ? c : (c.name || '');
-        const normName = rawName.replace(/\s+/g, ' ').trim();
-        const val = typeof c === 'string' ? c : (c.value || c.name || '');
+      return isCategoryMatch || isTitleMatch;
+    }).map(p => {
+      const firstImg = extractFirstValidImage(p);
+      const primaryImg = p.displayImage || (firstImg && !firstImg.includes('mock-cloud') ? firstImg : (p.image || '/iphone_nav/iphone_17.png'));
+      return {
+        id: p._id || p.id,
+        name: (p.title || p.name || '').replace(/^phone\b/i, 'iPhone'),
+        price: p.price,
+        priceStr: `₹${p.price.toLocaleString('en-IN')}`,
+        discountPercent: p.discountPercent,
+        discountPrice: p.discountPrice,
+        displayImage: primaryImg,
+        colorImages: p.colorImages || {},
+        image: primaryImg,
+        images: p.images || [],
+        variants: p.variants || [],
+        stock: p.stock,
+        colors: Array.isArray(p.colors) && p.colors.length > 0 ? p.colors.map(c => {
+          const rawName = typeof c === 'string' ? c : (c.name || '');
+          const normName = rawName.replace(/\s+/g, ' ').trim();
+          const val = typeof c === 'string' ? c : (c.value || c.name || '');
 
-        let variantImage = typeof c === 'object' && c.image ? c.image : null;
-        if (!variantImage && typeof c === 'object' && Array.isArray(c.images) && c.images[0]) {
-          variantImage = c.images[0];
-        }
-        if (!variantImage && p.variants && Array.isArray(p.variants)) {
-          const matchedVariant = p.variants.find(v => {
-            if (!v.color) return false;
-            const vColor = v.color.replace(/\s+/g, ' ').trim().toLowerCase();
-            return vColor === normName.toLowerCase();
-          });
-          if (matchedVariant) {
-            if (matchedVariant.image) {
-              variantImage = matchedVariant.image;
-            } else if (matchedVariant.images && matchedVariant.images[0]) {
-              variantImage = matchedVariant.images[0];
+          let variantImage = typeof c === 'object' && c.image ? c.image : null;
+          if (!variantImage && typeof c === 'object' && Array.isArray(c.images) && c.images[0]) {
+            variantImage = c.images[0];
+          }
+          if (!variantImage && p.variants && Array.isArray(p.variants)) {
+            const matchedVariant = p.variants.find(v => {
+              if (!v.color) return false;
+              const vColor = v.color.replace(/\s+/g, ' ').trim().toLowerCase();
+              return vColor === normName.toLowerCase();
+            });
+            if (matchedVariant) {
+              if (matchedVariant.image) {
+                variantImage = matchedVariant.image;
+              } else if (matchedVariant.images && matchedVariant.images[0]) {
+                variantImage = matchedVariant.images[0];
+              }
             }
           }
-        }
 
-        return {
-          name: normName,
-          rawName: rawName,
-          value: resolveColorValue(val),
-          image: variantImage
-        };
-      }) : [],
-      rating: p.rating || 5.0,
-      isSoldOut: p.stock !== undefined && p.stock !== null ? p.stock <= 0 : false
-    };
-  });
+          return {
+            name: normName,
+            rawName: rawName,
+            value: resolveColorValue(val),
+            image: variantImage
+          };
+        }) : [],
+        rating: p.rating || 5.0,
+        isSoldOut: p.stock !== undefined && p.stock !== null ? p.stock <= 0 : false
+      };
+    });
+  }, [products]);
 
-  const combinedProducts = (() => {
+  const combinedProducts = useMemo(() => {
     if (dbIphones.length > 0) {
       const filtered = dbIphones.filter(p => {
         const name = (p.name || p.title || '').toLowerCase();
@@ -859,7 +988,7 @@ export default function Iphone() {
     }
 
     return DEFAULT_IPHONE_PRODUCTS;
-  })();
+  }, [dbIphones]);
 
   const getIphoneSequenceRank = (productName) => {
     const name = (productName || '').toLowerCase();
@@ -875,29 +1004,33 @@ export default function Iphone() {
     return 8;
   };
 
-  const sortedProducts = [...combinedProducts].sort((a, b) => {
-    if (sortBy === 'price-asc') return a.price - b.price;
-    if (sortBy === 'price-desc') return b.price - a.price;
-    if (sortBy === 'rating') return b.rating - a.rating;
+  const sortedProducts = useMemo(() => {
+    return [...combinedProducts].sort((a, b) => {
+      if (sortBy === 'price-asc') return a.price - b.price;
+      if (sortBy === 'price-desc') return b.price - a.price;
+      if (sortBy === 'rating') return b.rating - a.rating;
 
-    const rankA = getIphoneSequenceRank(a.name || a.title);
-    const rankB = getIphoneSequenceRank(b.name || b.title);
-    if (rankA !== rankB) return rankA - rankB;
+      const rankA = getIphoneSequenceRank(a.name || a.title);
+      const rankB = getIphoneSequenceRank(b.name || b.title);
+      if (rankA !== rankB) return rankA - rankB;
 
-    return 0;
-  });
+      return 0;
+    });
+  }, [combinedProducts, sortBy]);
 
   const searchQuery = searchParams.get('search') || '';
 
-  let filteredProducts = sortedProducts.filter((prod) => {
-    if (searchQuery && !matchesProductSearch(prod, searchQuery)) {
-      return false;
-    }
+  const filteredProducts = useMemo(() => {
+    return sortedProducts.filter((prod) => {
+      if (searchQuery && !matchesProductSearch(prod, searchQuery)) {
+        return false;
+      }
 
-    if (activeTab === 'available') return !prod.isSoldOut;
-    if (activeTab === 'soldout') return prod.isSoldOut;
-    return true;
-  });
+      if (activeTab === 'available') return !prod.isSoldOut;
+      if (activeTab === 'soldout') return prod.isSoldOut;
+      return true;
+    });
+  }, [sortedProducts, searchQuery, activeTab]);
 
   // Fallback: If search query produced 0 items, keep filteredProducts as [] so search results are accurately displayed
 
@@ -907,7 +1040,7 @@ export default function Iphone() {
       {/* Title & Category Sub-Nav Header */}
       <div className="w-full bg-[#fcfcfc] pt-2 pb-4 select-none font-sans mb-6">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-zinc-950 text-left mb-6">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950 text-left mb-4">
             iPhone
           </h1>
 
@@ -956,7 +1089,7 @@ export default function Iphone() {
                       style={{ mixBlendMode: 'multiply', filter: 'contrast(1.06) brightness(1.02)' }}
                     />
                   </div>
-                  <span className={`text-xs tracking-tight transition-colors duration-200 ${isActive ? 'font-bold text-zinc-950' : 'font-semibold text-zinc-700 group-hover:text-zinc-950'}`}>
+                  <span className={`text-[11px] tracking-tight transition-colors duration-200 ${isActive ? 'font-bold text-zinc-950' : 'font-medium text-zinc-700 group-hover:text-zinc-950'}`}>
                     {item.name}
                   </span>
                 </Link>
@@ -977,14 +1110,40 @@ export default function Iphone() {
               <div className="bg-white rounded-[24px] sm:rounded-[28px] border border-zinc-200/60 overflow-hidden shadow-xs p-6 sm:p-10 text-left">
                 {/* Header section */}
                 <div className="border-b border-zinc-100 pb-5 mb-6">
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div className="text-center sm:text-left">
                       <div className="text-2xl sm:text-4xl md:text-5xl font-black text-[#FF2D55] tracking-tight py-1">
                         {dbHeaderTitle || 'AppleCare+'}
                       </div>
                       <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-1">
-                        Official 2-Year Apple-certified protection for your iPhone
+                        Official Apple-certified protection for your iPhone (1-Year & 2-Year Plans)
                       </p>
+                    </div>
+
+                    {/* Global Duration Selector Pills */}
+                    <div className="flex items-center gap-2 bg-zinc-100 p-1 rounded-2xl shrink-0 self-center md:self-auto">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedGlobalDuration('1yr')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          selectedGlobalDuration === '1yr'
+                            ? 'bg-[#0071e3] text-white shadow-sm'
+                            : 'text-zinc-600 hover:text-zinc-900'
+                        }`}
+                      >
+                        1 Year Plans
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedGlobalDuration('2yr')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          selectedGlobalDuration === '2yr'
+                            ? 'bg-[#FF2D55] text-white shadow-sm'
+                            : 'text-zinc-600 hover:text-zinc-900'
+                        }`}
+                      >
+                        2 Year Plans
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1000,17 +1159,22 @@ export default function Iphone() {
                           const itemKey = row.model || row.title;
                           const isSelected = !!selectedAppleCareMap[itemKey];
 
-                          const activeMrp = row.mrp2yr || row.mrp;
-                          const activeSalePrice = row.salePrice2yr || row.salePrice || row.yearly;
-                          const activeDiscount = row.discount2yr || row.discount;
-                          const activeSku = row.sku2yr || row.sku;
-                          const activeDescription = row.description2yr || row.description;
+                          const chosenDuration = selectedDurationMap[itemKey] || selectedGlobalDuration || '2yr';
+                          const is1Yr = chosenDuration === '1yr';
+                          const planDetails = is1Yr ? resolve1YrDetails(row) : resolve2YrDetails(row);
+
+                          const activeMrp = planDetails.mrp;
+                          const activeSalePrice = planDetails.salePrice;
+                          const activeDiscount = planDetails.discount;
+                          const activeSku = planDetails.sku;
+                          const activeDescription = planDetails.description;
+                          const durationLabelText = is1Yr ? '1 Year' : '2 Years';
 
                           return (
                             <div 
                               key={i} 
                               onClick={() => {
-                                toggleAppleCareSelection({ ...row, salePrice: activeSalePrice, mrp: activeMrp, sku: activeSku, duration: '2 Years' });
+                                toggleAppleCareSelection({ ...row, salePrice: activeSalePrice, mrp: activeMrp, sku: activeSku, duration: durationLabelText, title: `${row.title || row.model} (${durationLabelText})` });
                               }}
                               className={`group bg-white rounded-[24px] sm:rounded-[28px] border transition-all duration-300 relative text-left cursor-pointer p-5 sm:p-6 shadow-xs hover:shadow-md flex flex-col justify-between h-full ${
                                 isSelected 
@@ -1028,8 +1192,10 @@ export default function Iphone() {
                                     
                                     {/* Top Left Badge */}
                                     <div className="w-full flex items-center justify-start z-10 mb-1">
-                                      <span className="bg-[#FF2D55] text-white text-[11px] font-bold px-3 py-1 rounded-full tracking-wide">
-                                        Apple Care+ (2 Years)
+                                      <span className={`text-white text-[11px] font-bold px-3 py-1 rounded-full tracking-wide transition-colors ${
+                                        is1Yr ? 'bg-[#0071e3]' : 'bg-[#FF2D55]'
+                                      }`}>
+                                        Apple Care+ ({durationLabelText})
                                       </span>
                                     </div>
                                     {/* Main Product Image */}
@@ -1070,14 +1236,42 @@ export default function Iphone() {
                                   {/* RIGHT COLUMN: Info & Pricing Block */}
                                   <div className="md:col-span-7 space-y-3 flex flex-col justify-between h-full">
                                     <div>
-                                      <div className="text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-[#FF2D55] mb-1">
-                                        APPLE CARE+ • 2 YEAR PLAN
+                                      {/* Per-card Duration Selector Pills */}
+                                      <div className="flex items-center gap-1.5 mb-2.5 bg-zinc-100/80 p-1 rounded-xl w-fit">
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedDurationMap(prev => ({ ...prev, [itemKey]: '1yr' }));
+                                          }}
+                                          className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                            is1Yr ? 'bg-white text-[#0071e3] shadow-xs ring-1 ring-black/5' : 'text-zinc-600 hover:text-zinc-900'
+                                          }`}
+                                        >
+                                          1 Year Plan
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedDurationMap(prev => ({ ...prev, [itemKey]: '2yr' }));
+                                          }}
+                                          className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                            !is1Yr ? 'bg-white text-[#FF2D55] shadow-xs ring-1 ring-black/5' : 'text-zinc-600 hover:text-zinc-900'
+                                          }`}
+                                        >
+                                          2 Year Plan
+                                        </button>
                                       </div>
-                                      <h3 className="font-extrabold text-[#1D1D1F] text-lg sm:text-xl leading-snug tracking-tight min-h-[52px] flex items-center">
-                                        {row.title || `Apple Care+ ${row.model}`}
+
+                                      <div className="text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-[#FF2D55] mb-1">
+                                        APPLE CARE+ • {is1Yr ? '1 YEAR PLAN' : '2 YEAR PLAN'}
+                                      </div>
+                                      <h3 className="font-extrabold text-[#1D1D1F] text-lg sm:text-xl leading-snug tracking-tight min-h-[44px] flex items-center">
+                                        {row.title || `Apple Care+ ${row.model}`} ({durationLabelText})
                                       </h3>
                                       <p className="text-xs text-zinc-500 font-medium mt-1 leading-relaxed min-h-[36px] flex items-center">
-                                        {activeDescription || `Extended coverage for your ${row.model}. Peace of mind for what's next.`}
+                                        {activeDescription || `${durationLabelText} Apple-certified coverage for your ${row.model}. Peace of mind for what's next.`}
                                       </p>
                                     </div>
 
@@ -1124,8 +1318,8 @@ export default function Iphone() {
                                   </div>
                                 </div>
 
-                                {/* MIDDLE SECTION: 4 Feature Highlights Grid */}
-                                <AppleCareFeaturesGrid years="2" />
+                                {/* MIDDLE SECTION: Feature Highlights Grid */}
+                                <AppleCareFeaturesGrid years={is1Yr ? "1" : "2"} />
                               </div>
 
                               {/* BOTTOM ACTION BUTTONS */}
@@ -1134,7 +1328,7 @@ export default function Iphone() {
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleAddAppleCareToWishlist({ ...row, salePrice: activeSalePrice, sku: activeSku }, i);
+                                    handleAddAppleCareToWishlist({ ...row, salePrice: activeSalePrice, mrp: activeMrp, sku: activeSku, duration: durationLabelText, title: `${row.title || row.model} (${durationLabelText})` }, i);
                                   }}
                                   className={`w-full border font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer ${
                                     localWishlist[`ac-iphone-${activeSku || i}`]
@@ -1150,7 +1344,7 @@ export default function Iphone() {
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleAddAppleCareToCart({ ...row, salePrice: activeSalePrice, sku: activeSku }, i);
+                                    handleAddAppleCareToCart({ ...row, salePrice: activeSalePrice, mrp: activeMrp, sku: activeSku, duration: durationLabelText, title: `${row.title || row.model} (${durationLabelText})` }, i);
                                   }}
                                   className="w-full bg-black hover:bg-zinc-900 active:scale-[0.98] text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
                                 >
@@ -1216,13 +1410,8 @@ export default function Iphone() {
 
         return (
           <>
-            {/* Top Filter and View Controller Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-zinc-150 pb-6 mb-8 text-sm font-sans uppercase font-bold text-zinc-500 tracking-wider">
-              <div className="text-zinc-800 text-xs tracking-widest flex items-center gap-2">
-                <span>SHOWING ALL {filteredProducts.length} RESULTS</span>
-              </div>
-
-              {searchQuery && (
+            {searchQuery && (
+              <div className="flex items-center justify-between gap-4 pb-4 mb-4 text-sm font-sans uppercase font-bold text-zinc-500 tracking-wider">
                 <button
                   onClick={() => setSearchParams({})}
                   className="text-xs font-semibold text-[#0071e3] hover:underline cursor-pointer flex items-center gap-1"
@@ -1230,8 +1419,8 @@ export default function Iphone() {
                   <X className="w-3.5 h-3.5" />
                   Clear Search Filter ("{searchQuery}")
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Slide-out Filter Drawer */}
             {filterOpen && (
@@ -1287,99 +1476,121 @@ export default function Iphone() {
 
             {/* Grid of iPhone models */}
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.slice(0, visibleCount).map((prod) => (
-                <div
-                  key={prod.id}
-                  className="group bg-white rounded-2xl overflow-hidden flex flex-col justify-between p-6 shadow-sm border border-zinc-100/50 hover:shadow-md hover:border-zinc-200/55 transition-all duration-300 relative text-left"
-                >
-                  <div className="flex items-center justify-between absolute top-4 left-4 right-4 z-10">
-                    {prod.isSoldOut ? (
-                      <span className="bg-[#f5f5f7] text-[#1d1d1f] font-bold text-[9px] tracking-widest uppercase px-2.5 py-1 rounded">
-                        SOLD OUT
-                      </span>
-                    ) : (
-                      <div />
-                    )}
+              {filteredProducts.slice(0, visibleCount).map((prod) => {
+                const pricing = getProductCardPricing(prod);
 
-                    <button
-                      onClick={() => handleAddToWishlist(prod)}
-                      className={`p-2 rounded-full shadow-sm border border-zinc-100/80 bg-white/90 hover:scale-110 transition-all cursor-pointer ${localWishlist[prod.id] ? 'text-red-500' : 'text-zinc-400 hover:text-zinc-600'
-                        }`}
-                    >
-                      <Heart className={`h-4 w-4 ${localWishlist[prod.id] ? 'fill-current' : ''}`} />
-                    </button>
-                  </div>
+                return (
+                  <div
+                    key={prod.id}
+                    className="group bg-white rounded-2xl overflow-hidden flex flex-col justify-between p-6 shadow-sm border border-zinc-100/50 hover:shadow-md hover:border-zinc-200/55 transition-all duration-300 relative text-left"
+                  >
+                    <div className="flex items-center justify-between absolute top-4 left-4 right-4 z-10">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {prod.isSoldOut && (
+                          <span className="bg-[#f5f5f7] text-[#1d1d1f] font-bold text-[9px] tracking-widest uppercase px-2.5 py-1 rounded shadow-2xs">
+                            SOLD OUT
+                          </span>
+                        )}
+                        {pricing.hasDiscount && (
+                          <span className="bg-[#FF2D55] text-white font-extrabold text-[9.5px] tracking-wide uppercase px-2.5 py-1 rounded shadow-2xs">
+                            {pricing.discountPercent}% OFF
+                          </span>
+                        )}
+                      </div>
 
-                  {/* Clickable Area: Image and Title */}
-                  <Link to={`/product/${prod.id}`} className="block cursor-pointer">
-                    {/* Product Visual - Apple Showcase Background (#f5f5f7) */}
-                    <CleanProductImage
-                      src={getProductImage(prod)}
-                      alt={prod.name}
-                      className="max-h-[92%] max-w-[92%] object-contain group-hover:scale-110 transition-transform duration-500 select-none transform scale-115 sm:scale-125"
-                      containerClassName="w-full h-72 sm:h-80 bg-white rounded-2xl flex items-center justify-center p-2 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f0f0f2]"
-                    />
+                      <button
+                        onClick={() => handleAddToWishlist(prod)}
+                        className={`p-2 rounded-full shadow-sm border border-zinc-100/80 bg-white/90 hover:scale-110 transition-all cursor-pointer ${localWishlist[prod.id] ? 'text-red-500' : 'text-zinc-400 hover:text-zinc-600'
+                          }`}
+                      >
+                        <Heart className={`h-4 w-4 ${localWishlist[prod.id] ? 'fill-current' : ''}`} />
+                      </button>
+                    </div>
 
-                    {/* Title (Clean Product Name) */}
-                    <h3 className="font-semibold text-[16px] leading-snug tracking-tight text-zinc-900 group-hover:text-zinc-900 transition-colors min-h-[48px]">
-                      {(() => {
-                        const cleanProductTitle = (rawTitle) => {
-                          if (!rawTitle) return '';
-                          return rawTitle.replace(/\s*[A-Z0-9]{5,9}\/[A-Z]$/i, '').trim();
-                        };
-                        return (
-                          <span>{cleanProductTitle(prod.name || prod.title)}</span>
-                        );
-                      })()}
-                    </h3>
-                  </Link>
+                    {/* Clickable Area: Image and Title */}
+                    <Link to={`/product/${prod.id}`} className="block cursor-pointer">
+                      {/* Product Visual - Apple Showcase Background (#f5f5f7) */}
+                      <CleanProductImage
+                        src={getProductImage(prod)}
+                        alt={prod.name}
+                        className="max-h-[92%] max-w-[92%] object-contain group-hover:scale-110 transition-transform duration-500 select-none transform scale-115 sm:scale-125"
+                        containerClassName="w-full h-72 sm:h-80 bg-white rounded-2xl flex items-center justify-center p-2 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f0f0f2]"
+                      />
 
-                  {/* Non-clickable configurations / actions */}
-                  <div className="space-y-4 pt-2">
-                    {/* Color Dot Options */}
-                    <div className="flex items-center justify-between gap-2 border-t border-zinc-100/60 pt-3">
-                      <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Colors</span>
-                      <div className="flex items-center gap-3 shrink-0 py-1">
-                        {prod.colors.map((color) => {
-                          const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
+                      {/* Title (Clean Product Name) */}
+                      <h3 className="font-semibold text-[16px] leading-snug tracking-tight text-zinc-900 group-hover:text-zinc-900 transition-colors min-h-[48px]">
+                        {(() => {
+                          const cleanProductTitle = (rawTitle) => {
+                            if (!rawTitle) return '';
+                            return rawTitle.replace(/\s*[A-Z0-9]{5,9}\/[A-Z]$/i, '').trim();
+                          };
                           return (
-                            <button
-                              key={color.name}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleColorChange(prod.id, color.name);
-                              }}
-                              style={{ backgroundColor: color.value }}
-                              className={`w-4 h-4 rounded-full cursor-pointer transition-all ${isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10' : 'border border-zinc-300 hover:scale-105'
-                                }`}
-                              title={color.name}
-                            />
+                            <span>{cleanProductTitle(prod.name || prod.title)}</span>
                           );
-                        })}
-                      </div>
-                    </div>
+                        })()}
+                      </h3>
+                    </Link>
 
-                    {/* Price and Cart Row */}
-                    <div className="flex items-center justify-between pt-1 border-t border-zinc-100/60">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Price</span>
-                        <span className="font-semibold text-zinc-900 text-sm">{prod.priceStr}</span>
+                    {/* Non-clickable configurations / actions */}
+                    <div className="space-y-4 pt-2">
+                      {/* Color Dot Options */}
+                      <div className="flex items-center justify-between gap-2 border-t border-zinc-100/60 pt-3">
+                        <span className="text-[17px] text-zinc-700 uppercase tracking-wider font-extrabold">Colors</span>
+                        <div className="flex items-center gap-3 shrink-0 py-1">
+                          {prod.colors.map((color) => {
+                            const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
+                            return (
+                              <button
+                                key={color.name}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleColorChange(prod.id, color.name);
+                                }}
+                                style={{ backgroundColor: color.value }}
+                                className={`w-4 h-4 rounded-full cursor-pointer transition-all ${isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10' : 'border border-zinc-300 hover:scale-105'
+                                  }`}
+                                title={color.name}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
 
-                      {!prod.isSoldOut && (
-                        <button
-                          onClick={() => handleAddToCart(prod)}
-                          className="flex items-center justify-center p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 hover:text-zinc-900 transition-all cursor-pointer"
-                          title="Add to Cart"
-                        >
-                          <ShoppingBag className="h-4 w-4" />
-                        </button>
-                      )}
+                      {/* Price and Cart Row */}
+                      <div className="flex items-center justify-between pt-1 border-t border-zinc-100/60">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Price</span>
+                          {pricing.hasDiscount ? (
+                            <div className="flex items-baseline gap-1.5 flex-wrap">
+                              <span className="font-extrabold text-zinc-950 text-base">
+                                ₹{pricing.sellingPrice.toLocaleString('en-IN')}
+                              </span>
+                              <span className="text-xs text-zinc-400 line-through font-bold">
+                                ₹{pricing.originalMrp.toLocaleString('en-IN')}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="font-semibold text-zinc-900 text-base">
+                              {prod.priceStr || `₹${Number(prod.price || 0).toLocaleString('en-IN')}`}
+                            </span>
+                          )}
+                        </div>
+
+                        {!prod.isSoldOut && (
+                          <button
+                            onClick={() => handleAddToCart(prod)}
+                            className="flex items-center justify-center p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 hover:text-zinc-900 transition-all cursor-pointer"
+                            title="Add to Cart"
+                          >
+                            <ShoppingBag className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Infinite Scroll Indicator */}

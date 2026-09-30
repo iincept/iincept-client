@@ -437,8 +437,8 @@ export default function Checkout() {
               {cartItems.map((item) => (
                 <div key={item.id} className="py-3 flex items-center justify-between gap-3 text-xs">
                   <div className="flex items-center gap-2.5 text-left">
-                    <div className="h-10 w-10 rounded bg-zinc-50 border border-zinc-200 overflow-hidden shrink-0">
-                      <img src={item.image} alt="" className="w-full h-full object-cover" />
+                    <div className="h-10 w-10 rounded bg-white border border-zinc-200 overflow-hidden shrink-0 p-0.5 flex items-center justify-center">
+                      <img src={item.image} alt="" className="max-h-full max-w-full object-contain mix-blend-multiply" />
                     </div>
                     <div>
                       <h4 className="font-bold text-zinc-800 line-clamp-1">{item.name}</h4>

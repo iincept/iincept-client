@@ -5,7 +5,8 @@ import { Heart, SlidersHorizontal, ArrowUpDown, X, ShoppingBag, ShieldCheck, Wre
 import { addToCart } from '../redux/cartSlice';
 import { addToWishlist } from '../redux/wishlistSlice';
 import { fetchProducts } from '../redux/productSlice';
-import { matchesProductSearch } from '../utils/searchUtils';
+import { matchesProductSearch, normalizeTargetPath } from '../utils/searchUtils';
+import { getProductCardPricing } from '../utils/pricingUtils';
 import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
@@ -50,13 +51,23 @@ const TVHOME_SUB_NAV_ITEMS = [
 ];
 
 const resolveSubItemPath = (item) => {
-  if (item.path && item.path !== '/tv-home') return item.path;
-  const lowerName = (item.name || item.label || '').toLowerCase();
-  if (lowerName.includes('care')) {
+  const nameLower = (item?.name || item?.label || '').toLowerCase();
+  const queryLower = (item?.query || '').toLowerCase();
+  const pathLower = (item?.path || '').toLowerCase();
+
+  if (nameLower.includes('care') || queryLower.includes('care') || pathLower.includes('care')) {
     return '/tv-home?tab=applecare';
   }
-  if (item.query) {
-    return `/tv-home?search=${encodeURIComponent(item.query)}`;
+  if (nameLower.includes('compare') || queryLower.includes('compare') || pathLower.includes('compare')) {
+    return '/compare?category=tv-home';
+  }
+  if (item?.path && item.path.trim()) {
+    const normalized = normalizeTargetPath(item.path.trim());
+    if (normalized && normalized !== '/tv-home') return normalized;
+  }
+  const queryVal = item?.query || item?.label || item?.name || '';
+  if (queryVal && queryVal.trim()) {
+    return `/tv-home?search=${encodeURIComponent(queryVal.trim())}`;
   }
   return '/tv-home';
 };
@@ -390,44 +401,103 @@ export default function TvHome() {
     );
   };
 
+  const getColorStr = (c) => (typeof c === 'object' ? (c?.name || c?.value || '') : (c || '')).toString().trim();
+
   const handleColorChange = (productId, colorVal) => {
     setSelectedColors((prev) => ({ ...prev, [productId]: colorVal }));
   };
 
   const getProductImage = (prod) => {
-    const selectedColorName = selectedColors[prod.id] || (prod.colors && prod.colors[0] ? (prod.colors[0].name || (typeof prod.colors[0] === 'string' ? prod.colors[0] : '')) : null);
+    if (!prod) return '/tv_nav/apple_tv_4k.png';
+
+    const pId = prod._id || prod.id;
+    const selectedColorName = selectedColors[pId];
+
     if (selectedColorName) {
-      const foundColor = prod.colors.find((c) => c.name === selectedColorName);
-      if (foundColor && foundColor.image) {
-        return foundColor.image;
+      const normSelected = selectedColorName.toString().trim().toLowerCase();
+
+      // 1. Check variants first (Admin Panel color variants)
+      if (prod.variants && Array.isArray(prod.variants) && prod.variants.length > 0) {
+        const matchedVariant = prod.variants.find(v => {
+          const vColorName = getColorStr(v.color).toLowerCase();
+          return vColorName === normSelected;
+        });
+        if (matchedVariant) {
+          const vImg = matchedVariant.image || (Array.isArray(matchedVariant.images) && matchedVariant.images[0]);
+          if (vImg && !vImg.includes('mock-cloud')) return vImg;
+        }
       }
-      const colorIdx = prod.colors.findIndex((c) => (c.name || c) === selectedColorName);
-      if (colorIdx !== -1 && prod.images && prod.images[colorIdx]) {
-        return prod.images[colorIdx];
+
+      // 2. Check prod.colors array object
+      if (prod.colors && Array.isArray(prod.colors)) {
+        const foundColor = prod.colors.find((c) => {
+          const cName = getColorStr(c).toLowerCase();
+          return cName === normSelected;
+        });
+        if (foundColor) {
+          if (foundColor.image && !foundColor.image.includes('mock-cloud')) return foundColor.image;
+          if (Array.isArray(foundColor.images) && foundColor.images[0] && !foundColor.images[0].includes('mock-cloud')) return foundColor.images[0];
+        }
+        const colorIdx = prod.colors.findIndex((c) => {
+          const cName = getColorStr(c).toLowerCase();
+          return cName === normSelected;
+        });
+        if (colorIdx !== -1 && prod.images && prod.images[colorIdx] && !prod.images[colorIdx].includes('mock-cloud')) {
+          return prod.images[colorIdx];
+        }
       }
     }
-    return prod.image;
+
+    // Fallback to primary product image
+    if (prod.displayImage) return prod.displayImage;
+    if (prod.image && !prod.image.includes('tv_category')) return prod.image;
+    const extracted = prod.image || (prod.images && prod.images[0]);
+    if (extracted && !extracted.includes('mock-cloud')) return extracted;
+    return prod.image || '/tv_nav/apple_tv_4k.png';
+  };
+
+  const getSelectedVariantPricing = (prod) => {
+    if (!prod) return { sellingPrice: 0, originalMrp: 0, discountPercent: 0, hasDiscount: false };
+    const pId = prod._id || prod.id;
+    const selectedColorName = selectedColors[pId];
+
+    if (selectedColorName && prod.variants && Array.isArray(prod.variants) && prod.variants.length > 0) {
+      const normSelected = selectedColorName.toString().trim().toLowerCase();
+      const matchedVariant = prod.variants.find(v => {
+        const vColorName = getColorStr(v.color).toLowerCase();
+        return vColorName === normSelected;
+      });
+      if (matchedVariant && (Number(matchedVariant.price || 0) > 0 || Number(matchedVariant.discountPrice || 0) > 0)) {
+        return getProductCardPricing(matchedVariant);
+      }
+    }
+    return getProductCardPricing(prod);
   };
 
   const handleAddToCart = (prod) => {
-    const selectedColor = selectedColors[prod.id] || prod.colors[0]?.name || 'Standard';
+    const pId = prod._id || prod.id;
+    const firstColor = prod.colors?.[0] ? getColorStr(prod.colors[0]) : 'Standard';
+    const selectedColor = selectedColors[pId] || firstColor;
+    const pricing = getSelectedVariantPricing(prod);
     dispatch(addToCart({
-      id: prod.id,
-      name: `${prod.name} (${selectedColor})`,
-      price: prod.price,
+      id: pId,
+      name: `${prod.name || prod.title} (${selectedColor})`,
+      price: pricing.sellingPrice,
       image: getProductImage(prod),
       quantity: 1
     }));
   };
 
   const handleAddToWishlist = (prod) => {
-    setLocalWishlist((prev) => ({ ...prev, [prod.id]: !prev[prod.id] }));
+    const pId = prod._id || prod.id;
+    setLocalWishlist((prev) => ({ ...prev, [pId]: !prev[pId] }));
+    const pricing = getSelectedVariantPricing(prod);
     dispatch(addToWishlist({
-      id: prod.id,
-      name: prod.name,
-      price: prod.price,
+      id: pId,
+      name: prod.name || prod.title,
+      price: pricing.sellingPrice,
       image: getProductImage(prod),
-      rating: prod.rating
+      rating: prod.rating || 5.0
     }));
   };
 
@@ -470,14 +540,19 @@ export default function TvHome() {
            catName.toLowerCase().includes('home');
   }).map(p => {
     const firstImg = p.image || (p.images && p.images[0]);
-    const isValidImg = firstImg && !firstImg.includes('mock-cloud');
+    const primaryImg = p.displayImage || (firstImg && !firstImg.includes('mock-cloud') ? firstImg : (p.image || '/tv_nav/apple_tv_4k.png'));
     return {
       id: p._id || p.id,
       name: p.title || p.name,
       price: p.price,
       priceStr: `₹${p.price.toLocaleString()}`,
-      image: isValidImg ? firstImg : '/tv_category.jpg',
+      discountPercent: p.discountPercent,
+      discountPrice: p.discountPrice,
+      displayImage: primaryImg,
+      colorImages: p.colorImages || {},
+      image: primaryImg,
       images: p.images || [],
+      variants: p.variants || [],
       colors: Array.isArray(p.colors) ? p.colors.map(c => {
         const name = typeof c === 'string' ? c : (c.name || '');
         const val = typeof c === 'string' ? c : (c.value || c.name || '');
@@ -514,7 +589,7 @@ export default function TvHome() {
       {/* Title & Category Sub-Nav Header */}
       <div className="w-full bg-[#fcfcfc] pt-2 pb-4 select-none font-sans mb-6">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-zinc-950 text-left mb-6">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950 text-left mb-4">
             TV & Home
           </h1>
 
@@ -553,7 +628,7 @@ export default function TvHome() {
                       style={{ mixBlendMode: 'multiply', filter: 'contrast(1.06) brightness(1.02)' }}
                     />
                   </div>
-                  <span className={`text-xs tracking-tight transition-colors duration-200 ${isActive ? 'font-bold text-zinc-950' : 'font-semibold text-zinc-700 group-hover:text-zinc-950'}`}>
+                  <span className={`text-[11px] tracking-tight transition-colors duration-200 ${isActive ? 'font-bold text-zinc-950' : 'font-medium text-zinc-700 group-hover:text-zinc-950'}`}>
                     {item.name}
                   </span>
                 </Link>
@@ -797,12 +872,6 @@ export default function TvHome() {
 
         return (
           <>
-            {/* Controller Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-zinc-150 pb-6 mb-8 text-sm font-sans uppercase font-bold text-zinc-500 tracking-wider">
-              <div className="text-zinc-800 text-xs tracking-widest">
-                SHOWING ALL {filteredProducts.length} RESULTS
-              </div>
-            </div>
 
             {/* Filter Drawer */}
             {filterOpen && (
@@ -858,96 +927,127 @@ export default function TvHome() {
 
             {/* Grid */}
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.slice(0, visibleCount).map((prod) => (
-                <div
-                  key={prod.id}
-                  className="group bg-white rounded-2xl overflow-hidden flex flex-col justify-between p-6 shadow-sm border border-zinc-100/50 hover:shadow-md hover:border-zinc-200/55 transition-all duration-300 relative text-left"
-                >
-                  <div className="flex items-center justify-between absolute top-4 left-4 right-4 z-10">
-                    {prod.isSoldOut ? (
-                      <span className="bg-[#f5f5f7] text-[#1d1d1f] font-bold text-[9px] tracking-widest uppercase px-2.5 py-1 rounded">
-                        SOLD OUT
-                      </span>
-                    ) : (
-                      <div />
-                    )}
+              {filteredProducts.slice(0, visibleCount).map((prod) => {
+                const pricing = getProductCardPricing(prod);
 
-                    <button
-                      onClick={() => handleAddToWishlist(prod)}
-                      className={`p-2 rounded-full shadow-sm border border-zinc-100/80 bg-white/90 hover:scale-110 transition-all cursor-pointer ${
-                        localWishlist[prod.id] ? 'text-red-500' : 'text-zinc-400 hover:text-zinc-600'
-                      }`}
-                    >
-                      <Heart className={`h-4 w-4 ${localWishlist[prod.id] ? 'fill-current' : ''}`} />
-                    </button>
-                  </div>
+                return (
+                  <div
+                    key={prod.id}
+                    className="group bg-white rounded-2xl overflow-hidden flex flex-col justify-between p-6 shadow-sm border border-zinc-100/50 hover:shadow-md hover:border-zinc-200/55 transition-all duration-300 relative text-left"
+                  >
+                    <div className="flex items-center justify-between absolute top-4 left-4 right-4 z-10">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {prod.isSoldOut && (
+                          <span className="bg-[#f5f5f7] text-[#1d1d1f] font-bold text-[9px] tracking-widest uppercase px-2.5 py-1 rounded shadow-2xs">
+                            SOLD OUT
+                          </span>
+                        )}
+                        {pricing.hasDiscount && (
+                          <span className="bg-[#FF2D55] text-white font-extrabold text-[9.5px] tracking-wide uppercase px-2.5 py-1 rounded shadow-2xs">
+                            {pricing.discountPercent}% OFF
+                          </span>
+                        )}
+                      </div>
 
-                  {/* Clickable Area: Image and Title */}
-                  <Link to={`/product/${prod.id}`} className="block cursor-pointer">
-                    {/* Product Visual - Apple Showcase Background (#f5f5f7) */}
-                    <CleanProductImage
-                      src={getProductImage(prod)}
-                      alt={prod.name}
-                      className="max-h-[92%] max-w-[92%] object-contain group-hover:scale-110 transition-transform duration-500 select-none transform scale-115 sm:scale-125"
-                      containerClassName="w-full h-72 sm:h-80 bg-white rounded-2xl flex items-center justify-center p-2 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f0f0f2]"
-                    />
+                      <button
+                        onClick={() => handleAddToWishlist(prod)}
+                        className={`p-2 rounded-full shadow-sm border border-zinc-100/80 bg-white/90 hover:scale-110 transition-all cursor-pointer ${
+                          localWishlist[prod.id] ? 'text-red-500' : 'text-zinc-400 hover:text-zinc-600'
+                        }`}
+                      >
+                        <Heart className={`h-4 w-4 ${localWishlist[prod.id] ? 'fill-current' : ''}`} />
+                      </button>
+                    </div>
 
-                    {/* Title */}
-                    <h3 className="font-semibold text-[16px] leading-snug tracking-tight text-zinc-900 group-hover:text-zinc-900 transition-colors min-h-[48px]">
-                      {(() => {
-                        const cleanProductTitle = (rawTitle) => {
-                          if (!rawTitle) return '';
-                          return rawTitle.replace(/\s*[A-Z0-9]{5,9}\/[A-Z]$/i, '').trim();
-                        };
-                        return (
-                          <span>{cleanProductTitle(prod.name || prod.title)}</span>
-                        );
-                      })()}
-                    </h3>
-                  </Link>
+                    {/* Clickable Area: Image and Title */}
+                    <Link to={`/product/${prod.id}`} className="block cursor-pointer">
+                      {/* Product Visual - Apple Showcase Background (#f5f5f7) */}
+                      <CleanProductImage
+                        src={getProductImage(prod)}
+                        alt={prod.name}
+                        className="max-h-[92%] max-w-[92%] object-contain group-hover:scale-110 transition-transform duration-500 select-none transform scale-115 sm:scale-125"
+                        containerClassName="w-full h-72 sm:h-80 bg-white rounded-2xl flex items-center justify-center p-2 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f0f0f2]"
+                      />
 
-                  {/* Non-clickable configurations / actions */}
-                  <div className="space-y-4 pt-2">
-                    {/* Color Dot Options Row */}
-                    <div className="flex items-center justify-between gap-2 border-t border-zinc-100/60 pt-3">
-                      <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Colors</span>
-                      <div className="flex items-center gap-3 shrink-0 py-1">
-                        {prod.colors.map((color) => {
-                          const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
+                      {/* Title */}
+                      <h3 className="font-semibold text-[16px] leading-snug tracking-tight text-zinc-900 group-hover:text-zinc-900 transition-colors min-h-[48px]">
+                        {(() => {
+                          const cleanProductTitle = (rawTitle) => {
+                            if (!rawTitle) return '';
+                            return rawTitle.replace(/\s*[A-Z0-9]{5,9}\/[A-Z]$/i, '').trim();
+                          };
                           return (
-                            <button
-                              key={color.name}
-                              onClick={() => handleColorChange(prod.id, color.name)}
-                              style={{ backgroundColor: color.value }}
-                              className={`w-4 h-4 rounded-full cursor-pointer transition-all ${
-                                isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10' : 'border border-zinc-300 hover:scale-105'
-                              }`}
-                              title={color.name}
-                            />
+                            <span>{cleanProductTitle(prod.name || prod.title)}</span>
                           );
-                        })}
-                      </div>
-                    </div>
+                        })()}
+                      </h3>
+                    </Link>
 
-                    <div className="flex items-center justify-between pt-1 border-t border-zinc-100/60">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Price</span>
-                        <span className="font-semibold text-zinc-900 text-sm">{prod.priceStr}</span>
+                    {/* Non-clickable configurations / actions */}
+                    <div className="space-y-4 pt-2">
+                      {/* Color Dot Options Row */}
+                      <div className="flex items-center justify-between gap-2 border-t border-zinc-100/60 pt-3">
+                        <span className="text-[17px] text-zinc-700 uppercase tracking-wider font-extrabold">Colors</span>
+                        <div className="flex items-center gap-3 shrink-0 py-1">
+                          {prod.colors.map((color, cIdx) => {
+                            const cName = getColorStr(color);
+                            const pId = prod._id || prod.id;
+                            const firstColor = prod.colors?.[0] ? getColorStr(prod.colors[0]) : '';
+                            const isSelected = selectedColors[pId] === cName || (!selectedColors[pId] && firstColor === cName);
+                            return (
+                              <button
+                                key={cName || cIdx}
+                                onClick={() => handleColorChange(pId, cName)}
+                                style={{ backgroundColor: resolveColorValue(typeof color === 'object' ? (color.value || color.name) : color) }}
+                                className={`w-4 h-4 rounded-full cursor-pointer transition-all ${
+                                  isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10' : 'border border-zinc-300 hover:scale-105'
+                                }`}
+                                title={cName}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
 
-                      {!prod.isSoldOut && (
-                        <button
-                          onClick={() => handleAddToCart(prod)}
-                          className="flex items-center justify-center p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 hover:text-zinc-900 transition-all cursor-pointer"
-                          title="Add to Cart"
-                        >
-                          <ShoppingBag className="h-4 w-4" />
-                        </button>
-                      )}
+                      <div className="flex items-center justify-between pt-1 border-t border-zinc-100/60">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Price</span>
+                          {(() => {
+                            const pricing = getSelectedVariantPricing(prod);
+                            if (pricing.hasDiscount) {
+                              return (
+                                <div className="flex items-baseline gap-1.5 flex-wrap">
+                                  <span className="font-extrabold text-zinc-950 text-base">
+                                    ₹{pricing.sellingPrice.toLocaleString('en-IN')}
+                                  </span>
+                                  <span className="text-xs text-zinc-400 line-through font-bold">
+                                    ₹{pricing.originalMrp.toLocaleString('en-IN')}
+                                  </span>
+                                </div>
+                              );
+                            }
+                            return (
+                              <span className="font-semibold text-zinc-900 text-base">
+                                ₹{pricing.sellingPrice.toLocaleString('en-IN')}
+                              </span>
+                            );
+                          })()}
+                        </div>
+
+                        {!prod.isSoldOut && (
+                          <button
+                            onClick={() => handleAddToCart(prod)}
+                            className="flex items-center justify-center p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 hover:text-zinc-900 transition-all cursor-pointer"
+                            title="Add to Cart"
+                          >
+                            <ShoppingBag className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Infinite Scroll Indicator */}

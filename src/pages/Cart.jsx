@@ -108,16 +108,17 @@ export default function Cart() {
           {cartItems.map((item) => (
             <div 
               key={item.id}
-              className="flex flex-col sm:flex-row items-center justify-between p-4 bg-white border border-zinc-200 rounded-2xl gap-4 hover:border-zinc-300 transition-colors shadow-sm"
+              className="flex flex-row items-center justify-between p-3 sm:p-4 bg-white border border-zinc-200 rounded-2xl gap-2 sm:gap-4 hover:border-zinc-300 transition-colors shadow-sm"
             >
               {/* Product Thumbnail & Name */}
-              <div className="flex items-center gap-4 w-full sm:w-auto">
-                <div className="h-20 w-20 rounded-xl overflow-hidden bg-zinc-50 shrink-0 border border-zinc-200">
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+              <div className="flex items-center gap-2.5 sm:gap-4 flex-1 min-w-0">
+                <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl overflow-hidden bg-white shrink-0 border border-zinc-200 p-1 flex items-center justify-center">
+                  <img src={item.image} alt={item.name} className="max-h-full max-w-full object-contain mix-blend-multiply" />
                 </div>
-                <div className="text-left">
-                  <h3 className="font-bold text-zinc-800 text-sm line-clamp-1">{item.name}</h3>
-                  <div className="text-[10px] text-zinc-500 space-y-0.5 mt-0.5">
+                <div className="text-left min-w-0 flex-1">
+                  <h3 className="font-bold text-zinc-800 text-xs sm:text-sm line-clamp-1">{item.name}</h3>
+                  <div className="text-[10px] text-zinc-500 space-y-0.5 mt-0.5 hidden sm:block">
+                    {item.accessoriesSize && item.accessoriesSize !== 'None' && <p>Accessories Size: <span className="text-zinc-700">{item.accessoriesSize}</span></p>}
                     {item.size && <p>Config: <span className="text-zinc-700">{item.size}</span></p>}
                     {item.color && (
                       <div className="flex items-center gap-1">
@@ -126,42 +127,42 @@ export default function Cart() {
                       </div>
                     )}
                   </div>
-                  <span className="text-xs text-zinc-750 font-bold block mt-1">₹{item.price.toLocaleString('en-IN')}</span>
+                  <span className="text-xs text-zinc-750 font-bold block sm:mt-1">₹{item.price.toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
               {/* Quantity Controls & Math */}
-              <div className="flex items-center justify-between sm:justify-end gap-8 w-full sm:w-auto border-t border-zinc-150 sm:border-0 pt-3 sm:pt-0">
+              <div className="flex items-center gap-2 sm:gap-6 shrink-0">
                 
                 {/* Quantity */}
-                <div className="flex items-center bg-zinc-50 border border-zinc-200 rounded-xl px-2 py-1 gap-3">
+                <div className="flex items-center bg-zinc-50 border border-zinc-200 rounded-xl px-1.5 py-0.5 sm:px-2 sm:py-1 gap-1.5 sm:gap-3">
                   <button 
                     onClick={() => handleQtyChange(item.id, item.quantity, 'dec')}
                     className="p-1 rounded-lg hover:bg-zinc-200 text-zinc-500 hover:text-zinc-800 cursor-pointer"
                   >
-                    <Minus className="h-3.5 w-3.5" />
+                    <Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   </button>
-                  <span className="text-xs font-bold w-5 text-center text-zinc-800">{item.quantity}</span>
+                  <span className="text-xs font-bold w-4 sm:w-5 text-center text-zinc-800">{item.quantity}</span>
                   <button 
                     onClick={() => handleQtyChange(item.id, item.quantity, 'inc')}
                     className="p-1 rounded-lg hover:bg-zinc-200 text-zinc-500 hover:text-zinc-800 cursor-pointer"
                   >
-                    <Plus className="h-3.5 w-3.5" />
+                    <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   </button>
                 </div>
 
                 {/* Subtotal */}
-                <span className="font-bold text-sm w-20 text-right text-zinc-800">
+                <span className="font-bold text-xs sm:text-sm w-14 sm:w-20 text-right text-zinc-800">
                   ₹{(item.price * item.quantity).toLocaleString('en-IN')}
                 </span>
 
                 {/* Remove */}
                 <button 
                   onClick={() => handleRemove(item.id)}
-                  className="p-2 bg-zinc-100 hover:bg-rose-50 text-zinc-500 hover:text-rose-600 rounded-xl border border-zinc-200 transition-colors cursor-pointer"
+                  className="p-1.5 sm:p-2 bg-zinc-100 hover:bg-rose-50 text-zinc-500 hover:text-rose-600 rounded-xl border border-zinc-200 transition-colors cursor-pointer"
                   aria-label="Remove item"
                 >
-                  <Trash2 className="h-4.5 w-4.5" />
+                  <Trash2 className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
                 </button>
               </div>
             </div>

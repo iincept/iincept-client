@@ -23,16 +23,82 @@ import {
 } from 'lucide-react';
 
 const DEFAULT_AIRPODS_ROWS = [
-  { model: 'AirPods (4th Gen) / Beats', title: 'AppleCare+ for AirPods / Beats', description: '2 Years Apple-certified coverage for AirPods & Beats.', sku: 'AC-AIRPODS-STD', mrp: '₹3,490.00', discount: '17% OFF', salePrice: '₹2,900.00', monthly: '₹149.00', yearly: '₹2,900.00', image: '/airpods_category.jpg', isActive: true },
-  { model: 'AirPods Pro 2', title: 'AppleCare+ for AirPods Pro 2', description: '2 Years Apple-certified coverage for AirPods Pro 2.', sku: 'AC-AIRPODS-PRO', mrp: '₹5,900.00', discount: '16% OFF', salePrice: '₹4,900.00', monthly: '₹249.00', yearly: '₹4,900.00', image: '/airpods_category.jpg', isActive: true },
-  { model: 'AirPods Max', title: 'AppleCare+ for AirPods Max', description: '2 Years Apple-certified coverage for AirPods Max.', sku: 'AC-AIRPODS-MAX', mrp: '₹7,900.00', discount: '12% OFF', salePrice: '₹6,900.00', monthly: '₹349.00', yearly: '₹6,900.00', image: '/airpods_category.jpg', isActive: true }
+  { 
+    model: 'AirPods (4th Gen) / Beats', 
+    title: 'AppleCare+ for AirPods / Beats', 
+    description: 'Apple-certified coverage for AirPods & Beats with accidental damage protection.', 
+    description1yr: '1 Year Apple-certified coverage for AirPods & Beats with accidental damage protection.',
+    description2yr: '2 Years Apple-certified coverage for AirPods & Beats with accidental damage protection.',
+    sku: 'AC-AIRPODS-STD', 
+    sku1yr: 'AC-AIRPODS-STD-1YR',
+    sku2yr: 'AC-AIRPODS-STD-2YR',
+    mrp: '₹3,490.00', 
+    mrp1yr: '₹2,490.00',
+    mrp2yr: '₹3,490.00',
+    discount: '17% OFF', 
+    discount1yr: '10% OFF',
+    discount2yr: '17% OFF',
+    salePrice: '₹2,900.00', 
+    salePrice1yr: '₹2,241.00',
+    salePrice2yr: '₹2,900.00',
+    monthly: '₹149.00', 
+    yearly: '₹2,900.00', 
+    image: '/airpods_category.jpg', 
+    isActive: true 
+  },
+  { 
+    model: 'AirPods Pro 2', 
+    title: 'AppleCare+ for AirPods Pro 2', 
+    description: 'Apple-certified coverage for AirPods Pro 2 with accidental damage protection.', 
+    description1yr: '1 Year Apple-certified coverage for AirPods Pro 2 with accidental damage protection.',
+    description2yr: '2 Years Apple-certified coverage for AirPods Pro 2 with accidental damage protection.',
+    sku: 'AC-AIRPODS-PRO', 
+    sku1yr: 'AC-AIRPODS-PRO-1YR',
+    sku2yr: 'AC-AIRPODS-PRO-2YR',
+    mrp: '₹5,900.00', 
+    mrp1yr: '₹3,900.00',
+    mrp2yr: '₹5,900.00',
+    discount: '16% OFF', 
+    discount1yr: '10% OFF',
+    discount2yr: '16% OFF',
+    salePrice: '₹4,900.00', 
+    salePrice1yr: '₹3,510.00',
+    salePrice2yr: '₹4,900.00',
+    monthly: '₹249.00', 
+    yearly: '₹4,900.00', 
+    image: '/airpods_category.jpg', 
+    isActive: true 
+  },
+  { 
+    model: 'AirPods Max', 
+    title: 'AppleCare+ for AirPods Max', 
+    description: 'Apple-certified coverage for AirPods Max with accidental damage protection.', 
+    description1yr: '1 Year Apple-certified coverage for AirPods Max with accidental damage protection.',
+    description2yr: '2 Years Apple-certified coverage for AirPods Max with accidental damage protection.',
+    sku: 'AC-AIRPODS-MAX', 
+    sku1yr: 'AC-AIRPODS-MAX-1YR',
+    sku2yr: 'AC-AIRPODS-MAX-2YR',
+    mrp: '₹7,900.00', 
+    mrp1yr: '₹4,900.00',
+    mrp2yr: '₹7,900.00',
+    discount: '12% OFF', 
+    discount1yr: '10% OFF',
+    discount2yr: '12% OFF',
+    salePrice: '₹6,900.00', 
+    salePrice1yr: '₹4,410.00',
+    salePrice2yr: '₹6,900.00',
+    monthly: '₹349.00', 
+    yearly: '₹6,900.00', 
+    image: '/airpods_category.jpg', 
+    isActive: true 
+  }
 ];
 
 export default function AirpodsAppleCareManager() {
   const [pricingTables, setPricingTables] = useState([]);
   const [airpodsRows, setAirpodsRows] = useState(DEFAULT_AIRPODS_ROWS);
   const [headerTitle, setHeaderTitle] = useState('AppleCare+');
-  const [durationLabel, setDurationLabel] = useState('2 Years');
+  const [durationLabel, setDurationLabel] = useState('1 Year & 2 Years');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingRowIndex, setUploadingRowIndex] = useState(null);
@@ -51,19 +117,31 @@ export default function AirpodsAppleCareManager() {
         const airpodsTable = res.data.appleCarePricingTables.find(t => t.categoryKey === 'airpods');
         if (airpodsTable) {
           setHeaderTitle(airpodsTable.headerTitle ?? 'AppleCare+');
-          setDurationLabel(airpodsTable.durationLabel ?? '2 Years');
+          setDurationLabel(airpodsTable.durationLabel ?? '1 Year & 2 Years');
           if (airpodsTable.rows && airpodsTable.rows.length > 0) {
             setAirpodsRows(airpodsTable.rows.map(r => ({
               model: r.model || '',
               title: r.title || `AppleCare+ for ${r.model}`,
-              description: r.description || `2 Years Apple-certified coverage for ${r.model}`,
-              sku: r.sku || '',
-              mrp: r.mrp || '',
-              discount: r.discount || '',
-              salePrice: r.salePrice || r.yearly || '',
+              description: r.description || r.description2yr || `Apple-certified coverage for ${r.model}`,
+              description1yr: r.description1yr || `1 Year Apple-certified coverage for ${r.model}`,
+              description2yr: r.description2yr || r.description || `2 Years Apple-certified coverage for ${r.model}`,
+              sku: r.sku || r.sku2yr || '',
+              sku1yr: r.sku1yr || (r.sku ? `${r.sku}-1YR` : ''),
+              sku2yr: r.sku2yr || r.sku || '',
+              mrp: r.mrp || r.mrp2yr || '',
+              mrp1yr: r.mrp1yr || '',
+              mrp2yr: r.mrp2yr || r.mrp || '',
+              discount: r.discount || r.discount2yr || '',
+              discount1yr: r.discount1yr || '',
+              discount2yr: r.discount2yr || r.discount || '',
+              salePrice: r.salePrice || r.salePrice2yr || r.yearly || '',
+              salePrice1yr: r.salePrice1yr || '',
+              salePrice2yr: r.salePrice2yr || r.salePrice || r.yearly || '',
               monthly: r.monthly || '',
-              yearly: r.yearly || r.salePrice || '',
+              yearly: r.yearly || r.salePrice || r.salePrice2yr || '',
               image: r.image ?? '',
+              planType: r.planType || 'APPLE CARE+',
+              duration: r.duration || airpodsTable.durationLabel || '1 Year & 2 Years',
               isActive: r.isActive !== false
             })));
           }
@@ -82,22 +160,54 @@ export default function AirpodsAppleCareManager() {
     setTimeout(() => setMessage(null), 4000);
   };
 
-  const isCustomImage = (row) => {
-    if (!row?.image) return false;
-    return row.image !== '/airpods_category.jpg';
+  const parsePriceNumber = (val) => {
+    if (val === null || val === undefined) return 0;
+    if (typeof val === 'number') return val;
+    const cleaned = String(val).replace(/[^0-9.]/g, '');
+    return parseFloat(cleaned) || 0;
   };
 
-  const handleRemoveImage = (index) => {
-    handleUpdateRow(index, 'image', '');
-    showMessage('success', 'Image removed! Click "Save Changes" to apply.');
+  const calculateFinalPriceStr = (mrp, discount) => {
+    const mrpNum = parsePriceNumber(mrp);
+    const discNum = Math.min(100, Math.max(0, parseFloat(discount) || 0));
+    const finalNum = Math.max(0, Math.round(mrpNum - (mrpNum * discNum / 100)));
+    return `₹${finalNum.toLocaleString('en-IN')}`;
   };
 
-  const handleUpdateRow = (index, field, value) => {
+  const handleUpdateRow = (index, fieldOrObject, value) => {
     setAirpodsRows(prev => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
-      if (field === 'salePrice') updated[index].yearly = value;
-      if (field === 'yearly' && !updated[index].salePrice) updated[index].salePrice = value;
+      const current = updated[index];
+      let row;
+      if (typeof fieldOrObject === 'object' && fieldOrObject !== null) {
+        row = { ...current, ...fieldOrObject };
+      } else {
+        row = { ...current, [fieldOrObject]: value };
+      }
+
+      if (fieldOrObject === 'discount' || fieldOrObject === 'discount2yr') {
+        const discVal = value ? (String(value).includes('%') ? value : `${value}% OFF`) : '';
+        row.discount = discVal;
+        row.discount2yr = discVal;
+      }
+      if (fieldOrObject === 'discount1yr') {
+        row.discount1yr = value ? (String(value).includes('%') ? value : `${value}% OFF`) : '';
+      }
+
+      if (row.mrp1yr || row.discount1yr !== undefined) {
+        const disc1 = Math.min(100, Math.max(0, parseFloat(row.discount1yr) || 0));
+        row.salePrice1yr = calculateFinalPriceStr(row.mrp1yr, disc1);
+      }
+
+      const mrp2Val = row.mrp2yr || row.mrp;
+      const disc2Val = row.discount2yr || row.discount;
+      const disc2 = Math.min(100, Math.max(0, parseFloat(disc2Val) || 0));
+      const computedFinal = calculateFinalPriceStr(mrp2Val, disc2);
+      row.salePrice2yr = computedFinal;
+      row.salePrice = computedFinal;
+      row.yearly = computedFinal;
+
+      updated[index] = row;
       return updated;
     });
   };
@@ -108,13 +218,23 @@ export default function AirpodsAppleCareManager() {
       {
         model: 'New AirPods Model',
         title: 'AppleCare+ for New AirPods Model',
-        description: '2 Years Apple-certified coverage',
+        description: 'Apple-certified coverage for New AirPods Model',
+        description1yr: '1 Year Apple-certified coverage',
+        description2yr: '2 Years Apple-certified coverage',
         sku: 'AC-AIRPODS-NEW',
-        mrp: '₹5,900.00',
+        sku1yr: 'AC-AIRPODS-NEW-1YR',
+        sku2yr: 'AC-AIRPODS-NEW-2YR',
+        mrp: '₹4,900.00',
+        mrp1yr: '₹2,900.00',
+        mrp2yr: '₹4,900.00',
         discount: '10% OFF',
-        salePrice: '₹4,900.00',
-        monthly: '₹249.00',
-        yearly: '₹4,900.00',
+        discount1yr: '10% OFF',
+        discount2yr: '10% OFF',
+        salePrice: '₹4,410.00',
+        salePrice1yr: '₹2,610.00',
+        salePrice2yr: '₹4,410.00',
+        monthly: '₹199.00',
+        yearly: '₹4,410.00',
         image: '/airpods_category.jpg',
         isActive: true
       }
@@ -133,22 +253,34 @@ export default function AirpodsAppleCareManager() {
       const newAirpodsTable = {
         categoryKey: 'airpods',
         image: '/airpods_category.jpg',
-        headline: 'Cover your AirPods.',
+        headline: 'Cover your headphones.',
         headerTitle: headerTitle ?? 'AppleCare+',
-        subheadline: 'Every set of AirPods comes with 1 year of hardware repair coverage.',
-        durationLabel: durationLabel ?? '2 Years',
+        subheadline: 'AppleCare+ for Headphones covers AirPods and Beats with coverage options for 1 Year and 2 Years.',
+        durationLabel: durationLabel ?? '1 Year & 2 Years',
         isActive: true,
         rows: updatedRows.map(r => ({
           model: r.model || '',
-          title: r.title || '',
-          description: r.description || '',
-          sku: r.sku || '',
-          mrp: r.mrp || '',
-          discount: r.discount || '',
-          salePrice: r.salePrice || r.yearly || '',
+          title: r.title || `AppleCare+ for ${r.model}`,
+          description: r.description || r.description2yr || `Apple-certified coverage for ${r.model}`,
+          description1yr: r.description1yr || `1 Year Apple-certified coverage for ${r.model}`,
+          description2yr: r.description2yr || r.description || `2 Years Apple-certified coverage for ${r.model}`,
+          sku: r.sku2yr || r.sku || '',
+          sku1yr: r.sku1yr || (r.sku ? `${r.sku}-1YR` : ''),
+          sku2yr: r.sku2yr || r.sku || '',
+          mrp: r.mrp2yr || r.mrp || '',
+          mrp1yr: r.mrp1yr || '',
+          mrp2yr: r.mrp2yr || r.mrp || '',
+          discount: r.discount2yr || r.discount || '',
+          discount1yr: r.discount1yr || '',
+          discount2yr: r.discount2yr || r.discount || '',
+          salePrice: r.salePrice2yr || r.salePrice || r.yearly || '',
+          salePrice1yr: r.salePrice1yr || '',
+          salePrice2yr: r.salePrice2yr || r.salePrice || r.yearly || '',
           monthly: r.monthly || '',
           yearly: r.yearly || r.salePrice || '',
           image: r.image ?? '',
+          planType: r.planType || 'APPLE CARE+',
+          duration: r.duration || durationLabel || '1 Year & 2 Years',
           isActive: r.isActive !== false
         }))
       };
@@ -225,6 +357,11 @@ export default function AirpodsAppleCareManager() {
     }
   };
 
+  const handleRemoveImage = (index) => {
+    handleUpdateRow(index, 'image', '');
+    showMessage('success', 'Image removed! Click "Save Changes" to apply.');
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -236,22 +373,38 @@ export default function AirpodsAppleCareManager() {
         image: '/airpods_category.jpg',
         headline: 'Cover your headphones.',
         headerTitle: headerTitle ?? 'AppleCare+',
-        subheadline: 'AppleCare+ for Headphones covers AirPods Pro, AirPods Max and Beats.',
-        durationLabel: durationLabel ?? '2 Years',
+        subheadline: 'AppleCare+ for Headphones covers AirPods and Beats with coverage options for 1 Year and 2 Years.',
+        durationLabel: durationLabel ?? '1 Year & 2 Years',
         isActive: true,
-        rows: airpodsRows.map(r => ({
-          model: r.model || '',
-          title: r.title || `AppleCare+ for ${r.model}`,
-          description: r.description || `2 Years Apple-certified coverage for ${r.model}`,
-          sku: r.sku || '',
-          mrp: r.mrp || '',
-          discount: r.discount || '',
-          salePrice: r.salePrice || r.yearly || '',
-          monthly: r.monthly || '',
-          yearly: r.yearly || r.salePrice || '',
-          image: r.image ?? '',
-          isActive: r.isActive !== false
-        }))
+        rows: airpodsRows.map(r => {
+          const sale1 = r.salePrice1yr || calculateFinalPriceStr(r.mrp1yr, r.discount1yr);
+          const sale2 = r.salePrice2yr || r.salePrice || calculateFinalPriceStr(r.mrp2yr || r.mrp, r.discount2yr || r.discount);
+          return {
+            model: r.model || '',
+            title: r.title || `AppleCare+ for ${r.model}`,
+            description: r.description || r.description2yr || `Apple-certified coverage for ${r.model}`,
+            description1yr: r.description1yr || `1 Year Apple-certified coverage for ${r.model}`,
+            description2yr: r.description2yr || r.description || `2 Years Apple-certified coverage for ${r.model}`,
+            sku: r.sku2yr || r.sku || '',
+            sku1yr: r.sku1yr || (r.sku ? `${r.sku}-1YR` : ''),
+            sku2yr: r.sku2yr || r.sku || '',
+            mrp: r.mrp2yr || r.mrp || '',
+            mrp1yr: r.mrp1yr || '',
+            mrp2yr: r.mrp2yr || r.mrp || '',
+            discount: r.discount2yr || r.discount || '',
+            discount1yr: r.discount1yr || '',
+            discount2yr: r.discount2yr || r.discount || '',
+            salePrice: sale2,
+            salePrice1yr: sale1,
+            salePrice2yr: sale2,
+            monthly: r.monthly || '',
+            yearly: sale2,
+            image: r.image ?? '',
+            planType: r.planType || 'APPLE CARE+',
+            duration: r.duration || durationLabel || '1 Year & 2 Years',
+            isActive: r.isActive !== false
+          };
+        })
       };
 
       if (airpodsTableIndex !== -1) {
@@ -260,19 +413,19 @@ export default function AirpodsAppleCareManager() {
         updatedTables.push(newAirpodsTable);
       }
 
-      const res = await axiosClient.put('/settings', {
-        appleCarePricingTables: updatedTables
-      });
-
-      if (res.data?.appleCarePricingTables) {
-        setPricingTables(res.data.appleCarePricingTables);
+      const res = await axiosClient.put('/settings', { appleCarePricingTables: updatedTables });
+      if (res.data) {
+        setPricingTables(updatedTables);
+        try {
+          localStorage.setItem('iincept_admin_airpods_applecare_rows_v2', JSON.stringify(newAirpodsTable.rows));
+          localStorage.setItem('iincept_airpods_applecare_rows_v2', JSON.stringify(newAirpodsTable.rows.filter(r => r.isActive !== false)));
+        } catch (e) {}
+        notifyAdminChange('appleCare');
+        showMessage('success', 'AirPods AppleCare settings saved successfully!');
       }
-
-      notifyAdminChange('settings', { action: 'update_airpods_applecare' });
-      showMessage('success', 'AirPods AppleCare products saved successfully!');
     } catch (err) {
       console.error('Failed to save settings:', err);
-      showMessage('error', 'Failed to save settings. Check connection.');
+      showMessage('error', 'Failed to save AirPods AppleCare settings');
     } finally {
       setSaving(false);
     }
@@ -280,31 +433,27 @@ export default function AirpodsAppleCareManager() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 text-[#0071e3] animate-spin" />
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#0071e3]" />
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8 font-sans text-zinc-900 select-none">
-      {/* Header Banner */}
-      <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 border border-zinc-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
-        <div className="flex items-center gap-4 flex-1 min-w-0">
-          <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl border border-purple-100 shrink-0">
-            <Headphones className="h-7 w-7" />
+    <div className="space-y-6 text-left max-w-6xl mx-auto pb-12">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <div className="p-3 bg-rose-50 text-[#FF2D55] rounded-xl border border-rose-100">
+            <Headphones className="h-6 w-6" />
           </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 leading-tight">
-              AirPods AppleCare Pricing Manager
-            </h1>
-            <p className="text-xs sm:text-sm text-zinc-500 mt-0.5 truncate sm:whitespace-normal">
-              Manage title, description, SKU, MRP, discount, sale price, and image for every AirPods AppleCare product.
-            </p>
+          <div>
+            <h1 className="text-xl font-bold text-zinc-900 tracking-tight">AirPods AppleCare+ Manager</h1>
+            <p className="text-xs text-zinc-500 font-medium">Configure individual 1-Year and 2-Year AppleCare+ plans for AirPods models.</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleAddRow}
@@ -335,7 +484,7 @@ export default function AirpodsAppleCareManager() {
         </div>
       )}
 
-      {/* Global Table Header Settings */}
+      {/* Global Header Settings */}
       <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6 space-y-4">
         <h2 className="font-bold text-zinc-900 text-sm uppercase tracking-wider text-zinc-500">Header Title & Duration Labels</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -350,12 +499,12 @@ export default function AirpodsAppleCareManager() {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-zinc-700 mb-1">Duration Label (Column Title)</label>
+            <label className="block text-xs font-bold text-zinc-700 mb-1">Duration Label</label>
             <input
               type="text"
               value={durationLabel}
               onChange={(e) => setDurationLabel(e.target.value)}
-              placeholder="e.g. 2 years"
+              placeholder="e.g. 1 Year & 2 Years"
               className="w-full px-3.5 py-2 border border-zinc-200 rounded-xl text-sm font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
             />
           </div>
@@ -367,21 +516,19 @@ export default function AirpodsAppleCareManager() {
         <div className="p-5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
           <div>
             <h2 className="font-bold text-zinc-900 text-lg">AirPods AppleCare Products & Pricing List</h2>
-            <p className="text-xs text-zinc-500">Edit model title, description, SKU, MRP, discount & sale price for each AirPods AppleCare product.</p>
+            <p className="text-xs text-zinc-500">Edit model title, image, and individual 1-Year & 2-Year plan pricing specs.</p>
           </div>
-          <span className="text-xs font-semibold px-3 py-1 bg-purple-50 text-purple-600 rounded-full border border-purple-100">
+          <span className="text-xs font-semibold px-3 py-1 bg-rose-50 text-[#FF2D55] rounded-full border border-rose-100">
             {airpodsRows.length} AirPods Products
           </span>
         </div>
 
         <div className="p-4 sm:p-6 space-y-6">
           {airpodsRows.map((row, idx) => (
-            <div key={idx} className="p-5 bg-zinc-50/60 border border-zinc-200 rounded-2xl space-y-4 transition-all hover:border-zinc-300">
+            <div key={idx} className="p-5 bg-white border border-zinc-200/80 rounded-2xl space-y-4 shadow-xs transition-all hover:border-zinc-300 hover:shadow-sm">
               
               {/* Row Header */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-200/80 pb-4">
-                
-                {/* Left: Move & Image & Model Title */}
                 <div className="flex items-center gap-3.5 flex-1 min-w-0">
                   <div className="flex items-center gap-1 shrink-0">
                     <span className="text-xs font-bold text-zinc-400 w-5">{idx + 1}.</span>
@@ -425,7 +572,6 @@ export default function AirpodsAppleCareManager() {
                     </div>
                   </div>
 
-                  {/* Thumbnail Image */}
                   <div 
                     className="bg-white rounded-xl border border-zinc-200 flex items-center justify-center overflow-hidden p-1 shrink-0 relative"
                     style={{ width: '56px', height: '56px', minWidth: '56px', minHeight: '56px', maxWidth: '56px', maxHeight: '56px' }}
@@ -435,18 +581,10 @@ export default function AirpodsAppleCareManager() {
                         src={row.image}
                         alt={row.model}
                         style={{ width: '100%', height: '100%', maxWidth: '56px', maxHeight: '56px', objectFit: 'contain' }}
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = '/airpods_category.jpg';
-                        }}
                       />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-50 text-zinc-400 p-1">
-                        <img
-                          src="/airpods_category.jpg"
-                          alt={row.model}
-                          style={{ width: '100%', height: '100%', maxWidth: '56px', maxHeight: '56px', objectFit: 'contain', opacity: 0.35 }}
-                        />
+                        <Headphones className="h-6 w-6 text-zinc-300" />
                       </div>
                     )}
                     {uploadingRowIndex === idx && (
@@ -461,12 +599,11 @@ export default function AirpodsAppleCareManager() {
                       {row.model || 'AirPods Model'}
                     </span>
                     <span className="text-xs text-zinc-500 font-medium block truncate">
-                      {row.sku ? `SKU: ${row.sku}` : 'No SKU'} • {row.salePrice || row.yearly || 'No Price Set'}
+                      1-Yr: {row.salePrice1yr || calculateFinalPriceStr(row.mrp1yr, row.discount1yr)} • 2-Yr: {row.salePrice2yr || row.salePrice || calculateFinalPriceStr(row.mrp2yr || row.mrp, row.discount2yr || row.discount)}
                     </span>
                   </div>
                 </div>
 
-                {/* Right Actions */}
                 <div className="flex items-center gap-3 shrink-0">
                   <label className="relative inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white hover:bg-zinc-100 text-zinc-700 text-xs font-semibold rounded-xl cursor-pointer border border-zinc-200 transition-colors">
                     <Upload className="h-3.5 w-3.5 text-[#0071e3]" />
@@ -520,13 +657,12 @@ export default function AirpodsAppleCareManager() {
                 </div>
               </div>
 
-              {/* Form Input Fields Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                
+              {/* Common Info */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 bg-zinc-50 p-4 rounded-xl border border-zinc-200/60 mb-4">
                 <div>
                   <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
                     <Tag className="w-3.5 h-3.5 text-[#0071e3]" />
-                    Model / Title Name
+                    Model Name
                   </label>
                   <input
                     type="text"
@@ -553,100 +689,159 @@ export default function AirpodsAppleCareManager() {
 
                 <div>
                   <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
-                    <Barcode className="w-3.5 h-3.5 text-[#0071e3]" />
-                    SKU Code
-                  </label>
-                  <input
-                    type="text"
-                    value={row.sku || ''}
-                    onChange={(e) => handleUpdateRow(idx, 'sku', e.target.value)}
-                    placeholder="e.g. AC-AIRPODS-PRO"
-                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
-                    <DollarSign className="w-3.5 h-3.5 text-zinc-500" />
-                    MRP Price
-                  </label>
-                  <input
-                    type="text"
-                    value={row.mrp || ''}
-                    onChange={(e) => handleUpdateRow(idx, 'mrp', e.target.value)}
-                    placeholder="e.g. ₹5,900.00"
-                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
-                    <Percent className="w-3.5 h-3.5 text-emerald-600" />
-                    Discount Label
-                  </label>
-                  <input
-                    type="text"
-                    value={row.discount || ''}
-                    onChange={(e) => handleUpdateRow(idx, 'discount', e.target.value)}
-                    placeholder="e.g. 16% OFF"
-                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
-                    <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
-                    Final Sale Price
-                  </label>
-                  <input
-                    type="text"
-                    value={row.salePrice || row.yearly || ''}
-                    onChange={(e) => handleUpdateRow(idx, 'salePrice', e.target.value)}
-                    placeholder="e.g. ₹4,900.00"
-                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-bold text-emerald-700 focus:outline-none focus:border-[#0071e3]"
-                  />
-                </div>
-
-                <div className="sm:col-span-2 md:col-span-3">
-                  <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
                     <Upload className="w-3.5 h-3.5 text-zinc-500" />
-                    Product Image URL / Uploaded Asset Path
+                    Product Image URL
                   </label>
-                  <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    value={row.image || ''}
+                    onChange={(e) => handleUpdateRow(idx, 'image', e.target.value)}
+                    placeholder="e.g. /airpods_category.jpg"
+                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
+                  />
+                </div>
+              </div>
+
+              {/* 1-YEAR COVERAGE PLAN SPECS */}
+              <div className="p-4 bg-sky-50/50 border border-sky-200/80 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between border-b border-sky-200/60 pb-2">
+                  <span className="text-xs font-extrabold uppercase text-[#0071e3] tracking-wider flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#0071e3]"></span>
+                    1-Year Plan Specs (AppleCare+)
+                  </span>
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 bg-sky-100 text-[#0071e3] rounded-full border border-sky-200">
+                    1-Year Coverage
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-700 mb-1">SKU Code (1-Yr)</label>
                     <input
                       type="text"
-                      value={row.image || ''}
-                      onChange={(e) => handleUpdateRow(idx, 'image', e.target.value)}
-                      placeholder="e.g. /airpods_category.jpg"
-                      className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-mono text-zinc-800 focus:outline-none focus:border-[#0071e3]"
+                      value={row.sku1yr || ''}
+                      onChange={(e) => handleUpdateRow(idx, 'sku1yr', e.target.value)}
+                      placeholder="e.g. AC-AIRPODS-PRO-1YR"
+                      className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-mono font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
                     />
-                    {row.image && (
-                      <div className="w-10 h-10 rounded-lg border border-zinc-200 bg-white p-1 shrink-0 flex items-center justify-center overflow-hidden shadow-xs">
-                        <img
-                          src={row.image}
-                          alt="Preview"
-                          className="max-h-full max-w-full object-contain"
-                        />
-                      </div>
-                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-700 mb-1 flex items-center justify-between">
+                      <span>MRP Price (₹)</span>
+                      <span className="text-[9px] text-[#0071e3] font-semibold uppercase">EDITABLE</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={row.mrp1yr || ''}
+                      onChange={(e) => handleUpdateRow(idx, 'mrp1yr', e.target.value)}
+                      placeholder="e.g. ₹3,900.00"
+                      className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-bold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
+                    />
+                    <span className="text-[9px] text-zinc-400 mt-0.5 block font-medium">Enter 1-Yr MRP</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-700 mb-1">Discount (%)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={(row.discount1yr !== undefined && row.discount1yr !== null) ? String(row.discount1yr).replace(/[^0-9.]/g, '') : ''}
+                      onChange={(e) => handleUpdateRow(idx, 'discount1yr', e.target.value)}
+                      placeholder="0 to 100"
+                      className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#0071e3]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-700 mb-1 flex items-center justify-between">
+                      <span>Final Price (₹)</span>
+                      <span className="text-[9px] text-emerald-600 font-bold uppercase">AUTO</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={calculateFinalPriceStr(row.mrp1yr, row.discount1yr)}
+                      readOnly
+                      disabled
+                      placeholder="e.g. ₹3,510"
+                      className="w-full px-3 py-2 bg-emerald-50/60 border border-emerald-200/80 rounded-xl text-xs font-extrabold text-emerald-800 cursor-not-allowed select-none focus:outline-none"
+                    />
+                    <span className="text-[9px] text-emerald-600 mt-0.5 block font-medium">AUTOMATICALLY CALCULATED</span>
                   </div>
                 </div>
+              </div>
 
-                <div className="sm:col-span-2 md:col-span-3">
-                  <label className="block text-xs font-bold text-zinc-700 mb-1 flex items-center gap-1">
-                    <FileText className="w-3.5 h-3.5 text-zinc-500" />
-                    Card Description Paragraph
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={row.description || ''}
-                    onChange={(e) => handleUpdateRow(idx, 'description', e.target.value)}
-                    placeholder="e.g. 2 Years Apple-certified coverage for AirPods Pro 2."
-                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-medium text-zinc-800 focus:outline-none focus:border-[#0071e3]"
-                  />
+              {/* 2-YEAR COVERAGE PLAN SPECS */}
+              <div className="p-4 bg-[#F7F7F9] border border-zinc-200/80 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between border-b border-zinc-200/60 pb-2">
+                  <span className="text-xs font-extrabold uppercase text-[#FF2D55] tracking-wider flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#FF2D55]"></span>
+                    2-Year Plan Specs (AppleCare+)
+                  </span>
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 bg-rose-50 text-[#FF2D55] rounded-full border border-rose-100">
+                    2-Year Coverage
+                  </span>
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-700 mb-1">SKU Code (2-Yr)</label>
+                    <input
+                      type="text"
+                      value={row.sku2yr || row.sku || ''}
+                      onChange={(e) => handleUpdateRow(idx, 'sku2yr', e.target.value)}
+                      placeholder="e.g. AC-AIRPODS-PRO"
+                      className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-mono font-semibold text-zinc-900 focus:outline-none focus:border-[#FF2D55]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-700 mb-1 flex items-center justify-between">
+                      <span>MRP Price (₹)</span>
+                      <span className="text-[9px] text-[#FF2D55] font-semibold uppercase">EDITABLE</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={row.mrp2yr || row.mrp || ''}
+                      onChange={(e) => handleUpdateRow(idx, 'mrp2yr', e.target.value)}
+                      placeholder="e.g. ₹5,900.00"
+                      className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-bold text-zinc-900 focus:outline-none focus:border-[#FF2D55]"
+                    />
+                    <span className="text-[9px] text-zinc-400 mt-0.5 block font-medium">Enter 2-Yr MRP</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-700 mb-1">Discount (%)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={(row.discount2yr !== undefined && row.discount2yr !== null && row.discount2yr !== '') ? String(row.discount2yr).replace(/[^0-9.]/g, '') : ((row.discount !== undefined && row.discount !== null) ? String(row.discount).replace(/[^0-9.]/g, '') : '')}
+                      onChange={(e) => handleUpdateRow(idx, 'discount2yr', e.target.value)}
+                      placeholder="0 to 100"
+                      className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-900 focus:outline-none focus:border-[#FF2D55]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-700 mb-1 flex items-center justify-between">
+                      <span>Final Price (₹)</span>
+                      <span className="text-[9px] text-emerald-600 font-bold uppercase">AUTO</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={calculateFinalPriceStr(row.mrp2yr || row.mrp, row.discount2yr || row.discount)}
+                      readOnly
+                      disabled
+                      placeholder="e.g. ₹4,900"
+                      className="w-full px-3 py-2 bg-emerald-50/60 border border-emerald-200/80 rounded-xl text-xs font-extrabold text-emerald-800 cursor-not-allowed select-none focus:outline-none"
+                    />
+                    <span className="text-[9px] text-emerald-600 mt-0.5 block font-medium">AUTOMATICALLY CALCULATED</span>
+                  </div>
+                </div>
               </div>
+
             </div>
           ))}
         </div>

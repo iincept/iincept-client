@@ -1070,21 +1070,15 @@ export default function AppleCare() {
         </div>
 
         {/* Large Official AppleCare Device Lineup Banner Image */}
-        <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mt-4 sm:mt-8 md:mt-10 py-6 sm:py-10 md:py-14 bg-white flex items-center justify-center overflow-hidden text-center">
-          <picture className="w-full flex items-center justify-center text-center overflow-visible">
-            <source srcSet="https://www.apple.com/in/applecare/images/overview/hero/hero__d4bput78wzu6_small_2x.jpg 2x" media="(max-width:734px)" />
-            <source srcSet="https://www.apple.com/in/applecare/images/overview/hero/hero__d4bput78wzu6_medium_2x.jpg 2x" media="(max-width:1068px)" />
-            <source srcSet="https://www.apple.com/in/applecare/images/overview/hero/hero__d4bput78wzu6_large_2x.jpg 2x" media="(max-width:1440px)" />
-            <source srcSet="https://www.apple.com/in/applecare/images/overview/hero/hero__d4bput78wzu6_xlarge_2x.jpg 2x" media="(min-width:0px)" />
-            <img
-              src="https://www.apple.com/in/applecare/images/overview/hero/hero__d4bput78wzu6_xlarge.jpg"
-              alt="Various Apple products, including MacBook, Apple Watch, iPhone, AirPods Pro, AirPods Max"
-              className="w-full h-auto object-contain max-w-[2200px] sm:max-w-[2600px] md:max-w-[3000px] scale-120 sm:scale-135 md:scale-145 translate-x-8 sm:translate-x-16 md:translate-x-24 mx-auto block origin-center text-center transition-transform duration-300 transform-gpu my-4 sm:my-8"
-            />
-          </picture>
+        <div className="w-full max-w-6xl md:max-w-7xl mx-auto mt-4 sm:mt-6 md:mt-8 py-4 sm:py-10 md:py-12 bg-white flex flex-col items-center justify-center text-center px-0 sm:px-4 overflow-hidden sm:overflow-visible">
+          <img
+            src="https://www.apple.com/in/applecare/images/overview/hero/hero__d4bput78wzu6_xlarge.jpg"
+            alt="Various Apple products, including MacBook, Apple Watch, iPhone, AirPods Pro, AirPods Max"
+            className="w-full h-auto object-contain object-center max-w-full mx-auto block origin-center text-center transition-transform duration-300 transform-gpu scale-130 sm:scale-120 md:scale-125 lg:scale-135 my-6 sm:my-6 md:my-8"
+          />
         </div>
 
-        <div className="content max-w-3xl mx-auto flex flex-col items-center justify-center text-center space-y-6 mt-16 sm:mt-24 md:mt-32 pt-0 px-6 relative z-10">
+        <div className="content max-w-3xl mx-auto flex flex-col items-center justify-center text-center space-y-6 mt-8 sm:mt-12 md:mt-16 pt-0 px-6 relative z-10">
           <p className="section-copy typography-eyebrow-reduced font-semibold text-[#1D1D1F] text-base sm:text-lg md:text-xl leading-relaxed text-center max-w-2xl sm:max-w-3xl mx-auto">
             AppleCare offers one-stop support and service for all of your Apple products — from the people who know them best. Get easy, fast repairs for accidents like drops and spills. A replacement battery when yours drops below 80% capacity. And priority care with just a&nbsp;chat, call or&nbsp;tap.
           </p>
@@ -1119,8 +1113,8 @@ export default function AppleCare() {
         </div>
 
         {/* Device Category Icon Nav Bar */}
-        <div className="relative border-b border-[#D2D2D7]/80 pb-0 mb-12">
-          <div className="flex items-end justify-center gap-6 sm:gap-10 md:gap-12 overflow-x-auto scrollbar-none px-4">
+        <div className="relative border-b border-[#D2D2D7]/80 pb-0 mb-12 -mx-6 sm:mx-0">
+          <div className="flex items-end justify-start sm:justify-center gap-5 sm:gap-10 md:gap-12 overflow-x-auto scrollbar-none px-6 sm:px-4">
             {[
               { id: 'iPhone', label: 'iPhone', icon: IPhoneSvgIcon },
               { id: 'Mac', label: 'Mac', icon: MacSvgIcon },
@@ -1176,10 +1170,16 @@ export default function AppleCare() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {activeRows.map((row, idx) => {
-                const displaySalePrice = row.salePrice || row.yearly || '11,900.00';
-                const formattedPrice = String(displaySalePrice).includes('₹')
-                  ? displaySalePrice
-                  : `₹${Number(String(displaySalePrice).replace(/[^0-9.]/g, '')).toLocaleString('en-IN')}.00`;
+                const mrpStr = row.mrp || '';
+                const mrpNum = parseFloat(String(mrpStr).replace(/[^0-9.]/g, '')) || 0;
+                const discNum = Math.min(100, Math.max(0, parseFloat(String(row.discount).replace(/[^0-9.]/g, '')) || 0));
+
+                const finalNum = mrpNum > 0 && discNum >= 0
+                  ? Math.max(0, Math.round(mrpNum - (mrpNum * discNum / 100)))
+                  : (parseFloat(String(row.salePrice || row.yearly || '0').replace(/[^0-9.]/g, '')) || 0);
+
+                const formattedPrice = `₹${finalNum.toLocaleString('en-IN')}`;
+                const formattedMrp = mrpStr.includes('₹') ? mrpStr : (mrpNum > 0 ? `₹${mrpNum.toLocaleString('en-IN')}` : '');
 
                 return (
                   <div
@@ -1250,19 +1250,19 @@ export default function AppleCare() {
                           <div className="flex items-center justify-between text-xs text-zinc-500">
                             <span className="font-semibold text-zinc-500">MRP</span>
                             <div className="flex items-center gap-2">
-                              {row.mrp && <span className="line-through text-zinc-400 font-medium">{row.mrp}</span>}
-                              {row.discount && (
+                              {formattedMrp && <span className="line-through text-zinc-400 font-medium">{formattedMrp}</span>}
+                              {discNum > 0 && (
                                 <span className="bg-[#FF2D55] text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md shadow-2xs">
-                                  {row.discount.includes('%') ? row.discount : `${row.discount} OFF`}
+                                  {discNum}% OFF
                                 </span>
                               )}
                             </div>
                           </div>
 
-                          {row.discount ? (
+                          {discNum > 0 ? (
                             <div className="flex items-center justify-between text-xs">
                               <span className="font-semibold text-zinc-500">Discount</span>
-                              <span className="font-bold text-[#FF2D55]">-{row.discount.replace(/OFF/i, '').trim()}</span>
+                              <span className="font-bold text-[#FF2D55]">-{discNum}%</span>
                             </div>
                           ) : (
                             <div className="h-4"></div>

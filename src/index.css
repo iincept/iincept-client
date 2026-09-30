@@ -23,16 +23,28 @@
   --blue: #0071E3;
 }
 
-html, body {
+html {
   margin: 0 !important;
   padding: 0 !important;
   width: 100% !important;
   overflow-x: hidden !important;
+  background-color: #FFFFFF !important;
+  color-scheme: light;
 }
 
 body {
-  background: #FFFFFF;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  overflow-x: hidden !important;
+  background-color: #FFFFFF !important;
   color: #1D1D1F;
+  color-scheme: light;
+}
+
+#root {
+  background-color: #FFFFFF !important;
+  min-height: 100vh;
 }
 
 .typography-headline-elevated {
@@ -385,4 +397,16 @@ body {
 .page-smooth-enter {
   animation: pageSmoothEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   will-change: opacity, transform;
+}
+
+/* Hide scrollbars globally for horizontal scroll rows like model icon bars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }

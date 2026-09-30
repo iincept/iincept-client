@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { ShieldAlert, Star } from 'lucide-react';
 import { fetchProductById, fetchProducts, setCurrentProduct } from '../redux/productSlice';
@@ -8,10 +8,12 @@ import Loader from '../components/Loader';
 import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
 
-// Fallback definitions removed in favor of real database records
+// In-memory cache for processed canvas images to prevent main thread re-processing
+const canvasProcessedCache = new Map();
 
 export default function ProductDetails() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -25,8 +27,6 @@ export default function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedStorage, setSelectedStorage] = useState('');
-
-
 
   const handleGalleryMouseMove = (e) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
@@ -47,6 +47,8 @@ export default function ProductDetails() {
   const [selectedRam, setSelectedRam] = useState('');
   const [selectedGlass, setSelectedGlass] = useState('');
   const [selectedConnectivity, setSelectedConnectivity] = useState('');
+  const [selectedBandSize, setSelectedBandSize] = useState('');
+  const [selectedAccessoriesSize, setSelectedAccessoriesSize] = useState('');
   const [selectedAppleCare, setSelectedAppleCare] = useState(false);
   const [activeTab, setActiveTab] = useState('specs');
 
@@ -64,6 +66,7 @@ export default function ProductDetails() {
   const [productAppleCare, setProductAppleCare] = useState(null);
 
   useEffect(() => {
+    if (!id) return;
     fetchReviews();
     fetchAppleCareSettings();
   }, [id]);
@@ -113,21 +116,23 @@ export default function ProductDetails() {
 
   useEffect(() => {
     if (id) {
-      if (currentProduct && (currentProduct._id !== id && currentProduct.id !== id && currentProduct.slug !== id)) {
-        dispatch(setCurrentProduct(null));
-      }
-      setActiveImage('');
-      setProcessedImage('');
-      setSelectedColor(null);
+      const isCurrentMatching = currentProduct && 
+        (currentProduct._id === id || currentProduct.id === id || currentProduct.slug === id);
 
-      if (id.match(/^[0-9a-fA-F]{24}$/)) {
-        dispatch(fetchProductById(id));
-      } else {
-        dispatch(fetchProducts());
+      if (!isCurrentMatching) {
+        dispatch(setCurrentProduct(null));
+        setActiveImage('');
+        setProcessedImage('');
+        setSelectedColor(null);
+
+        if (id.match(/^[0-9a-fA-F]{24}$/)) {
+          dispatch(fetchProductById(id));
+        } else if (!products || products.length === 0) {
+          dispatch(fetchProducts());
+        }
       }
     }
     const unsubscribe = subscribeToLiveSync(() => {
-      dispatch(fetchProducts());
       if (id && id.match(/^[0-9a-fA-F]{24}$/)) {
         dispatch(fetchProductById(id));
       }
@@ -139,7 +144,7 @@ export default function ProductDetails() {
     if (!products || products.length === 0) {
       dispatch(fetchProducts());
     }
-  }, [dispatch, products]);
+  }, [dispatch, products?.length]);
 
   // Pincode calculation helper
   const checkPincodeDelivery = () => {
@@ -519,96 +524,38 @@ export default function ProductDetails() {
   const getCategoryGroup = (prod) => {
     if (!prod) return 'other';
     const catObj = prod.category;
-    const catId = (catObj && typeof catObj === 'object') ? (catObj._id || catObj.id || '') : (typeof catObj === 'string' ? catObj : '');
-    const catName = (catObj && typeof catObj === 'object') ? (catObj.name || catObj.title || '') : (typeof catObj === 'string' ? catObj : '');
-    const catSlug = (catObj && typeof catObj === 'object') ? (catObj.slug || '') : '';
-
+    const catId = (catObj && typeof catObj === 'object') ? (catObj._id?.toString() || catObj.id || '') : (typeof catObj === 'string' ? catObj : '');
+    const catName = (catObj && typeof catObj === 'object') ? (catObj.name || catObj.title || '').toLowerCase() : (typeof catObj === 'string' ? catObj.toLowerCase() : '');
+    const catSlug = (catObj && typeof catObj === 'object') ? (catObj.slug || '').toLowerCase() : '';
     const title = (prod.title || prod.name || '').toLowerCase();
-    const catText = `${catName} ${catSlug} ${catId}`.toLowerCase();
 
-    // Explicit accessory keywords in product title (cases, sleeves, adapters, guards)
+    // 1. Direct Category Name/Slug Match (Mongoose populated category)
+    if (catSlug === 'mac' || catSlug === 'laptops-pcs' || catName === 'mac' || catName === 'laptops & pcs') return 'mac';
+    if (catSlug === 'iphone' || catSlug === 'smartphones' || catName === 'iphone' || catName === 'smartphones') return 'iphone';
+    if (catSlug === 'ipad' || catSlug === 'ipads' || catName === 'ipad' || catName === 'ipads') return 'ipad';
+    if (catSlug === 'watch' || catSlug === 'wearables' || catName === 'watch' || catName === 'wearables' || catName.includes('apple watch')) return 'watch';
+    if (catSlug === 'airpods' || catSlug === 'premium-audio' || catName === 'airpods' || catName === 'premium-audio') return 'airpods';
+    if (catSlug === 'tv-home' || catName.includes('tv') || catName.includes('home')) return 'tv-home';
+    if (catSlug === 'accessories' || catName === 'accessories') return 'accessories';
+
+    // 2. Hardware Title Match
+    if (title.includes('macbook') || title.includes('mac mini') || title.includes('imac') || title.includes('mac studio') || title.includes('mac pro') || title.startsWith('mac ')) return 'mac';
+    if (title.includes('iphone')) return 'iphone';
+    if (title.includes('ipad')) return 'ipad';
+    if (title.includes('watch')) return 'watch';
+    if (title.includes('airpods') || title.includes('airpod')) return 'airpods';
+    if (title.includes('homepod') || title.includes('apple tv')) return 'tv-home';
+
+    // 3. Accessories Title Match
     const isExplicitAccessoryTitle = [
       'case', 'sleeve', 'cover', 'bag', 'backpack', 'folio', 'screen protector',
       'guard', 'film', 'skin', 'stand', 'mount', 'hub', 'dock', 'dongle', 'converter',
       'adapter', 'charger', 'charging', 'cable', 'cord', 'connector', 'strap', 'band', 'loop'
     ].some(kw => title.includes(kw));
 
-    // 1. Pure Mac Laptops & Computers
-    const isMacHardware = (
-      title.includes('macbook') ||
-      title.includes('mac mini') ||
-      title.includes('imac') ||
-      title.includes('mac studio') ||
-      title.includes('mac pro') ||
-      title.includes('macbook air') ||
-      title.includes('macbook pro') ||
-      title.includes('macbook neo') ||
-      catText.includes('macbook') ||
-      catText.includes('laptops') ||
-      (catText.includes('mac') && !catText.includes('accessories'))
-    );
+    if (isExplicitAccessoryTitle) return 'accessories';
 
-    if (isMacHardware && !isExplicitAccessoryTitle) {
-      return 'mac';
-    }
-
-    // 2. iPhone Hardware
-    const isIphoneHardware = (
-      title.includes('iphone') ||
-      catText.includes('iphone') ||
-      catText.includes('smartphones')
-    );
-    if (isIphoneHardware && !isExplicitAccessoryTitle) {
-      return 'iphone';
-    }
-
-    // 3. iPad Hardware
-    const isIpadHardware = (
-      title.includes('ipad') ||
-      catText.includes('ipad') ||
-      catText.includes('tablets')
-    );
-    if (isIpadHardware && !isExplicitAccessoryTitle) {
-      return 'ipad';
-    }
-
-    // 4. Apple Watch Hardware
-    const isWatchHardware = (
-      title.includes('watch') ||
-      catText.includes('watch') ||
-      catText.includes('wearable')
-    );
-    if (isWatchHardware && !isExplicitAccessoryTitle) {
-      return 'watch';
-    }
-
-    // 5. AirPods & Audio Hardware
-    const isAirpodsHardware = (
-      title.includes('airpods') ||
-      title.includes('airpod') ||
-      catText.includes('airpods')
-    );
-    if (isAirpodsHardware && !isExplicitAccessoryTitle) {
-      return 'airpods';
-    }
-
-    // 6. TV & Home Hardware
-    const isTvHomeHardware = (
-      title.includes('apple tv') ||
-      title.includes('homepod') ||
-      catText.includes('tv') ||
-      catText.includes('homepod')
-    );
-    if (isTvHomeHardware && !isExplicitAccessoryTitle) {
-      return 'tv-home';
-    }
-
-    // 7. General Accessories
-    if (isExplicitAccessoryTitle || catText.includes('accessories')) {
-      return 'accessories';
-    }
-
-    return catName.toLowerCase() || 'other';
+    return catName || 'other';
   };
 
   const isValidCurrentProduct = currentProduct && 
@@ -618,7 +565,7 @@ export default function ProductDetails() {
   const product = isValidCurrentProduct ? currentProduct : localProduct;
 
   useEffect(() => {
-    const rawTarget = activeImage || (product ? (colors[0]?.image || product.images?.[0] || product.image) : '');
+    const rawTarget = activeImage || (selectedColor ? (colors.find(c => c.name === selectedColor.name)?.image || product?.images?.[0]) : (product?.displayImage || colors[0]?.image || product?.images?.[0] || product?.image)) || '';
     if (!rawTarget) return;
 
     let isMounted = true;
@@ -626,6 +573,11 @@ export default function ProductDetails() {
     if (targetSrc.startsWith('uploads/')) targetSrc = `/${targetSrc}`;
 
     setProcessedImage(targetSrc);
+
+    if (canvasProcessedCache.has(targetSrc)) {
+      setProcessedImage(canvasProcessedCache.get(targetSrc));
+      return;
+    }
 
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -635,13 +587,27 @@ export default function ProductDetails() {
       try {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        const w = img.naturalWidth || img.width;
-        const h = img.naturalHeight || img.height;
-        if (w === 0 || h === 0) return;
+        const origW = img.naturalWidth || img.width;
+        const origH = img.naturalHeight || img.height;
+        if (origW === 0 || origH === 0) return;
+
+        // Downsample to max 350px for super-fast background threshold calculation (<2ms)
+        const maxDim = 350;
+        let w = origW;
+        let h = origH;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
 
         canvas.width = w;
         canvas.height = h;
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0, w, h);
 
         const imgData = ctx.getImageData(0, 0, w, h);
         const data = imgData.data;
@@ -694,7 +660,9 @@ export default function ProductDetails() {
 
             if (modified && isMounted) {
               ctx.putImageData(imgData, 0, 0);
-              setProcessedImage(canvas.toDataURL('image/png'));
+              const processedUrl = canvas.toDataURL('image/png');
+              canvasProcessedCache.set(targetSrc, processedUrl);
+              setProcessedImage(processedUrl);
               return;
             }
           }
@@ -702,10 +670,12 @@ export default function ProductDetails() {
       } catch (e) {
         // Fallback for CORS or canvas errors
       }
+      canvasProcessedCache.set(targetSrc, targetSrc);
       if (isMounted) setProcessedImage(targetSrc);
     };
 
     img.onerror = () => {
+      canvasProcessedCache.set(targetSrc, targetSrc);
       if (isMounted) setProcessedImage(targetSrc);
     };
 
@@ -766,6 +736,8 @@ export default function ProductDetails() {
     return PDP_COLOR_MAP[lowerVal] || '#cbd5e1';
   };
 
+  const getColorStr = (c) => (typeof c === 'object' ? (c?.name || c?.value || '') : (c || '')).toString().trim();
+
   // Helper to extract color-specific images
   const getColorImages = (colorName) => {
     if (!product) return [];
@@ -775,19 +747,25 @@ export default function ProductDetails() {
 
     // 1. Check variants for matching color (Admin Panel uploaded images)
     if (product.variants && Array.isArray(product.variants)) {
-      const colorVariant = product.variants.find(v => 
-        v.color?.toString().trim().toLowerCase() === normColor &&
-        Array.isArray(v.images) && v.images.length > 0
-      );
-      if (colorVariant && colorVariant.images && colorVariant.images.length > 0) {
-        return colorVariant.images;
+      const colorVariant = product.variants.find(v => {
+        const vColorName = getColorStr(v.color).toLowerCase();
+        return vColorName === normColor &&
+          ((Array.isArray(v.images) && v.images.length > 0) || v.image);
+      });
+      if (colorVariant) {
+        if (Array.isArray(colorVariant.images) && colorVariant.images.length > 0) {
+          return colorVariant.images;
+        }
+        if (colorVariant.image) {
+          return [colorVariant.image];
+        }
       }
     }
 
     // 2. Check product.colors array object
     const colorIdx = (product.colors || []).findIndex(c => {
-      const name = typeof c === 'object' ? c.name : c;
-      return name?.toString().trim().toLowerCase() === normColor;
+      const name = getColorStr(c);
+      return name.toLowerCase() === normColor;
     });
 
     if (colorIdx !== -1) {
@@ -925,14 +903,43 @@ export default function ProductDetails() {
   let connectivities = Array.isArray(product?.connectivities) ? [...product.connectivities] : [];
   if (product?.variants && product.variants.length > 0) {
     product.variants.forEach(v => {
-      if (v.connectivity) {
-        const trimmedConn = v.connectivity.toString().trim();
+      const connVal = v.connectivity || (v.displayTitle?.includes('Cellular') || v.title?.includes('Cellular') ? 'GPS + Cellular' : (v.displayTitle?.includes('GPS') || v.title?.includes('GPS') ? 'GPS' : ''));
+      if (connVal) {
+        const trimmedConn = connVal.toString().trim();
         if (trimmedConn && !connectivities.some(c => c.toLowerCase() === trimmedConn.toLowerCase())) {
           connectivities.push(trimmedConn);
         }
       }
     });
   }
+
+  let bandSizes = Array.isArray(product?.bandSizes) ? [...product.bandSizes] : [];
+  if (product?.variants && product.variants.length > 0) {
+    product.variants.forEach(v => {
+      if (v.bandSize) {
+        const trimmedB = v.bandSize.toString().trim();
+        if (trimmedB && !bandSizes.some(b => b.toLowerCase() === trimmedB.toLowerCase())) {
+          bandSizes.push(trimmedB);
+        }
+      }
+    });
+  }
+
+  let accessoriesSizes = [];
+  const rawAccSizes = Array.isArray(product?.accessoriesSizes) ? [...product.accessoriesSizes] : [];
+  if (product?.variants && product.variants.length > 0) {
+    product.variants.forEach(v => {
+      if (v.accessoriesSize && v.accessoriesSize !== 'None' && v.accessoriesSize !== 'Not Applicable') {
+        rawAccSizes.push(v.accessoriesSize);
+      }
+    });
+  }
+  rawAccSizes.forEach(accSz => {
+    const trimmed = (accSz || '').toString().trim();
+    if (trimmed && trimmed !== 'None' && !accessoriesSizes.some(a => a.toLowerCase() === trimmed.toLowerCase())) {
+      accessoriesSizes.push(trimmed);
+    }
+  });
 
   const activeColorName = selectedColor?.name || (colors[0]?.name || '');
   const rawGalleryImages = getColorImages(activeColorName);
@@ -962,63 +969,97 @@ export default function ProductDetails() {
     return product?.category?.name || product?.category || 'iPhone';
   };
 
-  // Determine active configurations
+  // Determine active configurations and initial active image in a single consolidated pass
   useEffect(() => {
     if (product) {
-      if (colors.length > 0) {
-        setSelectedColor(colors[0]);
-      } else {
-        setSelectedColor(null);
+      const skuQuery = searchParams.get('sku') || searchParams.get('variant') || searchParams.get('q');
+      let matchedVar = null;
+
+      if (skuQuery && Array.isArray(product.variants) && product.variants.length > 0) {
+        const qClean = skuQuery.trim().toLowerCase();
+        matchedVar = product.variants.find(v => {
+          if (!v) return false;
+          const vSku = (v.sku || '').trim().toLowerCase();
+          const vPartNumber = (v.partNumber || '').trim().toLowerCase();
+          const vModelNumber = (v.modelNumber || '').trim().toLowerCase();
+          return vSku === qClean || vPartNumber === qClean || vModelNumber === qClean || (vSku && vSku.includes(qClean)) || (vPartNumber && vPartNumber.includes(qClean));
+        });
       }
 
-      if (sizes.length > 0) {
-        setSelectedSize(sizes[0]);
-      } else {
-        setSelectedSize('');
-      }
+      if (matchedVar) {
+        if (matchedVar.color && colors.length > 0) {
+          const matchC = colors.find(c => (c.name || '').toLowerCase() === (matchedVar.color || '').toLowerCase());
+          setSelectedColor(matchC || colors[0]);
+        } else if (colors.length > 0) {
+          setSelectedColor(colors[0]);
+        }
 
-      if (storages.length > 0) {
-        setSelectedStorage(storages[0]);
-      } else {
-        setSelectedStorage('');
-      }
+        if (matchedVar.size) setSelectedSize(matchedVar.size);
+        else if (sizes.length > 0) setSelectedSize(sizes[0]);
 
-      if (rams.length > 0) {
-        setSelectedRam(rams[0]);
-      } else {
-        setSelectedRam('');
-      }
+        if (matchedVar.storage) setSelectedStorage(matchedVar.storage);
+        else if (storages.length > 0) setSelectedStorage(storages[0]);
 
-      if (glasses.length > 0) {
-        setSelectedGlass(glasses[0]);
-      } else {
-        setSelectedGlass('');
-      }
+        if (matchedVar.ram) setSelectedRam(matchedVar.ram);
+        else if (rams.length > 0) setSelectedRam(rams[0]);
 
-      if (connectivities.length > 0) {
-        setSelectedConnectivity(connectivities[0]);
+        if (matchedVar.glass) setSelectedGlass(matchedVar.glass);
+        else if (glasses.length > 0) setSelectedGlass(glasses[0]);
+
+        if (matchedVar.connectivity) setSelectedConnectivity(matchedVar.connectivity);
+        else if (connectivities.length > 0) setSelectedConnectivity(connectivities[0]);
+
+        if (matchedVar.bandSize) setSelectedBandSize(matchedVar.bandSize);
+        else if (bandSizes.length > 0) setSelectedBandSize(bandSizes[0]);
+
+        if (matchedVar.accessoriesSize && matchedVar.accessoriesSize !== 'None') setSelectedAccessoriesSize(matchedVar.accessoriesSize);
+        else if (accessoriesSizes.length > 0) setSelectedAccessoriesSize(accessoriesSizes[0]);
+        else setSelectedAccessoriesSize('');
+
+        const varImg = matchedVar.images?.[0] || matchedVar.image;
+        if (varImg) {
+          setActiveImage(varImg);
+        } else {
+          const activeColorName = matchedVar.color || (colors[0]?.name || '');
+          const imgs = getColorImages(activeColorName);
+          if (imgs && imgs.length > 0) setActiveImage(imgs[0]);
+          else setActiveImage(product.displayImage || product.image || (product.images?.[0] || ''));
+        }
       } else {
-        setSelectedConnectivity('');
+        const initialColor = colors.length > 0 ? colors[0] : null;
+        setSelectedColor(initialColor);
+        setSelectedSize(sizes.length > 0 ? sizes[0] : '');
+        setSelectedStorage(storages.length > 0 ? storages[0] : '');
+        setSelectedRam(rams.length > 0 ? rams[0] : '');
+        setSelectedGlass(glasses.length > 0 ? glasses[0] : '');
+        setSelectedConnectivity(connectivities.length > 0 ? connectivities[0] : '');
+        setSelectedBandSize(bandSizes.length > 0 ? bandSizes[0] : '');
+        setSelectedAccessoriesSize(accessoriesSizes.length > 0 ? accessoriesSizes[0] : '');
+
+        const activeColorName = initialColor?.name || '';
+        const imgs = getColorImages(activeColorName);
+        if (imgs && imgs.length > 0) {
+          setActiveImage(imgs[0]);
+        } else if (product.images && product.images.length > 0) {
+          setActiveImage(product.images[0]);
+        } else if (product.image) {
+          setActiveImage(product.image);
+        } else {
+          setActiveImage('');
+        }
       }
     }
-  }, [product, colors.length, sizes.length, storages.length, rams.length, glasses.length, connectivities.length]);
+  }, [product?._id || product?.id, searchParams]);
 
-  // Set active image whenever selectedColor changes
+  // Update active image when user explicitly selects a color
   useEffect(() => {
-    if (product) {
-      const activeColorName = selectedColor?.name || (colors[0]?.name || '');
-      const imgs = getColorImages(activeColorName);
+    if (product && selectedColor) {
+      const imgs = getColorImages(selectedColor.name);
       if (imgs && imgs.length > 0) {
         setActiveImage(imgs[0]);
-      } else if (product.images && product.images.length > 0) {
-        setActiveImage(product.images[0]);
-      } else if (product.image) {
-        setActiveImage(product.image);
-      } else {
-        setActiveImage('');
       }
     }
-  }, [selectedColor, product]);
+  }, [selectedColor]);
 
   const handleColorSelect = (colorObj) => {
     setSelectedColor(colorObj);
@@ -1184,7 +1225,7 @@ export default function ProductDetails() {
   };
 
   // Helper to extract active variant based on current selectors
-  const getActiveVariant = (oColor, oStorage, oRam, oSize, oGlass, oConnectivity) => {
+  const getActiveVariant = (oColor, oStorage, oRam, oSize, oGlass, oConnectivity, oBandSize, oAccessoriesSize) => {
     if (!product || !product.variants || product.variants.length === 0) return null;
 
     const targetColorStr = oColor ? (oColor.name || oColor) : (selectedColor?.name || colors[0]?.name || '');
@@ -1193,6 +1234,8 @@ export default function ProductDetails() {
     const targetSizeStr = oSize !== undefined ? oSize : selectedSize;
     const targetGlassStr = oGlass !== undefined ? oGlass : selectedGlass;
     const targetConnStr = oConnectivity !== undefined ? oConnectivity : selectedConnectivity;
+    const targetBandStr = oBandSize !== undefined ? oBandSize : selectedBandSize;
+    const targetAccSizeStr = oAccessoriesSize !== undefined ? oAccessoriesSize : selectedAccessoriesSize;
 
     const norm = (s) => (s || '').toString().trim().toLowerCase().replace(/ssd|ssd storage|storage|\s+/g, '');
 
@@ -1202,6 +1245,8 @@ export default function ProductDetails() {
     const normSize = norm(targetSizeStr);
     const normGlass = norm(targetGlassStr);
     const normConn = norm(targetConnStr);
+    const normBand = norm(targetBandStr);
+    const normAccSize = norm(targetAccSizeStr);
 
     let bestMatch = null;
     let maxScore = -10000;
@@ -1212,9 +1257,18 @@ export default function ProductDetails() {
       const vRam = norm(v.ram);
       const vSize = norm(v.size);
       const vGlass = norm(v.glass);
-      const vConn = norm(v.connectivity);
+      const vConnVal = v.connectivity || (v.displayTitle?.includes('Cellular') || v.title?.includes('Cellular') ? 'GPS + Cellular' : (v.displayTitle?.includes('GPS') || v.title?.includes('GPS') ? 'GPS' : ''));
+      const vConn = norm(vConnVal);
+      const vBand = norm(v.bandSize);
+      const vAccSize = norm(v.accessoriesSize);
 
       let score = 0;
+
+      // Accessories Size matching
+      if (normAccSize) {
+        if (vAccSize === normAccSize) score += 150;
+        else if (vAccSize && vAccSize !== normAccSize && vAccSize !== 'none') score -= 500;
+      }
 
       // Color matching
       if (normColor) {
@@ -1238,6 +1292,12 @@ export default function ProductDetails() {
       if (normConn) {
         if (vConn === normConn || vGlass === normConn) score += 200;
         else if ((vConn && vConn !== normConn) && (!vGlass || vGlass !== normConn)) score -= 500;
+      }
+
+      // Band Size matching
+      if (normBand) {
+        if (vBand === normBand) score += 150;
+        else if (vBand && vBand !== normBand) score -= 500;
       }
 
       // RAM matching
@@ -1267,44 +1327,137 @@ export default function ProductDetails() {
     return bestMatch || product.variants[0];
   };
 
-  // Helper to dynamically match variant price based on current selectors
-  const getVariantPrice = (oColor, oSize, oStorage, oRam, oGlass, oConnectivity) => {
-    if (!product) return 0;
-    const defaultPrice = product.price || 0;
+  // Helper to dynamically match variant pricing info based on current selectors
+  const getVariantPricingInfo = (oColor, oSize, oStorage, oRam, oGlass, oConnectivity) => {
+    if (!product) return { sellingPrice: 0, originalMrp: 0, youSave: 0, savePercent: 0 };
 
     const currentStorage = (oStorage || selectedStorage || storages[0] || '').toString().toLowerCase().trim();
     const is18Pro = (product.name || product.title || '').toLowerCase().includes('18 pro');
 
     if (is18Pro && currentStorage) {
-      if (currentStorage.includes('256')) return 164900;
-      if (currentStorage.includes('512')) return 189000;
-      if (currentStorage.includes('1tb') || currentStorage.includes('1 tb')) return 239900;
-      if (currentStorage.includes('2tb') || currentStorage.includes('2 tb')) return 314900;
+      let hardcodedPrice = 0;
+      if (currentStorage.includes('256')) hardcodedPrice = 164900;
+      else if (currentStorage.includes('512')) hardcodedPrice = 189000;
+      else if (currentStorage.includes('1tb') || currentStorage.includes('1 tb')) hardcodedPrice = 239900;
+      else if (currentStorage.includes('2tb') || currentStorage.includes('2 tb')) hardcodedPrice = 314900;
+
+      if (hardcodedPrice > 0) {
+        return { sellingPrice: hardcodedPrice, originalMrp: 0, youSave: 0, savePercent: 0 };
+      }
     }
 
-    if (!product.variants || product.variants.length === 0) return defaultPrice;
+    const matchedVar = getActiveVariant(oColor, oStorage, oRam, oGlass, oConnectivity);
 
-    const matchedVar = getActiveVariant(oColor, oStorage, oRam, oSize, oGlass, oConnectivity);
-    if (matchedVar && matchedVar.price > 0) {
-      return Number(matchedVar.price);
+    // 1. Gather all possible price and discount numbers from matchedVar and parent product
+    let vPrice = matchedVar && Number(matchedVar.price) > 0 ? Number(matchedVar.price) : 0;
+    let vDiscVal = matchedVar && Number(matchedVar.discountPrice || matchedVar.discountPercent || matchedVar.discount) > 0 ? Number(matchedVar.discountPrice || matchedVar.discountPercent || matchedVar.discount) : 0;
+    let vMrp = matchedVar && Number(matchedVar.mrp || matchedVar.originalPrice) > 0 ? Number(matchedVar.mrp || matchedVar.originalPrice) : 0;
+
+    let pPrice = Number(product.price || 0);
+    let pDiscVal = Number(product.discountPrice || product.discountPercent || product.discount || 0);
+    let pMrp = Number(product.mrp || product.originalPrice || 0);
+
+    // Effective Base Price
+    let rawBasePrice = vPrice > 0 ? vPrice : pPrice;
+    let rawDiscVal = vDiscVal > 0 ? vDiscVal : pDiscVal;
+    let rawMrp = vMrp > 0 ? vMrp : pMrp;
+
+    if (rawBasePrice <= 0) {
+      return { sellingPrice: 0, originalMrp: 0, youSave: 0, savePercent: 0 };
     }
-    return defaultPrice;
+
+    let sellingPrice = rawBasePrice;
+    let originalMrp = rawMrp > rawBasePrice ? rawMrp : 0;
+
+    // Interpret rawDiscVal smartly (whether entered as %, rupees off, or discount selling price):
+    if (rawDiscVal > 0) {
+      if (rawDiscVal <= 99) {
+        // Percentage Discount (e.g. 10 for 10% OFF)
+        originalMrp = rawBasePrice;
+        sellingPrice = Math.round(rawBasePrice - (rawBasePrice * rawDiscVal / 100));
+      } else if (rawDiscVal < rawBasePrice) {
+        // Check if rawDiscVal is Selling Price (e.g. 161910) or Discount Amount (e.g. 17990 off)
+        if (rawDiscVal < (rawBasePrice / 2)) {
+          // Discount Amount (e.g. ₹17,990 off)
+          originalMrp = rawBasePrice;
+          sellingPrice = rawBasePrice - rawDiscVal;
+        } else {
+          // Discounted Selling Price (e.g. ₹1,61,910)
+          originalMrp = rawBasePrice;
+          sellingPrice = rawDiscVal;
+        }
+      } else if (rawDiscVal > rawBasePrice) {
+        // rawDiscVal is MRP and rawBasePrice is Selling Price
+        originalMrp = rawDiscVal;
+        sellingPrice = rawBasePrice;
+      }
+    } else if (originalMrp > rawBasePrice) {
+      sellingPrice = rawBasePrice;
+    }
+
+    if (originalMrp <= sellingPrice) {
+      originalMrp = 0;
+    }
+
+    const youSave = originalMrp > sellingPrice ? originalMrp - sellingPrice : 0;
+    const savePercent = originalMrp > sellingPrice ? Math.round((youSave / originalMrp) * 100) : 0;
+
+    return {
+      sellingPrice,
+      originalMrp,
+      youSave,
+      savePercent
+    };
   };
 
-  const unitPrice = getVariantPrice();
+  const getVariantPrice = (oColor, oSize, oStorage, oRam, oGlass, oConnectivity) => {
+    return getVariantPricingInfo(oColor, oSize, oStorage, oRam, oGlass, oConnectivity).sellingPrice;
+  };
+
+  const pricingInfo = getVariantPricingInfo();
   const appleCareCost = selectedAppleCare ? 2900 : 0;
-  const finalUnitPrice = unitPrice + appleCareCost;
-  const totalPrice = finalUnitPrice * quantity;
+
+  const unitPrice = pricingInfo.sellingPrice + appleCareCost;
+  const unitOriginalMrp = pricingInfo.originalMrp > 0 ? pricingInfo.originalMrp + appleCareCost : 0;
+  const unitYouSave = pricingInfo.youSave;
+
+  const totalPrice = unitPrice * quantity;
+  const totalOriginalMrp = unitOriginalMrp > 0 ? unitOriginalMrp * quantity : 0;
+  const totalYouSave = unitYouSave * quantity;
+  const savePercent = pricingInfo.savePercent;
 
   if (!product) {
     return (
-      <div className="page-smooth-enter min-h-[60vh] flex items-center justify-center">
-        <Loader message="Loading product details..." />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-pulse select-none">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+          <div className="lg:col-span-7 space-y-4">
+            <div className="w-full h-80 sm:h-[450px] bg-zinc-100/90 rounded-3xl border border-zinc-200/40"></div>
+            <div className="flex gap-3 justify-center pt-2">
+              <div className="w-16 h-16 bg-zinc-100 rounded-2xl border border-zinc-200/40"></div>
+              <div className="w-16 h-16 bg-zinc-100 rounded-2xl border border-zinc-200/40"></div>
+              <div className="w-16 h-16 bg-zinc-100 rounded-2xl border border-zinc-200/40"></div>
+            </div>
+          </div>
+          <div className="lg:col-span-5 space-y-6 pt-2">
+            <div className="h-4 w-28 bg-zinc-200/80 rounded-full"></div>
+            <div className="h-10 w-4/5 bg-zinc-200/90 rounded-2xl"></div>
+            <div className="h-8 w-2/5 bg-zinc-200/80 rounded-xl"></div>
+            <div className="space-y-3 pt-4 border-t border-zinc-100">
+              <div className="h-4 w-full bg-zinc-100 rounded"></div>
+              <div className="h-4 w-5/6 bg-zinc-100 rounded"></div>
+              <div className="h-4 w-4/6 bg-zinc-100 rounded"></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 pt-4">
+              <div className="h-12 bg-zinc-200/80 rounded-2xl"></div>
+              <div className="h-12 bg-zinc-900/10 rounded-2xl"></div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return;
     const colorName = selectedColor?.name || (colors[0]?.name || 'Standard');
     const activeVar = getActiveVariant();
@@ -1313,10 +1466,13 @@ export default function ProductDetails() {
     const processorVal = activeVar?.processor || activeVar?.chip || getProcessorSpec();
 
     const detailsArr = [];
+    if (selectedAccessoriesSize && selectedAccessoriesSize !== 'None') detailsArr.push(`Size: ${selectedAccessoriesSize}`);
     if (selectedSize) detailsArr.push(selectedSize);
+    if (selectedBandSize) detailsArr.push(`Band: ${selectedBandSize}`);
     if (colorName) detailsArr.push(colorName);
+    if (selectedConnectivity) detailsArr.push(selectedConnectivity);
     if (selectedStorage) detailsArr.push(selectedStorage);
-    if (glassVal) detailsArr.push(glassVal);
+    if (glassVal && glassVal !== selectedConnectivity) detailsArr.push(glassVal);
     if (selectedRam) detailsArr.push(selectedRam);
     if (processorVal && ((product.title || product.name || '').toLowerCase().includes('mac') || (product.title || product.name || '').toLowerCase().includes('ipad'))) {
       detailsArr.push(processorVal);
@@ -1326,22 +1482,43 @@ export default function ProductDetails() {
 
     const nameDetails = detailsArr.join(' / ');
 
-    dispatch(addToCart({
-      id: `${id}-${selectedSize || 'std'}-${selectedStorage || 'std'}-${selectedRam || 'std'}-${glassVal || 'std'}-${selectedAppleCare ? 'ac' : 'noac'}-${colorName}`,
-      name: `${cleanProductTitle(product.name || product.title)} (${nameDetails})`,
-      price: finalUnitPrice,
-      image: activeImage || processedImage || colors[0]?.image || product.images?.[0] || product.image,
-      quantity,
-      size: selectedSize,
-      storage: selectedStorage,
-      glass: glassVal,
-      processor: processorVal,
-      partNumber: partNum,
-      ram: selectedRam,
-      color: colorName,
-      appleCare: selectedAppleCare,
-      stock: product.stock || 10
-    }));
+    try {
+      const result = await dispatch(addToCart({
+        id: `${id}-${selectedAccessoriesSize || 'nosz'}-${selectedSize || 'std'}-${selectedBandSize || 'std'}-${selectedConnectivity || 'std'}-${selectedStorage || 'std'}-${selectedRam || 'std'}-${glassVal || 'std'}-${selectedAppleCare ? 'ac' : 'noac'}-${colorName}`,
+        name: `${cleanProductTitle(product.name || product.title)} (${nameDetails})`,
+        price: unitPrice,
+        image: activeImage || processedImage || colors[0]?.image || product.images?.[0] || product.image,
+        quantity,
+        size: selectedSize,
+        accessoriesSize: selectedAccessoriesSize,
+        bandSize: selectedBandSize,
+        connectivity: selectedConnectivity,
+        storage: selectedStorage,
+        glass: glassVal,
+        processor: processorVal,
+        partNumber: partNum,
+        ram: selectedRam,
+        color: colorName,
+        appleCare: selectedAppleCare,
+        stock: product.stock || 10
+      }));
+
+      // Show error only for real failures (stock, network, etc.)
+      // Auth errors (401/403) are handled gracefully in cartSlice with local fallback.
+      if (result?.error) {
+        const msg = result.payload || result.error?.message || '';
+        const isAuthError = msg.toLowerCase().includes('auth') || msg.toLowerCase().includes('token') || msg.toLowerCase().includes('unauthorized');
+        if (!isAuthError && msg) {
+          alert(msg);
+        }
+      }
+    } catch (err) {
+      const msg = err?.message || '';
+      const isAuthError = msg.toLowerCase().includes('auth') || msg.toLowerCase().includes('token');
+      if (!isAuthError) {
+        alert(msg || 'Something went wrong. Please try again.');
+      }
+    }
   };
 
   const handleRequestBulkQuote = () => {
@@ -1357,7 +1534,9 @@ export default function ProductDetails() {
     let message = `Hello iiNCEPT B2B Desk! 👋\nI would like to request a quote/inquiry for the following Apple Product:\n\n`;
     message += `📦 *Product:* ${prodTitle}\n`;
     if (partNum) message += `🔢 *SKU/Part Number:* ${partNum}\n`;
-    if (selectedSize) message += `📏 *Size/Model:* ${selectedSize}\n`;
+    if (selectedSize) message += `📏 *Case Size/Model:* ${selectedSize}\n`;
+    if (selectedBandSize) message += `⌚ *Band Size:* ${selectedBandSize}\n`;
+    if (selectedConnectivity) message += `📡 *Connectivity:* ${selectedConnectivity}\n`;
     if (activeColorStr) message += `🎨 *Color:* ${activeColorStr}\n`;
     if (selectedStorage) message += `💾 *Storage:* ${selectedStorage}\n`;
     if (glassVal) message += `✨ *Glass Finish / Option:* ${glassVal}\n`;
@@ -1449,20 +1628,27 @@ export default function ProductDetails() {
           --blue: #0071E3; --line: rgba(0,0,0,0.10); --muted: rgba(29,29,31,0.62);
         }
         .wrap { max-width: 1240px; margin: 0 auto; padding: 0 28px; }
-        .breadcrumb { padding: 18px 0; font-size: 13px; color: var(--muted); text-align: left; }
+        @media(max-width: 640px) { .wrap { padding: 0 16px; } }
+
+        .breadcrumb { padding: 18px 0; font-size: 13px; color: var(--muted); text-align: left; word-break: break-word; }
         .breadcrumb a:hover { color: var(--paper); }
         .breadcrumb span { margin: 0 6px; }
 
         .pdp { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 60px; padding: 20px 0 70px; }
-        @media(max-width:920px) { .pdp { grid-template-columns: 1fr; } }
+        @media(max-width: 920px) { .pdp { grid-template-columns: 1fr; gap: 32px; padding: 10px 0 40px; } }
 
         .gallery { position: sticky; top: 90px; align-self: start; }
+        @media(max-width: 920px) { .gallery { position: relative; top: 0; } }
+
         .gallery-main {
           width: 100%; height: 520px; aspect-ratio: 1/1; border-radius: 20px; background: #ffffff;
           display: flex; align-items: center; justify-content: center;
           border: 1px solid var(--line); overflow: hidden;
           transition: background .3s ease, border-color .3s ease;
         }
+        @media(max-width: 640px) { .gallery-main { height: 340px; } }
+        @media(max-width: 380px) { .gallery-main { height: 280px; } }
+
         .gallery-main img {
           max-width: 90%; max-height: 90%; width: auto; height: auto; object-fit: contain; display: block; margin: auto;
           transition: opacity 0.35s ease-out, transform 0.35s ease-out;
@@ -1473,13 +1659,13 @@ export default function ProductDetails() {
         .gthumb.active { border-color: var(--paper); border-width: 2px; }
 
         .pinfo .eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--blue); font-weight: 700; margin-bottom: 10px; }
-        .pinfo h1 { font-size: clamp(28px, 3.6vw, 38px); margin-bottom: 10px; font-family: 'Fraunces', serif; font-weight: 600; }
+        .pinfo h1 { font-size: clamp(24px, 3.6vw, 38px); margin-bottom: 10px; font-family: 'Fraunces', serif; font-weight: 600; word-break: break-word; }
         .pinfo .price { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
         .pinfo .gst { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
 
         .optgroup { margin-bottom: 28px; }
         .optgroup label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; margin-bottom: 12px; }
-        .swatches { display: flex; gap: 12px; }
+        .swatches { display: flex; gap: 12px; flex-wrap: wrap; }
         .swatch { width: 38px; height: 38px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; position: relative; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
         .swatch:hover { transform: scale(1.15); box-shadow: 0 0 0 2px rgba(0,0,0,0.3), 0 0 0 4px #ffffff !important; }
         .swatch.active { border-color: transparent; }
@@ -1523,6 +1709,7 @@ export default function ProductDetails() {
         .qty input { width: 60px; text-align: center; border: none; font-size: 15px; font-weight: 600; background: transparent; }
 
         .btnrow { display: flex; gap: 12px; margin-bottom: 30px; }
+        @media(max-width: 480px) { .btnrow { flex-direction: column; } }
         .btn { padding: 15px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; flex: 1; text-align: center; transition: transform .15s ease; cursor: pointer; }
         .btn:hover { transform: translateY(-1px); }
         .btn-dark { background: var(--paper); color: #fff; border: none; }
@@ -1550,11 +1737,13 @@ export default function ProductDetails() {
         table.pricing td.save { color: #1E8E5A; font-weight: 600; }
 
         /* SPEC TABS */
-        .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
-        .tab { padding: 14px 22px; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
+        .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--line); margin-bottom: 24px; overflow-x: auto; }
+        .tab { padding: 14px 22px; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; flex-shrink: 0; }
         .tab.active { color: var(--paper); border-color: var(--paper); }
         .spectable { display: grid; grid-template-columns: 200px 1fr; gap: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-        .spectable .k, .spectable .v { padding: 14px 18px; font-size: 13.5px; border-bottom: 1px solid var(--line); }
+        @media(max-width: 640px) { .spectable { grid-template-columns: 110px 1fr; } }
+        @media(max-width: 400px) { .spectable { grid-template-columns: 1fr; } }
+        .spectable .k, .spectable .v { padding: 14px 18px; font-size: 13.5px; border-bottom: 1px solid var(--line); word-break: break-word; }
         .spectable .k { background: var(--ink-2); color: var(--muted); font-weight: 600; }
         .spectable .row { display: contents; }
         .spectable .row:last-child .k, .spectable .row:last-child .v { border-bottom: none; }
@@ -1620,7 +1809,7 @@ export default function ProductDetails() {
               const activeVar = getActiveVariant();
               const partNum = activeVar?.partNumber || product.partNumber || null;
               const modelNum = activeVar?.modelNumber || product.modelNumber || null;
-              const rawTitle = activeVar?.displayTitle || activeVar?.title || (product.name || product.title);
+              const rawTitle = product.title || product.name || activeVar?.displayTitle || activeVar?.title;
               const displayTitle = cleanProductTitle(rawTitle);
 
               return (
@@ -1637,8 +1826,28 @@ export default function ProductDetails() {
                     </div>
                   )}
 
-                  <div className="price text-3xl font-black text-zinc-950 mt-4 mb-6 text-left tracking-tight">
-                    ₹{totalPrice.toLocaleString('en-IN')}
+                  <div className="mt-4 mb-6 text-left space-y-2">
+                    <div className="flex items-baseline gap-3 flex-wrap">
+                      <span className="text-3xl md:text-4xl font-black text-zinc-950 tracking-tight">
+                        ₹{totalPrice.toLocaleString('en-IN')}
+                      </span>
+                      {totalOriginalMrp > totalPrice && (
+                        <span className="text-lg md:text-xl font-bold text-zinc-400 line-through tracking-tight">
+                          ₹{totalOriginalMrp.toLocaleString('en-IN')}
+                        </span>
+                      )}
+                    </div>
+
+                    {totalYouSave > 0 && (
+                      <div className="flex items-center gap-2 text-xs font-semibold text-zinc-600">
+                        <span className="text-zinc-500 font-bold">* You Save:</span>
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#EAFBF3] text-[#00A859] border border-[#B3F3D3] rounded-full font-extrabold text-xs shadow-2xs">
+                          <span>₹{totalYouSave.toLocaleString('en-IN')}</span>
+                          <span className="text-[#A3E9C5]">|</span>
+                          <span>{savePercent}% OFF</span>
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </>
               );
@@ -1776,10 +1985,32 @@ export default function ProductDetails() {
               );
             })()}
 
-            {/* Size / Model options */}
+            {/* Accessories Size options (XXS, XS, Small, Medium, Large) */}
+            {accessoriesSizes && accessoriesSizes.length > 0 && (
+              <div className="optgroup mb-8 text-left">
+                <label className="block text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">
+                  Accessories Size
+                </label>
+                <div className="optrow flex flex-wrap gap-3">
+                  {accessoriesSizes.map((accSz) => (
+                    <div
+                      key={accSz}
+                      onClick={() => setSelectedAccessoriesSize(accSz)}
+                      className={`opt ${selectedAccessoriesSize === accSz ? 'active' : ''}`}
+                    >
+                      {accSz}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Size / Case Size options */}
             {sizes && sizes.length > 0 && (
               <div className="optgroup mb-8">
-                <label className="block text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">Size / Model</label>
+                <label className="block text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">
+                  {(product?.category?.name || product?.category || '').toString().toLowerCase().includes('watch') ? 'Case Size' : 'Size / Model'}
+                </label>
                 <div className="optrow flex flex-wrap gap-3">
                   {sizes.map((sz) => (
                     <div
@@ -1788,6 +2019,45 @@ export default function ProductDetails() {
                       className={`opt ${selectedSize === sz ? 'active' : ''}`}
                     >
                       {sz}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Band Size options (S/M, M/L) */}
+            {bandSizes && bandSizes.length > 0 && (
+              <div className="optgroup mb-8">
+                <label className="block text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">Band Size</label>
+                <div className="optrow flex flex-wrap gap-3">
+                  {bandSizes.map((bs) => (
+                    <div
+                      key={bs}
+                      onClick={() => setSelectedBandSize(bs)}
+                      className={`opt ${selectedBandSize === bs ? 'active' : ''}`}
+                    >
+                      {bs}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Connectivity options (GPS / GPS + Cellular) */}
+            {connectivities && connectivities.length > 0 && (
+              <div className="optgroup mb-8">
+                <label className="block text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">Connectivity</label>
+                <div className="optrow flex flex-wrap gap-3">
+                  {connectivities.map((conn) => (
+                    <div
+                      key={conn}
+                      onClick={() => {
+                        setSelectedConnectivity(conn);
+                        setSelectedGlass(conn);
+                      }}
+                      className={`opt ${selectedConnectivity === conn || selectedGlass === conn ? 'active' : ''}`}
+                    >
+                      {conn}
                     </div>
                   ))}
                 </div>
@@ -1836,12 +2106,10 @@ export default function ProductDetails() {
               </div>
             )}
 
-
-
-            {/* Finish / Connectivity Options */}
-            {glasses && glasses.length > 0 && (
+            {/* Finish / Glass Finish Options */}
+            {glasses && glasses.length > 0 && (!connectivities || connectivities.length === 0) && (
               <div className="optgroup mb-8">
-                <label className="block text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">Connectivity / Glass Finish</label>
+                <label className="block text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">Glass Finish</label>
                 <div className="optrow flex flex-wrap gap-3">
                   {glasses.map((gl) => (
                     <div
@@ -1906,8 +2174,8 @@ export default function ProductDetails() {
                 <div className="bg-white border border-zinc-200 rounded-3xl p-5 sm:p-6 my-5 shadow-xs text-left select-none relative">
                   {title && (
                     <div className="flex items-center gap-2 mb-1">
-                      <svg className="w-5 h-5 fill-[#E30000] shrink-0" viewBox="0 0 170 170">
-                        <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.34.13-9.04-1.9-14.1-6.1-3.37-2.73-7.29-7.38-11.77-13.97-6.53-9.59-11.75-20.47-15.66-32.65-3.92-12.18-5.88-23.75-5.88-34.7 0-14.4 3.73-26.17 11.19-35.31 7.46-9.14 16.82-13.82 28.08-14.04 4.58 0 9.77 1.19 15.58 3.58 5.81 2.39 9.87 3.58 12.18 3.58 2.12 0 6.28-1.25 12.48-3.75 6.2-2.5 11.21-3.64 15.03-3.41 12.18.54 21.84 5.35 28.98 14.42-10.77 6.53-16.03 15.45-15.78 26.77.25 8.92 3.82 16.5 10.72 22.74 6.9 6.24 15.08 9.71 24.54 10.42-2.39 7.07-5.55 14.1-9.48 21.09zM119.22 31.62c0-7.39 2.65-14.46 7.95-21.21 5.3-6.75 11.95-10.41 19.95-10.98.22.98.33 1.96.33 2.94 0 7.29-2.72 14.37-8.17 21.24-5.45 6.87-12.14 10.59-20.06 11.16-.07-1.04-.1-2.09-.1-3.15z" />
+                      <svg className="w-5.5 h-5.5 text-[#E30000] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.32c.67-.82 1.13-1.96.99-3.11-1 .04-2.19.67-2.9 1.49-.64.74-1.2 1.92-1.05 3.05 1.12.09 2.29-.61 2.96-1.43z" />
                       </svg>
                       <h3 className="text-xl sm:text-2xl font-bold text-zinc-900 leading-tight tracking-tight">
                         {title}
@@ -1942,7 +2210,7 @@ export default function ProductDetails() {
 
             {/* Action Buttons */}
             <div className="btnrow">
-              <button onClick={handleAddToCart} className="btn btn-dark">Add to Order →</button>
+              <button type="button" onClick={handleAddToCart} className="btn btn-dark">Add to Order →</button>
               <button onClick={handleRequestBulkQuote} className="btn btn-line flex items-center justify-center gap-2">
                 Request to WhatsApp
               </button>
@@ -2186,14 +2454,14 @@ export default function ProductDetails() {
 
       {/* Recommended Related Products */}
       {(() => {
-        const targetProd = currentProduct || localProduct;
+        const targetProd = product;
         if (!targetProd || !products || products.length === 0) return null;
 
         const currentGroup = getCategoryGroup(targetProd);
-        const currentProdId = targetProd._id || targetProd.id;
+        const currentProdId = (targetProd._id || targetProd.id || '').toString();
 
         const relatedList = products.filter(p => {
-          const pId = p._id || p.id;
+          const pId = (p._id || p.id || '').toString();
           if (pId === currentProdId) return false;
           return getCategoryGroup(p) === currentGroup;
         }).slice(0, 4);
@@ -2218,7 +2486,7 @@ export default function ProductDetails() {
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6">
               {relatedList.map((p) => {
-                const prodImg = (p.images && p.images[0]) || p.image || '/macbook_category_v3.jpg';
+                const prodImg = p.displayImage || (p.images && p.images[0]) || p.image || '/macbook_category_v3.jpg';
                 return (
                   <Link key={p._id || p.id} to={`/product/${p._id || p.id}`} className="group space-y-3 block">
                     <div className="aspect-[4/3] w-full rounded-2xl bg-zinc-50 border border-zinc-100 p-3 flex items-center justify-center overflow-hidden">

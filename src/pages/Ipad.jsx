@@ -5,7 +5,8 @@ import { Heart, SlidersHorizontal, ArrowUpDown, X, ShoppingBag, ShieldCheck, Wre
 import { addToCart } from '../redux/cartSlice';
 import { addToWishlist } from '../redux/wishlistSlice';
 import { fetchProducts } from '../redux/productSlice';
-import { matchesProductSearch } from '../utils/searchUtils';
+import { matchesProductSearch, normalizeTargetPath } from '../utils/searchUtils';
+import { getProductCardPricing } from '../utils/pricingUtils';
 import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
@@ -142,13 +143,23 @@ const IPAD_SUB_NAV_ITEMS = [
 ];
 
 const resolveSubItemPath = (item) => {
-  const lowerName = (item.name || item.label || '').toLowerCase();
-  if (lowerName.includes('care')) {
+  const nameLower = (item?.name || item?.label || '').toLowerCase();
+  const queryLower = (item?.query || '').toLowerCase();
+  const pathLower = (item?.path || '').toLowerCase();
+
+  if (nameLower.includes('care') || queryLower.includes('care') || pathLower.includes('care')) {
     return '/ipad?tab=applecare';
   }
-  if (item.path && item.path !== '/ipad') return item.path;
-  if (item.query) {
-    return `/ipad?search=${encodeURIComponent(item.query)}`;
+  if (nameLower.includes('compare') || queryLower.includes('compare') || pathLower.includes('compare')) {
+    return '/compare?category=ipad';
+  }
+  if (item?.path && item.path.trim()) {
+    const normalized = normalizeTargetPath(item.path.trim());
+    if (normalized && normalized !== '/ipad') return normalized;
+  }
+  const queryVal = item?.query || item?.label || item?.name || '';
+  if (queryVal && queryVal.trim()) {
+    return `/ipad?search=${encodeURIComponent(queryVal.trim())}`;
   }
   return '/ipad';
 };
@@ -214,6 +225,50 @@ const getModelImageByName = (modelName = '') => {
   return '/ipad_nav/ipad.png';
 };
 
+const parsePriceNumber = (val) => {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'number') return val;
+  const cleaned = String(val).replace(/[^0-9.]/g, '');
+  return parseFloat(cleaned) || 0;
+};
+
+const calculateFinalPriceStr = (mrp, discount) => {
+  const mrpNum = parsePriceNumber(mrp);
+  const discNum = Math.min(100, Math.max(0, parseFloat(discount) || 0));
+  const finalNum = Math.max(0, Math.round(mrpNum - (mrpNum * discNum / 100)));
+  return `₹${finalNum.toLocaleString('en-IN')}`;
+};
+
+const resolve1YrDetails = (row) => {
+  const defaultRow = DEFAULT_IPAD_APPLECARE_ROWS.find(d => 
+    (d.model && row.model && d.model.toLowerCase().trim() === row.model.toLowerCase().trim()) ||
+    (d.title && row.title && d.title.toLowerCase().trim() === row.title.toLowerCase().trim())
+  ) || {};
+
+  const mrp = row.mrp1yr || defaultRow.mrp1yr || '₹5,900.00';
+  const discount = (row.discount1yr !== undefined && row.discount1yr !== null && row.discount1yr !== '') ? String(row.discount1yr) : (defaultRow.discount1yr || '17% OFF');
+  const salePrice = row.salePrice1yr || defaultRow.salePrice1yr || calculateFinalPriceStr(mrp, discount);
+  const sku = row.sku1yr || defaultRow.sku1yr || (row.sku ? `${row.sku.replace(/-2YR$/i, '')}-1YR` : 'AC-IPAD-1YR');
+  const description = row.description1yr || defaultRow.description1yr || `1 Year Apple-certified coverage for ${row.model || 'iPad'}.`;
+
+  return { mrp, discount, salePrice, sku, description };
+};
+
+const resolve2YrDetails = (row) => {
+  const defaultRow = DEFAULT_IPAD_APPLECARE_ROWS.find(d => 
+    (d.model && row.model && d.model.toLowerCase().trim() === row.model.toLowerCase().trim()) ||
+    (d.title && row.title && d.title.toLowerCase().trim() === row.title.toLowerCase().trim())
+  ) || {};
+
+  const mrp = row.mrp2yr || row.mrp || defaultRow.mrp2yr || defaultRow.mrp || '₹9,900.00';
+  const discount = (row.discount2yr !== undefined && row.discount2yr !== null && row.discount2yr !== '') ? String(row.discount2yr) : ((row.discount !== undefined && row.discount !== null && row.discount !== '') ? String(row.discount) : (defaultRow.discount2yr || defaultRow.discount || '10% OFF'));
+  const salePrice = row.salePrice2yr || row.salePrice || row.yearly || defaultRow.salePrice2yr || defaultRow.salePrice || calculateFinalPriceStr(mrp, discount);
+  const sku = row.sku2yr || row.sku || defaultRow.sku2yr || defaultRow.sku || 'AC-IPAD-2YR';
+  const description = row.description2yr || row.description || defaultRow.description2yr || defaultRow.description || `2 Years Apple-certified coverage for ${row.model || 'iPad'}.`;
+
+  return { mrp, discount, salePrice, sku, description };
+};
+
 export default function Ipad() {
   const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
@@ -242,6 +297,8 @@ export default function Ipad() {
   });
   const [selectedAppleCareModel, setSelectedAppleCareModel] = useState(() => dbAppleCareRows[0] || DEFAULT_IPAD_APPLECARE_ROWS[0]);
   const [selectedAppleCareMap, setSelectedAppleCareMap] = useState({});
+  const [selectedDurationMap, setSelectedDurationMap] = useState({});
+  const [selectedGlobalDuration, setSelectedGlobalDuration] = useState('2yr');
   const [dbHeaderTitle, setDbHeaderTitle] = useState(() => {
     try {
       return localStorage.getItem('iincept_ipad_applecare_title_v2') || 'AppleCare+';
@@ -249,8 +306,8 @@ export default function Ipad() {
   });
   const [dbDurationLabel, setDbDurationLabel] = useState(() => {
     try {
-      return localStorage.getItem('iincept_ipad_applecare_duration_v2') || '2 Years';
-    } catch (e) { return '2 Years'; }
+      return localStorage.getItem('iincept_ipad_applecare_duration_v2') || '1 Year & 2 Years';
+    } catch (e) { return '1 Year & 2 Years'; }
   });
   const [appleCareDuration, setAppleCareDuration] = useState('2');
 
@@ -489,16 +546,38 @@ export default function Ipad() {
   };
 
   const getProductImage = (prod) => {
-    const selectedColorName = selectedColors[prod.id] || (prod.colors && prod.colors[0] ? (prod.colors[0].name || prod.colors[0].rawName || (typeof prod.colors[0] === 'string' ? prod.colors[0] : '')) : null);
+    if (!prod) return '/ipad_nav/ipad.png';
+
+    const hasUserSelectedColor = Boolean(selectedColors[prod.id]);
+    
+    // When no color is explicitly selected by user interaction, ALWAYS return the primary product image
+    if (!hasUserSelectedColor) {
+      if (prod.displayImage) return prod.displayImage;
+      if (prod.image && !prod.image.includes('ipad_category')) return prod.image;
+      const extracted = extractFirstValidImage(prod);
+      if (extracted) return extracted;
+      return prod.image || '/ipad_nav/ipad.png';
+    }
+
+    const selectedColorName = selectedColors[prod.id];
     if (selectedColorName) {
       const targetNorm = selectedColorName.replace(/\s+/g, ' ').trim().toLowerCase();
 
-      const foundColor = prod.colors.find((c) => {
-        const cNorm = (c.name || c.rawName || c).replace(/\s+/g, ' ').trim().toLowerCase();
-        return cNorm === targetNorm;
-      });
-      if (foundColor && foundColor.image) {
-        return foundColor.image;
+      if (prod.colorImages && typeof prod.colorImages === 'object') {
+        const matchedKey = Object.keys(prod.colorImages).find(k => k.replace(/\s+/g, ' ').trim().toLowerCase() === targetNorm);
+        if (matchedKey && prod.colorImages[matchedKey]) {
+          return prod.colorImages[matchedKey];
+        }
+      }
+
+      if (prod.colors && Array.isArray(prod.colors)) {
+        const foundColor = prod.colors.find((c) => {
+          const cNorm = (c.name || c.rawName || c).replace(/\s+/g, ' ').trim().toLowerCase();
+          return cNorm === targetNorm;
+        });
+        if (foundColor && foundColor.image) {
+          return foundColor.image;
+        }
       }
 
       if (prod.variants && Array.isArray(prod.variants)) {
@@ -512,27 +591,23 @@ export default function Ipad() {
         }
       }
 
-      const colorIdx = prod.colors.findIndex((c) => {
-        const cNorm = (c.name || c.rawName || c).replace(/\s+/g, ' ').trim().toLowerCase();
-        return cNorm === targetNorm;
-      });
-      if (colorIdx !== -1 && prod.images && prod.images[colorIdx]) {
-        return prod.images[colorIdx];
+      if (prod.colors && Array.isArray(prod.colors)) {
+        const colorIdx = prod.colors.findIndex((c) => {
+          const cNorm = (c.name || c.rawName || c).replace(/\s+/g, ' ').trim().toLowerCase();
+          return cNorm === targetNorm;
+        });
+        if (colorIdx !== -1 && prod.images && prod.images[colorIdx]) {
+          return prod.images[colorIdx];
+        }
       }
-
-      if (targetNorm.includes('blue') || targetNorm.includes('sky')) return '/ipad_air_blue.jpg';
-      if (targetNorm.includes('space gray') || targetNorm.includes('black') || targetNorm.includes('dark')) return '/ipad_category.jpg';
-      if (targetNorm.includes('purple') || targetNorm.includes('pink')) return '/ipad_category_v3.png';
-      if (targetNorm.includes('starlight') || targetNorm.includes('silver') || targetNorm.includes('white')) return '/ipad_category_v2.jpg';
     }
 
-    if (prod.image && !prod.image.includes('ipad_category')) {
-      return prod.image;
-    }
+    if (prod.displayImage) return prod.displayImage;
+    if (prod.image && !prod.image.includes('ipad_category')) return prod.image;
     const extracted = extractFirstValidImage(prod);
     if (extracted) return extracted;
 
-    return prod.image || '/ipad_category_v2.jpg';
+    return prod.image || '/ipad_nav/ipad.png';
   };
 
   const handleAddToCart = (prod) => {
@@ -631,13 +706,17 @@ export default function Ipad() {
       catName.toLowerCase().includes('ipad');
   }).map(p => {
     const firstImg = extractFirstValidImage(p);
-    const isValidImg = !!firstImg;
+    const primaryImg = p.displayImage || (firstImg && !firstImg.includes('mock-cloud') ? firstImg : (p.image || '/ipad_nav/ipad.png'));
     return {
       id: p._id || p.id,
       name: p.title || p.name,
       price: p.price,
       priceStr: `₹${p.price.toLocaleString()}`,
-      image: isValidImg ? firstImg : '/ipad_category_v2.jpg',
+      discountPercent: p.discountPercent,
+      discountPrice: p.discountPrice,
+      displayImage: primaryImg,
+      colorImages: p.colorImages || {},
+      image: primaryImg,
       images: p.images || [],
       variants: p.variants || [],
       colors: Array.isArray(p.colors) ? p.colors.map(c => {
@@ -738,7 +817,7 @@ export default function Ipad() {
       {/* Title & Category Sub-Nav Header */}
       <div className="w-full bg-[#fcfcfc] pt-2 pb-4 select-none font-sans mb-6">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-zinc-950 text-left mb-6">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950 text-left mb-4">
             iPad
           </h1>
 
@@ -777,7 +856,7 @@ export default function Ipad() {
                       style={{ mixBlendMode: 'multiply', filter: 'contrast(1.06) brightness(1.02)' }}
                     />
                   </div>
-                  <span className={`text-xs tracking-tight transition-colors duration-200 ${isActive ? 'font-bold text-zinc-950' : 'font-semibold text-zinc-700 group-hover:text-zinc-950'}`}>
+                  <span className={`text-[11px] tracking-tight transition-colors duration-200 ${isActive ? 'font-bold text-zinc-950' : 'font-medium text-zinc-700 group-hover:text-zinc-950'}`}>
                     {item.name}
                   </span>
                 </Link>
@@ -798,13 +877,43 @@ export default function Ipad() {
             <div className="max-w-7xl mx-auto my-6 animate-in fade-in duration-300">
               <div className="bg-white rounded-[24px] sm:rounded-[28px] border border-zinc-200/60 overflow-hidden shadow-xs p-6 sm:p-10 text-left">
                 {/* Header section */}
-                <div className="border-b border-zinc-100 pb-4 mb-4 text-center">
-                  <div className="text-2xl sm:text-4xl md:text-5xl font-black text-[#FF2D55] tracking-tight py-1">
-                    {dbHeaderTitle || 'AppleCare+'}
+                <div className="border-b border-zinc-100 pb-5 mb-6">
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="text-center sm:text-left">
+                      <div className="text-2xl sm:text-4xl md:text-5xl font-black text-[#FF2D55] tracking-tight py-1">
+                        {dbHeaderTitle || 'AppleCare+'}
+                      </div>
+                      <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-1">
+                        Official Apple-certified protection for your iPad (1-Year & 2-Year Plans)
+                      </p>
+                    </div>
+
+                    {/* Global Duration Selector Pills */}
+                    <div className="flex items-center gap-2 bg-zinc-100 p-1 rounded-2xl shrink-0 self-center md:self-auto">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedGlobalDuration('1yr')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          selectedGlobalDuration === '1yr'
+                            ? 'bg-[#0071e3] text-white shadow-sm'
+                            : 'text-zinc-600 hover:text-zinc-900'
+                        }`}
+                      >
+                        1 Year Plans
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedGlobalDuration('2yr')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          selectedGlobalDuration === '2yr'
+                            ? 'bg-[#FF2D55] text-white shadow-sm'
+                            : 'text-zinc-600 hover:text-zinc-900'
+                        }`}
+                      >
+                        2 Year Plans
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-1">
-                    2-Year Apple-certified coverage for your iPad.
-                  </p>
                 </div>
 
                 {/* Product Box Grid matching reference design */}
@@ -818,27 +927,22 @@ export default function Ipad() {
                           const itemKey = row.model || row.title;
                           const isSelected = !!selectedAppleCareMap[itemKey];
 
-                          const activeMrp = row.mrp2yr || row.mrp2Yr || row.mrp || '';
-                          const activeSalePrice = row.salePrice2yr || row.salePrice2Yr || row.salePrice || row.yearly || '';
-                          const activeDiscount = row.discount2yr || row.discount2Yr || row.discount || '';
-                          const activeSku = row.sku2yr || row.sku2Yr || row.sku || '';
-                          const activeDescription = row.description2yr || row.description2Yr || row.description || `2 Years Apple-certified coverage for ${row.model}. Peace of mind for what's next.`;
+                          const chosenDuration = selectedDurationMap[itemKey] || selectedGlobalDuration || '2yr';
+                          const is1Yr = chosenDuration === '1yr';
+                          const planDetails = is1Yr ? resolve1YrDetails(row) : resolve2YrDetails(row);
 
-                          const activePlanRow = {
-                            ...row,
-                            salePrice: activeSalePrice,
-                            mrp: activeMrp,
-                            discount: activeDiscount,
-                            sku: activeSku,
-                            description: activeDescription,
-                            duration: '2 Years'
-                          };
+                          const activeMrp = planDetails.mrp;
+                          const activeSalePrice = planDetails.salePrice;
+                          const activeDiscount = planDetails.discount;
+                          const activeSku = planDetails.sku;
+                          const activeDescription = planDetails.description;
+                          const durationLabelText = is1Yr ? '1 Year' : '2 Years';
 
                           return (
                             <div 
                               key={i} 
                               onClick={() => {
-                                toggleAppleCareSelection(activePlanRow);
+                                toggleAppleCareSelection({ ...row, salePrice: activeSalePrice, mrp: activeMrp, sku: activeSku, duration: durationLabelText, title: `${row.title || row.model} (${durationLabelText})` });
                               }}
                               className={`group bg-white rounded-[24px] sm:rounded-[28px] border transition-all duration-300 relative text-left cursor-pointer p-5 sm:p-6 shadow-xs hover:shadow-md flex flex-col justify-between h-full ${
                                 isSelected 
@@ -856,8 +960,10 @@ export default function Ipad() {
                                     
                                     {/* Top Left Badge */}
                                     <div className="w-full flex items-center justify-start z-10 mb-1">
-                                      <span className="bg-[#FF2D55] text-white text-[11px] font-bold px-3 py-1 rounded-full tracking-wide">
-                                        Apple Care+ (2 Years)
+                                      <span className={`text-white text-[11px] font-bold px-3 py-1 rounded-full tracking-wide transition-colors ${
+                                        is1Yr ? 'bg-[#0071e3]' : 'bg-[#FF2D55]'
+                                      }`}>
+                                        Apple Care+ ({durationLabelText})
                                       </span>
                                     </div>
                                     {/* Main Product Image */}
@@ -898,14 +1004,42 @@ export default function Ipad() {
                                   {/* RIGHT COLUMN: Info & Pricing Block */}
                                   <div className="md:col-span-7 space-y-3 flex flex-col justify-between h-full">
                                     <div>
-                                      <div className="text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-[#FF2D55] mb-1">
-                                        APPLE CARE+ • 2 YEAR PLAN
+                                      {/* Per-card Duration Selector Pills */}
+                                      <div className="flex items-center gap-1.5 mb-2.5 bg-zinc-100/80 p-1 rounded-xl w-fit">
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedDurationMap(prev => ({ ...prev, [itemKey]: '1yr' }));
+                                          }}
+                                          className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                            is1Yr ? 'bg-white text-[#0071e3] shadow-xs ring-1 ring-black/5' : 'text-zinc-600 hover:text-zinc-900'
+                                          }`}
+                                        >
+                                          1 Year Plan
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedDurationMap(prev => ({ ...prev, [itemKey]: '2yr' }));
+                                          }}
+                                          className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                            !is1Yr ? 'bg-white text-[#FF2D55] shadow-xs ring-1 ring-black/5' : 'text-zinc-600 hover:text-zinc-900'
+                                          }`}
+                                        >
+                                          2 Year Plan
+                                        </button>
                                       </div>
-                                      <h3 className="font-extrabold text-[#1D1D1F] text-lg sm:text-xl leading-snug tracking-tight min-h-[52px] flex items-center">
-                                        {row.title || `Apple Care+ ${row.model}`}
+
+                                      <div className="text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-[#FF2D55] mb-1">
+                                        APPLE CARE+ • {is1Yr ? '1 YEAR PLAN' : '2 YEAR PLAN'}
+                                      </div>
+                                      <h3 className="font-extrabold text-[#1D1D1F] text-lg sm:text-xl leading-snug tracking-tight min-h-[44px] flex items-center">
+                                        {row.title || `Apple Care+ ${row.model}`} ({durationLabelText})
                                       </h3>
                                       <p className="text-xs text-zinc-500 font-medium mt-1 leading-relaxed min-h-[36px] flex items-center">
-                                        {activeDescription || `Extended coverage for your ${row.model}. Peace of mind for what's next.`}
+                                        {activeDescription || `${durationLabelText} Apple-certified coverage for your ${row.model}. Peace of mind for what's next.`}
                                       </p>
                                     </div>
 
@@ -956,8 +1090,8 @@ export default function Ipad() {
                                   </div>
                                 </div>
 
-                                {/* MIDDLE SECTION: 4 Feature Highlights Grid */}
-                                <AppleCareFeaturesGrid years="2" />
+                                {/* MIDDLE SECTION: Feature Highlights Grid */}
+                                <AppleCareFeaturesGrid years={is1Yr ? "1" : "2"} />
                               </div>
 
                               {/* BOTTOM ACTION BUTTONS */}
@@ -966,23 +1100,23 @@ export default function Ipad() {
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleAddAppleCareToWishlist(activePlanRow, i);
+                                    handleAddAppleCareToWishlist({ ...row, salePrice: activeSalePrice, mrp: activeMrp, sku: activeSku, duration: durationLabelText, title: `${row.title || row.model} (${durationLabelText})` }, i);
                                   }}
                                   className={`w-full border font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer ${
-                                    localWishlist[`ac-ipad-${activeSku || row.sku || i}`]
+                                    localWishlist[`ac-ipad-${activeSku || i}`]
                                       ? 'bg-rose-50 border-rose-200 text-rose-600'
-                                      : 'bg-white hover:bg-zinc-50 text-[#1D1D1F] border-zinc-300'
+                                      : 'bg-[#1D1D1F] text-white border-zinc-900 hover:bg-zinc-800'
                                   }`}
                                 >
-                                  <Heart className={`w-4 h-4 ${localWishlist[`ac-ipad-${activeSku || row.sku || i}`] ? 'fill-current text-rose-500' : 'text-zinc-600'}`} />
-                                  <span>{localWishlist[`ac-ipad-${activeSku || row.sku || i}`] ? 'Wishlisted' : 'Add to Wishlist'}</span>
+                                  <Heart className={`w-4 h-4 ${localWishlist[`ac-ipad-${activeSku || i}`] ? 'fill-current text-rose-500' : 'text-white'}`} />
+                                  <span>{localWishlist[`ac-ipad-${activeSku || i}`] ? 'Wishlisted' : 'Add to Wishlist'}</span>
                                 </button>
 
                                 <button
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleAddAppleCareToCart(activePlanRow, i);
+                                    handleAddAppleCareToCart({ ...row, salePrice: activeSalePrice, mrp: activeMrp, sku: activeSku, duration: durationLabelText, title: `${row.title || row.model} (${durationLabelText})` }, i);
                                   }}
                                   className="w-full bg-black hover:bg-zinc-900 active:scale-[0.98] text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
                                 >
@@ -1048,12 +1182,6 @@ export default function Ipad() {
 
         return (
           <>
-            {/* Controller Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-zinc-150 pb-6 mb-8 text-sm font-sans uppercase font-bold text-zinc-500 tracking-wider">
-              <div className="text-zinc-800 text-xs tracking-widest">
-                SHOWING ALL {filteredProducts.length} RESULTS
-              </div>
-            </div>
 
             {/* Filter Drawer */}
             {filterOpen && (
@@ -1109,98 +1237,120 @@ export default function Ipad() {
 
             {/* Grid */}
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.slice(0, visibleCount).map((prod) => (
-                <div
-                  key={prod.id}
-                  className="group bg-white rounded-2xl overflow-hidden flex flex-col justify-between p-6 shadow-sm border border-zinc-100/50 hover:shadow-md hover:border-zinc-200/55 transition-all duration-300 relative text-left"
-                >
-                  <div className="flex items-center justify-between absolute top-4 left-4 right-4 z-10">
-                    {prod.isSoldOut ? (
-                      <span className="bg-[#f5f5f7] text-[#1d1d1f] font-bold text-[9px] tracking-widest uppercase px-2.5 py-1 rounded">
-                        SOLD OUT
-                      </span>
-                    ) : (
-                      <div />
-                    )}
+              {filteredProducts.slice(0, visibleCount).map((prod) => {
+                const pricing = getProductCardPricing(prod);
 
-                    <button
-                      onClick={() => handleAddToWishlist(prod)}
-                      className={`p-2 rounded-full shadow-sm border border-zinc-100/80 bg-white/90 hover:scale-110 transition-all cursor-pointer ${localWishlist[prod.id] ? 'text-red-500' : 'text-zinc-400 hover:text-zinc-600'
-                        }`}
-                    >
-                      <Heart className={`h-4 w-4 ${localWishlist[prod.id] ? 'fill-current' : ''}`} />
-                    </button>
-                  </div>
+                return (
+                  <div
+                    key={prod.id}
+                    className="group bg-white rounded-2xl overflow-hidden flex flex-col justify-between p-6 shadow-sm border border-zinc-100/50 hover:shadow-md hover:border-zinc-200/55 transition-all duration-300 relative text-left"
+                  >
+                    <div className="flex items-center justify-between absolute top-4 left-4 right-4 z-10">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {prod.isSoldOut && (
+                          <span className="bg-[#f5f5f7] text-[#1d1d1f] font-bold text-[9px] tracking-widest uppercase px-2.5 py-1 rounded shadow-2xs">
+                            SOLD OUT
+                          </span>
+                        )}
+                        {pricing.hasDiscount && (
+                          <span className="bg-[#FF2D55] text-white font-extrabold text-[9.5px] tracking-wide uppercase px-2.5 py-1 rounded shadow-2xs">
+                            {pricing.discountPercent}% OFF
+                          </span>
+                        )}
+                      </div>
 
-                  {/* Clickable Area: Image and Title */}
-                  <Link to={`/product/${prod.id}`} className="block cursor-pointer">
-                    {/* Product Visual - Apple Showcase Background (#f5f5f7) */}
-                    <CleanProductImage
-                      src={getProductImage(prod)}
-                      alt={prod.name}
-                      className="max-h-[92%] max-w-[92%] object-contain group-hover:scale-110 transition-transform duration-500 select-none transform scale-115 sm:scale-125"
-                      containerClassName="w-full h-72 sm:h-80 bg-white rounded-2xl flex items-center justify-center p-2 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f0f0f2]"
-                    />
+                      <button
+                        onClick={() => handleAddToWishlist(prod)}
+                        className={`p-2 rounded-full shadow-sm border border-zinc-100/80 bg-white/90 hover:scale-110 transition-all cursor-pointer ${localWishlist[prod.id] ? 'text-red-500' : 'text-zinc-400 hover:text-zinc-600'
+                          }`}
+                      >
+                        <Heart className={`h-4 w-4 ${localWishlist[prod.id] ? 'fill-current' : ''}`} />
+                      </button>
+                    </div>
 
-                    {/* Title (Clean Product Name) */}
-                    <h3 className="font-semibold text-[16px] leading-snug tracking-tight text-zinc-900 group-hover:text-zinc-900 transition-colors min-h-[48px]">
-                      {(() => {
-                        const cleanProductTitle = (rawTitle) => {
-                          if (!rawTitle) return '';
-                          return rawTitle.replace(/\s*[A-Z0-9]{5,9}\/[A-Z]$/i, '').trim();
-                        };
-                        return (
-                          <span>{cleanProductTitle(prod.name || prod.title)}</span>
-                        );
-                      })()}
-                    </h3>
-                  </Link>
+                    {/* Clickable Area: Image and Title */}
+                    <Link to={`/product/${prod.id}`} className="block cursor-pointer">
+                      {/* Product Visual - Apple Showcase Background (#f5f5f7) */}
+                      <CleanProductImage
+                        src={getProductImage(prod)}
+                        alt={prod.name}
+                        className="max-h-[92%] max-w-[92%] object-contain group-hover:scale-110 transition-transform duration-500 select-none transform scale-115 sm:scale-125"
+                        containerClassName="w-full h-72 sm:h-80 bg-white rounded-2xl flex items-center justify-center p-2 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f0f0f2]"
+                      />
 
-                  {/* Non-clickable configurations / actions */}
-                  <div className="space-y-4 pt-2">
-                    {/* Color Dot Options Row */}
-                    <div className="flex items-center justify-between gap-2 border-t border-zinc-100/60 pt-3">
-                      <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Colors</span>
-                      <div className="flex items-center gap-3 shrink-0 py-1">
-                        {prod.colors.map((color) => {
-                          const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
+                      {/* Title (Clean Product Name) */}
+                      <h3 className="font-semibold text-[16px] leading-snug tracking-tight text-zinc-900 group-hover:text-zinc-900 transition-colors min-h-[48px]">
+                        {(() => {
+                          const cleanProductTitle = (rawTitle) => {
+                            if (!rawTitle) return '';
+                            return rawTitle.replace(/\s*[A-Z0-9]{5,9}\/[A-Z]$/i, '').trim();
+                          };
                           return (
-                            <button
-                              key={color.name}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleColorChange(prod.id, color.name);
-                              }}
-                              style={{ backgroundColor: color.value }}
-                              className={`w-4 h-4 rounded-full cursor-pointer transition-all ${isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10' : 'border border-zinc-300 hover:scale-105'
-                                }`}
-                              title={color.name}
-                            />
+                            <span>{cleanProductTitle(prod.name || prod.title)}</span>
                           );
-                        })}
-                      </div>
-                    </div>
+                        })()}
+                      </h3>
+                    </Link>
 
-                    <div className="flex items-center justify-between pt-1 border-t border-zinc-100/60">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Price</span>
-                        <span className="font-semibold text-zinc-900 text-sm">{prod.priceStr}</span>
+                    {/* Non-clickable configurations / actions */}
+                    <div className="space-y-4 pt-2">
+                      {/* Color Dot Options Row */}
+                      <div className="flex items-center justify-between gap-2 border-t border-zinc-100/60 pt-3">
+                        <span className="text-[17px] text-zinc-700 uppercase tracking-wider font-extrabold">Colors</span>
+                        <div className="flex items-center gap-3 shrink-0 py-1">
+                          {prod.colors.map((color) => {
+                            const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
+                            return (
+                              <button
+                                key={color.name}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleColorChange(prod.id, color.name);
+                                }}
+                                style={{ backgroundColor: color.value }}
+                                className={`w-4 h-4 rounded-full cursor-pointer transition-all ${isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10' : 'border border-zinc-300 hover:scale-105'
+                                  }`}
+                                title={color.name}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
 
-                      {!prod.isSoldOut && (
-                        <button
-                          onClick={() => handleAddToCart(prod)}
-                          className="flex items-center justify-center p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 hover:text-zinc-900 transition-all cursor-pointer"
-                          title="Add to Cart"
-                        >
-                          <ShoppingBag className="h-4 w-4" />
-                        </button>
-                      )}
+                      <div className="flex items-center justify-between pt-1 border-t border-zinc-100/60">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Price</span>
+                          {pricing.hasDiscount ? (
+                            <div className="flex items-baseline gap-1.5 flex-wrap">
+                              <span className="font-extrabold text-zinc-950 text-base">
+                                ₹{pricing.sellingPrice.toLocaleString('en-IN')}
+                              </span>
+                              <span className="text-xs text-zinc-400 line-through font-bold">
+                                ₹{pricing.originalMrp.toLocaleString('en-IN')}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="font-semibold text-zinc-900 text-base">
+                              {prod.priceStr || `₹${Number(prod.price || 0).toLocaleString('en-IN')}`}
+                            </span>
+                          )}
+                        </div>
+
+                        {!prod.isSoldOut && (
+                          <button
+                            onClick={() => handleAddToCart(prod)}
+                            className="flex items-center justify-center p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 hover:text-zinc-900 transition-all cursor-pointer"
+                            title="Add to Cart"
+                          >
+                            <ShoppingBag className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Infinite Scroll Indicator */}
