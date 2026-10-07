@@ -1569,7 +1569,15 @@ export default function AppleCare() {
                       <tbody className="divide-y divide-[#E8E8ED] text-[#1D1D1F]">
                         {activeRows.length > 0 ? (
                           activeRows.map((row, idx) => {
-                            const displayPrice = row.yearly || row.salePrice || '11,900.00';
+                            let displayPrice = row.yearly || row.salePrice || '11,900.00';
+                            const mrpNum = parseFloat(String(row.mrp || row.price || '0').replace(/[^0-9.]/g, '')) || 0;
+                            const discNum = parseFloat(String(row.discount || '0').replace(/[^0-9.]/g, '')) || 0;
+
+                            if (mrpNum > 0 && discNum > 0 && discNum <= 99) {
+                              const calcPrice = Math.round(mrpNum - (mrpNum * discNum / 100));
+                              displayPrice = `₹${calcPrice.toLocaleString('en-IN')}.00`;
+                            }
+
                             const formattedPrice = String(displayPrice).includes('₹')
                               ? displayPrice
                               : `₹${Number(String(displayPrice).replace(/[^0-9.]/g, '')).toLocaleString('en-IN')}.00`;

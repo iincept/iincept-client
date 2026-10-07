@@ -42,10 +42,46 @@ export const placeNewOrder = createAsyncThunk(
   async ({ shippingAddressId, shippingAddressData, paymentMethod, couponCode, cartItems, totalAmount }, thunkAPI) => {
     try {
       const state = thunkAPI.getState();
-      const token = state.auth.token;
+      let token = state.auth.token || localStorage.getItem('token');
+
+      // If user is not authenticated yet, attempt guest auto-authentication using address email
+      if (!token && shippingAddressData && shippingAddressData.email) {
+        try {
+          const guestEmail = shippingAddressData.email.toLowerCase().trim();
+          const guestName = shippingAddressData.fullName || 'Guest Customer';
+          const guestPassword = 'GuestPass_' + guestEmail.replace(/[^a-zA-Z0-9]/g, '');
+
+          try {
+            const regRes = await axiosClient.post('/auth/register', {
+              name: guestName,
+              email: guestEmail,
+              password: guestPassword
+            });
+            token = regRes.data?.token;
+            if (token) {
+              localStorage.setItem('token', token);
+              localStorage.setItem('user', JSON.stringify(regRes.data));
+              thunkAPI.dispatch({ type: 'auth/registerUser/fulfilled', payload: regRes.data });
+            }
+          } catch (regErr) {
+            const loginRes = await axiosClient.post('/auth/login', {
+              email: guestEmail,
+              password: guestPassword
+            });
+            token = loginRes.data?.token;
+            if (token) {
+              localStorage.setItem('token', token);
+              localStorage.setItem('user', JSON.stringify(loginRes.data));
+              thunkAPI.dispatch({ type: 'auth/loginUser/fulfilled', payload: loginRes.data });
+            }
+          }
+        } catch (autoErr) {
+          console.error("Auto guest auth failed:", autoErr);
+        }
+      }
 
       if (!token) {
-        throw new Error('Not authenticated');
+        throw new Error('Please sign in to your account to complete your order.');
       }
 
       let addressId = shippingAddressId;

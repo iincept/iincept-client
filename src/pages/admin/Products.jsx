@@ -523,6 +523,31 @@ export default function Products() {
       }];
     }
 
+    const mappedVariants = prodVariants.map(v => {
+      let discVal = (v.discountInput !== undefined && v.discountInput !== null && v.discountInput !== '')
+        ? v.discountInput
+        : (v.discountPercent !== undefined && v.discountPercent !== null && v.discountPercent !== '' 
+            ? v.discountPercent 
+            : (v.discount !== undefined && v.discount !== null && v.discount !== '' ? v.discount : ''));
+
+      if (discVal === '' || discVal === undefined) {
+        if (v.discountPrice !== undefined && v.discountPrice !== null && Number(v.discountPrice) > 0 && v.price && Number(v.price) > Number(v.discountPrice)) {
+          const pct = Math.round(((Number(v.price) - Number(v.discountPrice)) / Number(v.price)) * 100);
+          discVal = pct;
+        }
+      }
+
+      const numDisc = (discVal !== '' && discVal !== undefined && discVal !== null) ? Number(discVal) : null;
+
+      return {
+        ...v,
+        discount: numDisc !== null ? numDisc : (v.discount ?? 0),
+        discountPercent: numDisc !== null ? numDisc : (v.discountPercent ?? 0),
+        discountInput: (numDisc !== null && numDisc !== 0) ? numDisc : '',
+        discountPrice: (v.discountPrice !== undefined && v.discountPrice !== null) ? v.discountPrice : (v.price || '')
+      };
+    });
+
     setProductForm({
       title: prod.title || '',
       description: prod.description || '',
@@ -541,7 +566,7 @@ export default function Products() {
       features: prod.features || [],
       specifications: Array.isArray(prod.specifications) ? prod.specifications : [],
       images: prod.images || [],
-      variants: prodVariants,
+      variants: mappedVariants,
       partNumber: prod.partNumber || '',
       modelNumber: prod.modelNumber || '',
       seoTitle: prod.seoTitle || '',

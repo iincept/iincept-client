@@ -117,11 +117,62 @@ export default function Checkout() {
     }
   };
 
-  const executeOrderPlacement = () => {
+  const ensureUserAuthenticated = async (addressData) => {
+    let token = localStorage.getItem('token');
+    if (token) return token;
+
+    if (!addressData || !addressData.email) {
+      throw new Error('Please fill in your email address to complete your order.');
+    }
+
+    const email = (addressData.email || '').toLowerCase().trim();
+    const name = addressData.fullName || 'Customer';
+    const password = 'GuestPass_' + email.replace(/[^a-zA-Z0-9]/g, '');
+
+    try {
+      const regRes = await axiosClient.post('/auth/register', {
+        name,
+        email,
+        password
+      });
+      if (regRes.data?.token) {
+        localStorage.setItem('token', regRes.data.token);
+        localStorage.setItem('user', JSON.stringify(regRes.data));
+        dispatch({ type: 'auth/registerUser/fulfilled', payload: regRes.data });
+        return regRes.data.token;
+      }
+    } catch (regErr) {
+      try {
+        const loginRes = await axiosClient.post('/auth/login', {
+          email,
+          password
+        });
+        if (loginRes.data?.token) {
+          localStorage.setItem('token', loginRes.data.token);
+          localStorage.setItem('user', JSON.stringify(loginRes.data));
+          dispatch({ type: 'auth/loginUser/fulfilled', payload: loginRes.data });
+          return loginRes.data.token;
+        }
+      } catch (loginErr) {
+        throw new Error('An account with this email already exists. Please sign in to your account.');
+      }
+    }
+  };
+
+  const executeOrderPlacement = async () => {
     const activeAddress = shippingAddress;
     const pMethod = 'COD';
     const finalTotal = Math.max(0, totalAmount);
     const snapshotItems = [...cartItems];
+
+    setLocalLoading(true);
+    try {
+      await ensureUserAuthenticated(activeAddress);
+    } catch (authErr) {
+      setLocalLoading(false);
+      alert(authErr.message || 'Please sign in to place your order.');
+      return;
+    }
 
     dispatch(placeNewOrder({
       shippingAddressData: shippingAddress,
@@ -137,13 +188,19 @@ export default function Checkout() {
         navigate('/orders');
       })
       .catch((err) => {
-        alert(err || 'Failed to place order. Please try again.');
+        const cleanMsg = typeof err === 'string' ? err : (err?.message || 'Failed to place order. Please try again.');
+        alert(cleanMsg);
+      })
+      .finally(() => {
+        setLocalLoading(false);
       });
   };
 
   const handleRazorpayCheckout = async () => {
     setLocalLoading(true);
     try {
+      await ensureUserAuthenticated(shippingAddress);
+
       let addressId = selectedAddressId;
       if (isAddingNewAddress) {
         const addressResponse = await axiosClient.post('/address', shippingAddress);
