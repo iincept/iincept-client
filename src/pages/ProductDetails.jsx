@@ -1331,82 +1331,70 @@ export default function ProductDetails() {
   const getVariantPricingInfo = (oColor, oSize, oStorage, oRam, oGlass, oConnectivity) => {
     if (!product) return { sellingPrice: 0, originalMrp: 0, youSave: 0, savePercent: 0 };
 
-    const currentStorage = (oStorage || selectedStorage || storages[0] || '').toString().toLowerCase().trim();
-    const is18Pro = (product.name || product.title || '').toLowerCase().includes('18 pro');
-
-    if (is18Pro && currentStorage) {
-      let hardcodedPrice = 0;
-      if (currentStorage.includes('256')) hardcodedPrice = 164900;
-      else if (currentStorage.includes('512')) hardcodedPrice = 189000;
-      else if (currentStorage.includes('1tb') || currentStorage.includes('1 tb')) hardcodedPrice = 239900;
-      else if (currentStorage.includes('2tb') || currentStorage.includes('2 tb')) hardcodedPrice = 314900;
-
-      if (hardcodedPrice > 0) {
-        return { sellingPrice: hardcodedPrice, originalMrp: 0, youSave: 0, savePercent: 0 };
-      }
-    }
-
     const matchedVar = getActiveVariant(oColor, oStorage, oRam, oGlass, oConnectivity);
 
-    // 1. Gather all possible price and discount numbers from matchedVar and parent product
-    let vPrice = matchedVar && Number(matchedVar.price) > 0 ? Number(matchedVar.price) : 0;
-    let vDiscVal = matchedVar && Number(matchedVar.discountPrice || matchedVar.discountPercent || matchedVar.discount) > 0 ? Number(matchedVar.discountPrice || matchedVar.discountPercent || matchedVar.discount) : 0;
-    let vMrp = matchedVar && Number(matchedVar.mrp || matchedVar.originalPrice) > 0 ? Number(matchedVar.mrp || matchedVar.originalPrice) : 0;
+    // 1. Gather price and discount fields from matched variant
+    const vPrice = matchedVar && Number(matchedVar.price) > 0 ? Number(matchedVar.price) : 0;
+    const vDiscPrice = matchedVar && Number(matchedVar.discountPrice) > 0 ? Number(matchedVar.discountPrice) : 0;
+    const vDiscPercent = matchedVar && Number(matchedVar.discountPercent ?? matchedVar.discount ?? 0) > 0
+      ? Number(matchedVar.discountPercent ?? matchedVar.discount)
+      : 0;
+    const vMrp = matchedVar && Number(matchedVar.mrp || matchedVar.originalPrice) > 0 ? Number(matchedVar.mrp || matchedVar.originalPrice) : 0;
 
-    let pPrice = Number(product.price || 0);
-    let pDiscVal = Number(product.discountPrice || product.discountPercent || product.discount || 0);
-    let pMrp = Number(product.mrp || product.originalPrice || 0);
+    // 2. Fall back to parent product fields if variant lacks explicit pricing
+    const pPrice = Number(product.price || 0);
+    const pDiscPrice = Number(product.discountPrice || 0);
+    const pDiscPercent = Number(product.discountPercent ?? product.discount ?? 0);
+    const pMrp = Number(product.mrp || product.originalPrice || 0);
 
-    // Effective Base Price
-    let rawBasePrice = vPrice > 0 ? vPrice : pPrice;
-    let rawDiscVal = vDiscVal > 0 ? vDiscVal : pDiscVal;
-    let rawMrp = vMrp > 0 ? vMrp : pMrp;
+    // Base MRP is the starting price (vMrp || vPrice || pMrp || pPrice)
+    const baseMrp = vMrp > 0 ? vMrp : (vPrice > 0 ? vPrice : (pMrp > 0 ? pMrp : pPrice));
 
-    if (rawBasePrice <= 0) {
+    // Effective discount values
+    const discPercent = vDiscPercent > 0 ? vDiscPercent : pDiscPercent;
+    const discPrice = vDiscPrice > 0 ? vDiscPrice : pDiscPrice;
+
+    if (baseMrp <= 0) {
       return { sellingPrice: 0, originalMrp: 0, youSave: 0, savePercent: 0 };
     }
 
-    let sellingPrice = rawBasePrice;
-    let originalMrp = rawMrp > rawBasePrice ? rawMrp : 0;
+    let sellingPrice = baseMrp;
+    let originalMrp = 0;
+    let computedPercent = 0;
 
-    // Interpret rawDiscVal smartly (whether entered as %, rupees off, or discount selling price):
-    if (rawDiscVal > 0) {
-      if (rawDiscVal <= 99) {
-        // Percentage Discount (e.g. 10 for 10% OFF)
-        originalMrp = rawBasePrice;
-        sellingPrice = Math.round(rawBasePrice - (rawBasePrice * rawDiscVal / 100));
-      } else if (rawDiscVal < rawBasePrice) {
-        // Check if rawDiscVal is Selling Price (e.g. 161910) or Discount Amount (e.g. 17990 off)
-        if (rawDiscVal < (rawBasePrice / 2)) {
-          // Discount Amount (e.g. ₹17,990 off)
-          originalMrp = rawBasePrice;
-          sellingPrice = rawBasePrice - rawDiscVal;
-        } else {
-          // Discounted Selling Price (e.g. ₹1,61,910)
-          originalMrp = rawBasePrice;
-          sellingPrice = rawDiscVal;
-        }
-      } else if (rawDiscVal > rawBasePrice) {
-        // rawDiscVal is MRP and rawBasePrice is Selling Price
-        originalMrp = rawDiscVal;
-        sellingPrice = rawBasePrice;
-      }
-    } else if (originalMrp > rawBasePrice) {
-      sellingPrice = rawBasePrice;
+    // Calculate selling price and original MRP based on configured discount
+    if (discPrice > 0 && discPrice < baseMrp) {
+      originalMrp = baseMrp;
+      sellingPrice = discPrice;
+      computedPercent = discPercent > 0
+        ? Math.round(discPercent)
+        : Math.round(((baseMrp - discPrice) / baseMrp) * 100);
+    } else if (discPercent > 0 && discPercent <= 99) {
+      originalMrp = baseMrp;
+      sellingPrice = Math.round(baseMrp - (baseMrp * discPercent / 100));
+      computedPercent = Math.round(discPercent);
+    } else if (vMrp > vPrice && vPrice > 0) {
+      originalMrp = vMrp;
+      sellingPrice = vPrice;
+      computedPercent = Math.round(((vMrp - vPrice) / vMrp) * 100);
+    } else if (pMrp > pPrice && pPrice > 0) {
+      originalMrp = pMrp;
+      sellingPrice = pPrice;
+      computedPercent = Math.round(((pMrp - pPrice) / pMrp) * 100);
     }
 
     if (originalMrp <= sellingPrice) {
       originalMrp = 0;
+      computedPercent = 0;
     }
 
     const youSave = originalMrp > sellingPrice ? originalMrp - sellingPrice : 0;
-    const savePercent = originalMrp > sellingPrice ? Math.round((youSave / originalMrp) * 100) : 0;
 
     return {
       sellingPrice,
       originalMrp,
       youSave,
-      savePercent
+      savePercent: computedPercent
     };
   };
 

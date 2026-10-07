@@ -1044,12 +1044,7 @@ export default function Watch() {
                                       <div className="flex items-center justify-between text-xs text-zinc-500">
                                         <span className="font-semibold text-zinc-500">MRP</span>
                                         <div className="flex items-center gap-2">
-                                          {activeMrp && <span className="line-through text-zinc-400 font-medium">{activeMrp}</span>}
-                                          {activeDiscount && (
-                                            <span className="bg-[#FF2D55] text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md shadow-2xs">
-                                              {activeDiscount.includes('%') ? activeDiscount : `${activeDiscount} OFF`}
-                                            </span>
-                                          )}
+                                          {activeMrp && <span className="line-through text-zinc-600 font-semibold">{activeMrp}</span>}
                                         </div>
                                       </div>
 

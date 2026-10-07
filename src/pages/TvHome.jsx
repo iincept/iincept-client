@@ -747,12 +747,7 @@ export default function TvHome() {
                                       <div className="flex items-center justify-between text-xs text-zinc-500">
                                         <span className="font-semibold text-zinc-500">MRP</span>
                                         <div className="flex items-center gap-2">
-                                          {row.mrp && <span className="line-through text-zinc-400 font-medium">{row.mrp}</span>}
-                                          {row.discount && (
-                                            <span className="bg-[#FF2D55] text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md shadow-2xs">
-                                              {row.discount.includes('%') ? row.discount : `${row.discount} OFF`}
-                                            </span>
-                                          )}
+                                          {row.mrp && <span className="line-through text-zinc-600 font-semibold">{row.mrp}</span>}
                                         </div>
                                       </div>
 

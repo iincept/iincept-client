@@ -180,9 +180,11 @@ export const findMatchingVariant = (prod, query) => {
  */
 export const getVariantPricing = (variant, prod) => {
   let vPrice = variant && Number(variant.price) > 0 ? Number(variant.price) : 0;
-  let vDiscVal = variant && Number(variant.discountPrice || variant.discountPercent || variant.discount) > 0 
-    ? Number(variant.discountPrice || variant.discountPercent || variant.discount) 
-    : 0;
+  let vDiscVal = variant && Number(variant.discountPercent || variant.discount) > 0
+    ? Number(variant.discountPercent || variant.discount)
+    : (variant && Number(variant.discountPrice) > 0 && Number(variant.discountPrice) < Number(variant.price || Infinity)
+        ? Number(variant.discountPrice)
+        : 0);
   let vMrp = variant && Number(variant.mrp || variant.originalPrice) > 0 ? Number(variant.mrp || variant.originalPrice) : 0;
 
   let pPrice = Number(prod?.price || 0);

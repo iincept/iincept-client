@@ -1250,12 +1250,7 @@ export default function AppleCare() {
                           <div className="flex items-center justify-between text-xs text-zinc-500">
                             <span className="font-semibold text-zinc-500">MRP</span>
                             <div className="flex items-center gap-2">
-                              {formattedMrp && <span className="line-through text-zinc-400 font-medium">{formattedMrp}</span>}
-                              {discNum > 0 && (
-                                <span className="bg-[#FF2D55] text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md shadow-2xs">
-                                  {discNum}% OFF
-                                </span>
-                              )}
+                              {formattedMrp && <span className="line-through text-zinc-600 font-semibold">{formattedMrp}</span>}
                             </div>
                           </div>
 

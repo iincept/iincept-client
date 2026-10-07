@@ -1281,12 +1281,7 @@ export default function Iphone() {
                                       <div className="flex items-center justify-between text-xs text-zinc-500">
                                         <span className="font-semibold text-zinc-500">MRP</span>
                                         <div className="flex items-center gap-2">
-                                          {activeMrp && <span className="line-through text-zinc-400 font-medium">{activeMrp}</span>}
-                                          {activeDiscount && (
-                                            <span className="bg-[#FF2D55] text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md shadow-2xs">
-                                              {activeDiscount.includes('%') ? activeDiscount : `${activeDiscount} OFF`}
-                                            </span>
-                                          )}
+                                          {activeMrp && <span className="line-through text-zinc-600 font-semibold">{activeMrp}</span>}
                                         </div>
                                       </div>
 
@@ -1539,6 +1534,7 @@ export default function Iphone() {
                         <div className="flex items-center gap-3 shrink-0 py-1">
                           {prod.colors.map((color) => {
                             const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
+                            const resolvedColor = resolveColorValue(color.value || color.name);
                             return (
                               <button
                                 key={color.name}
@@ -1547,8 +1543,8 @@ export default function Iphone() {
                                   e.stopPropagation();
                                   handleColorChange(prod.id, color.name);
                                 }}
-                                style={{ backgroundColor: color.value }}
-                                className={`w-4 h-4 rounded-full cursor-pointer transition-all ${isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10' : 'border border-zinc-300 hover:scale-105'
+                                style={{ backgroundColor: resolvedColor }}
+                                className={`w-6 h-6 rounded-full cursor-pointer transition-all shadow-sm ${isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-md z-10' : 'hover:scale-105 hover:shadow-md'
                                   }`}
                                 title={color.name}
                               />

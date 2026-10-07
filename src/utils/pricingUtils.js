@@ -20,10 +20,13 @@ export const getProductCardPricing = (prod) => {
       if (vp > 0) variantPrices.push(vp);
 
       const vdp = Number(v.discountPrice || 0);
-      if (vdp > 0) variantDiscPrices.push(vdp);
+      // Only count as discount if discountPrice is strictly less than variant price
+      // If discountPrice === price or discountPrice === 0, it means no discount was set
+      if (vdp > 0 && vp > 0 && vdp < vp) variantDiscPrices.push(vdp);
 
       const vdper = Number(v.discountPercent || 0);
-      if (vdper > 0) variantDiscPercents.push(vdper);
+      // Only count variant's discountPercent if it also has an actual discount price
+      if (vdper > 0 && vdp > 0 && vdp < vp) variantDiscPercents.push(vdper);
     });
 
     if (variantPrices.length > 0 && baseMrp === 0) {
@@ -32,18 +35,29 @@ export const getProductCardPricing = (prod) => {
   }
 
   // Check for explicit percentage discount first
-  let explicitPercent = Number(
-    prod.discountPercent !== undefined && prod.discountPercent !== null && Number(prod.discountPercent) > 0
-      ? prod.discountPercent
-      : (prod.discount !== undefined && prod.discount !== null && Number(prod.discount) > 0 && Number(prod.discount) <= 99
-          ? prod.discount
-          : (variantDiscPercents.length > 0 ? Math.max(...variantDiscPercents) : 0))
-  );
+  // IMPORTANT: Only trust discountPercent if discountPrice also confirms a real discount exists
+  // If discountPrice = 0, admin has explicitly removed discount — ignore any stale discountPercent in DB
+  const prodDiscPrice = Number(prod.discountPrice ?? 0);
+  const prodHasExplicitNoDiscount = prodDiscPrice === 0; // admin explicitly cleared discount
 
-  let rawDisc = Number(prod.discountPrice !== undefined && prod.discountPrice !== null ? prod.discountPrice : 0);
+  let explicitPercent = 0;
+  if (!prodHasExplicitNoDiscount) {
+    // discountPrice is non-zero, so check discountPercent as well
+    if (prod.discountPercent !== undefined && prod.discountPercent !== null && Number(prod.discountPercent) > 0) {
+      explicitPercent = Number(prod.discountPercent);
+    } else if (prod.discount !== undefined && prod.discount !== null && Number(prod.discount) > 0 && Number(prod.discount) <= 99) {
+      explicitPercent = Number(prod.discount);
+    } else if (variantDiscPercents.length > 0 && variantDiscPrices.length > 0) {
+      // Only use variant discountPercents if variants actually have discounted prices
+      explicitPercent = Math.max(...variantDiscPercents);
+    }
+  }
+
+  let rawDisc = prodHasExplicitNoDiscount ? 0 : prodDiscPrice;
   if (rawDisc === 0 && variantDiscPrices.length > 0) {
     rawDisc = Math.min(...variantDiscPrices);
   }
+
 
   let sellingPrice = baseMrp;
   let originalMrp = 0;

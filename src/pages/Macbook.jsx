@@ -918,12 +918,7 @@ export default function Macbook() {
                                       <div className="flex items-center justify-between text-xs text-zinc-500">
                                         <span className="font-semibold text-zinc-500">MRP</span>
                                         <div className="flex items-center gap-2">
-                                          {row.mrp && <span className="line-through text-zinc-400 font-medium">{row.mrp}</span>}
-                                          {row.discount && (
-                                            <span className="bg-[#FF2D55] text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md shadow-2xs">
-                                              {row.discount.includes('%') ? row.discount : `${row.discount} OFF`}
-                                            </span>
-                                          )}
+                                          {row.mrp && <span className="line-through text-zinc-600 font-semibold">{row.mrp}</span>}
                                         </div>
                                       </div>
 
@@ -1178,12 +1173,12 @@ export default function Macbook() {
                   <div className="flex items-center gap-3 shrink-0 py-1">
                     {prod.colors.map((color) => {
                       const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
-                      // iMac two-tone split circle: top-left = main color, bottom-right = lighter shade
                       const isImac = prod.name && prod.name.toLowerCase().includes('imac');
-                      const lighterShade = color.value ? color.value + 'bb' : '#e0e0e2';
+                      // Use resolveColorValue to get actual hex from name or value
+                      const resolvedColor = resolveColorValue(color.value || color.name);
                       const swatchStyle = isImac
-                        ? { background: `linear-gradient(135deg, ${color.value} 50%, ${color.value}88 50%)`, border: 'none' }
-                        : { backgroundColor: color.value };
+                        ? { background: `linear-gradient(135deg, ${resolvedColor} 50%, ${resolvedColor}88 50%)`, border: 'none' }
+                        : { backgroundColor: resolvedColor };
                       return (
                         <button
                           key={color.name}
@@ -1193,10 +1188,10 @@ export default function Macbook() {
                             handleColorChange(prod.id, color.name);
                           }}
                           style={swatchStyle}
-                          className={`w-4 h-4 rounded-full cursor-pointer transition-all ${
+                          className={`w-6 h-6 rounded-full cursor-pointer transition-all shadow-sm ${
                             isSelected
-                              ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10'
-                              : 'border border-zinc-300 hover:scale-105 hover:shadow-xs'
+                              ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-md z-10'
+                              : 'hover:scale-105 hover:shadow-md'
                           }`}
                           title={color.name}
                         />

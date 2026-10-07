@@ -938,21 +938,31 @@ export default function Home() {
 
         .indiaistore-theme .testimonials-section .section-header {
           display: flex;
+          flex-direction: column;
           align-items: center;
           justify-content: center;
           text-align: center;
           position: relative;
-          margin-bottom: 28px;
+          margin-bottom: 48px;
         }
         .indiaistore-theme .testimonials-section .section-title {
           margin: 0 auto;
           text-align: center;
+          color: #1d1d1f !important;
+          font-size: 36px !important;
+          letter-spacing: -0.02em !important;
+        }
+        .indiaistore-theme .testimonials-section .section-subtitle {
+          margin-top: 10px;
+          font-size: 15px;
+          color: #6e6e73;
+          font-weight: 400;
+          letter-spacing: 0.01em;
         }
         .indiaistore-theme .testimonials-section .slider-nav-btns {
           position: absolute;
           right: 0;
-          top: 50%;
-          transform: translateY(-50%);
+          top: 0;
           display: flex;
           align-items: center;
           gap: 10px;
@@ -1032,7 +1042,7 @@ export default function Home() {
           height: 480px;
           border-radius: 28px;
           background: #f5f5f7;
-          overflow: hidden;
+          overflow: visible;
           text-decoration: none;
           color: #1d1d1f;
           transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1043,16 +1053,15 @@ export default function Home() {
           box-sizing: border-box;
           text-align: left;
           isolation: isolate;
-          -webkit-mask-image: -webkit-radial-gradient(white, black);
-          mask-image: -webkit-radial-gradient(white, black);
           transform: translateZ(0);
           -webkit-backface-visibility: hidden;
           backface-visibility: hidden;
+          position: relative;
         }
 
         .indiaistore-theme .rf-ccard-40:hover {
           transform: translateY(-4px) scale(1.015);
-          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+          box-shadow: 0 12px 30px rgba(0, 0, 0, 0.20);
         }
 
         .indiaistore-theme .as-util-relatedlink,
@@ -1929,6 +1938,8 @@ export default function Home() {
         .indiaistore-theme .testimonials-section {
           background: #ffffff;
           width: 100%;
+          position: relative;
+          overflow: hidden;
         }
 
         .indiaistore-theme .testimonials-slider-wrap {
@@ -1942,7 +1953,7 @@ export default function Home() {
           overflow-x: auto;
           scroll-behavior: smooth;
           -webkit-overflow-scrolling: touch;
-          padding: 8px 4px 20px;
+          padding: 8px 4px 28px;
           scrollbar-width: none;
         }
         .indiaistore-theme .testimonials-slider::-webkit-scrollbar {
@@ -1950,68 +1961,101 @@ export default function Home() {
         }
 
         .indiaistore-theme .testimonial-card {
-          flex: 0 0 380px;
-          min-width: 320px;
-          max-width: 400px;
-          background: white;
-          border: 1px solid var(--border);
-          border-radius: 18px;
-          padding: 22px 24px;
-          transition: all 0.25s ease;
+          flex: 0 0 360px;
+          min-width: 300px;
+          max-width: 380px;
+          background: #ffffff;
+          backdrop-filter: none;
+          -webkit-backdrop-filter: none;
+          border: 1px solid #e8e8ed;
+          border-radius: 24px;
+          padding: 28px 26px;
+          transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
           box-sizing: border-box;
           display: flex;
           flex-direction: column;
           justify-content: flex-start;
-          gap: 16px;
+          gap: 0;
+          position: relative;
+          overflow: hidden;
         }
 
+
         .indiaistore-theme .testimonial-card:hover {
-          box-shadow: var(--shadow);
-          transform: translateY(-2px);
+          background: #f5f5f7;
+          border-color: #0071e3;
+          transform: translateY(-6px);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,113,227,0.2);
+        }
+
+        .indiaistore-theme .testimonial-stars-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 16px;
+        }
+
+        .indiaistore-theme .testimonial-card-body {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          padding-top: 14px;
+          border-top: 1px solid #e8e8ed;
+        }
+
+        .indiaistore-theme .testimonial-text {
+          font-size: 15px;
+          line-height: 1.7;
+          color: #3d3d3d;
+          margin: 0;
+          word-break: break-word;
+          font-style: italic;
         }
 
         .indiaistore-theme .testimonial-card-header {
           display: flex;
-          align-items: flex-start;
+          align-items: center;
           justify-content: space-between;
           gap: 12px;
           width: 100%;
+          margin-bottom: 16px;
         }
 
         .indiaistore-theme .testimonial-author {
           display: flex;
-          align-items: flex-start;
-          gap: 12px;
+          align-items: center;
+          gap: 14px;
           flex: 1;
           min-width: 0;
         }
 
         .indiaistore-theme .author-avatar,
         .indiaistore-theme .author-avatar-img {
-          width: 44px;
-          height: 44px;
-          min-width: 44px;
-          min-height: 44px;
+          width: 48px;
+          height: 48px;
+          min-width: 48px;
+          min-height: 48px;
           border-radius: 50%;
           object-fit: cover;
           flex-shrink: 0;
         }
 
         .indiaistore-theme .author-avatar {
-          background: var(--apple-light, #f5f5f7);
+          background: linear-gradient(135deg, #0071e3 0%, #5e5ce6 100%);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: 600;
-          font-size: 15px;
-          color: var(--apple-blue, #0071e3);
-          border: 1px solid rgba(0, 0, 0, 0.05);
+          font-weight: 700;
+          font-size: 16px;
+          color: #ffffff;
+          border: 2px solid rgba(255,255,255,0.2);
+          box-shadow: 0 4px 16px rgba(0,113,227,0.4);
         }
 
         .indiaistore-theme .author-info {
           display: flex;
           flex-direction: column;
-          gap: 2px;
+          gap: 3px;
           min-width: 0;
         }
 
@@ -2030,18 +2074,18 @@ export default function Home() {
         .indiaistore-theme .author-info .author-sub {
           display: block;
           font-size: 12px;
-          font-weight: 500;
+          font-weight: 400;
           color: #6e6e73;
           line-height: 1.35;
         }
 
         .indiaistore-theme .slider-btn {
-          width: 36px;
-          height: 36px;
+          width: 38px;
+          height: 38px;
           border-radius: 50%;
-          background: var(--apple-light);
-          border: 1px solid var(--border);
-          color: var(--apple-black);
+          background: #f5f5f7;
+          border: 1px solid #e0e0e5;
+          color: #1d1d1f;
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -2052,33 +2096,57 @@ export default function Home() {
           line-height: 1;
         }
         .indiaistore-theme .slider-btn:hover {
-          background: var(--apple-blue);
+          background: #0071e3;
+          border-color: #0071e3;
           color: white;
-          border-color: var(--apple-blue);
+          box-shadow: 0 4px 16px rgba(0,113,227,0.3);
         }
 
         .indiaistore-theme .stars {
-          color: #f5a623;
-          font-size: 14px;
-          letter-spacing: 1px;
+          color: #fbbf24;
+          font-size: 15px;
+          letter-spacing: 2px;
           white-space: nowrap;
           flex-shrink: 0;
           line-height: 1;
-          padding-top: 3px;
+          text-shadow: 0 0 8px rgba(251,191,36,0.5);
         }
-
-        .indiaistore-theme .testimonial-card-body {
-          flex: 1;
+        .indiaistore-theme .stars-rating-label {
+          font-size: 12px;
+          font-weight: 600;
+          color: #6e6e73;
+          margin-top: 2px;
+          text-align: right;
+        }
+        .indiaistore-theme .testimonial-stars-col {
           display: flex;
           flex-direction: column;
+          align-items: flex-end;
+          flex-shrink: 0;
         }
 
-        .indiaistore-theme .testimonial-text {
-          font-size: 14px;
-          line-height: 1.6;
-          color: #333336;
-          margin: 0;
-          word-break: break-word;
+        .indiaistore-theme .slider-circle-btn {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          background: #f5f5f7;
+          border: 1px solid #e0e0e5;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .indiaistore-theme .slider-circle-btn:hover {
+          background: #0071e3;
+          border-color: #0071e3;
+          box-shadow: 0 4px 16px rgba(0,113,227,0.3);
+        }
+        .indiaistore-theme .slider-circle-btn svg {
+          stroke: #1d1d1f;
+        }
+        .indiaistore-theme .slider-circle-btn:hover svg {
+          stroke: #ffffff;
         }
 
         @media (max-width: 1100px) {
@@ -2890,6 +2958,7 @@ export default function Home() {
       <section className="section testimonials-section">
         <div className="section-header">
           <h2 className="section-title">WHAT OUR CUSTOMERS SAY</h2>
+          <p className="section-subtitle">Trusted by thousands of happy customers across India</p>
           <div className="slider-nav-btns">
             <button
               type="button"
@@ -2898,7 +2967,7 @@ export default function Home() {
               title="Previous"
               aria-label="Previous Testimonials"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6"></polyline>
               </svg>
             </button>
@@ -2909,7 +2978,7 @@ export default function Home() {
               title="Next"
               aria-label="Next Testimonials"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6"></polyline>
               </svg>
             </button>
@@ -2919,6 +2988,7 @@ export default function Home() {
           <div ref={testimonialSliderRef} className="testimonials-slider">
             {testimonials.map((item, idx) => (
               <div key={idx} className="testimonial-card">
+                {/* Top Row: Author LEFT + Stars RIGHT */}
                 <div className="testimonial-card-header">
                   <div className="testimonial-author">
                     {item.avatar || item.avatarUrl || item.image ? (
@@ -2939,10 +3009,14 @@ export default function Home() {
                       ) : null}
                     </div>
                   </div>
-                  <div className="stars" aria-label={`${item.stars || 5} out of 5 stars`}>
-                    {'★'.repeat(item.stars || 5)}
+                  <div className="testimonial-stars-col">
+                    <span className="stars" aria-label={`${item.stars || 5} out of 5 stars`}>
+                      {'★'.repeat(item.stars || 5)}
+                    </span>
+                    <span className="stars-rating-label">{item.stars || 5}.0</span>
                   </div>
                 </div>
+                {/* Review Text */}
                 <div className="testimonial-card-body">
                   <p className="testimonial-text">{item.text}</p>
                 </div>
