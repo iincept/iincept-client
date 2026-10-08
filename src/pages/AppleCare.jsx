@@ -1174,9 +1174,9 @@ export default function AppleCare() {
                 const mrpNum = parseFloat(String(mrpStr).replace(/[^0-9.]/g, '')) || 0;
                 const discNum = Math.min(100, Math.max(0, parseFloat(String(row.discount).replace(/[^0-9.]/g, '')) || 0));
 
-                const finalNum = mrpNum > 0 && discNum >= 0
+                const finalNum = mrpNum > 0 && discNum > 0
                   ? Math.max(0, Math.round(mrpNum - (mrpNum * discNum / 100)))
-                  : (parseFloat(String(row.salePrice || row.yearly || '0').replace(/[^0-9.]/g, '')) || 0);
+                  : (parseFloat(String(row.salePrice || row.yearly || '0').replace(/[^0-9.]/g, '')) || mrpNum);
 
                 const formattedPrice = `₹${finalNum.toLocaleString('en-IN')}`;
                 const formattedMrp = mrpStr.includes('₹') ? mrpStr : (mrpNum > 0 ? `₹${mrpNum.toLocaleString('en-IN')}` : '');
